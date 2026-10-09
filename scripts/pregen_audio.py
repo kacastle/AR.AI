@@ -58,7 +58,8 @@ def generate(jobs: list[audio.Job], force: bool) -> None:
         force = True
     changed = [j for j in jobs if done(j) and made.get(j.key) != audio.fingerprint(j)]
     if changed and not force:
-        print(f"{len(changed)} clips have new text in content/ (for example {changed[0].key}); remaking them.")
+        print("No text fingerprints saved yet; remaking every clip once." if not made else
+              f"{len(changed)} clips have new text in content/ (for example {changed[0].key}); remaking them.")
     # Recordings are cheap to copy, so they are always refreshed.
     todo = [j for j in jobs if force or not done(j) or recorded(j) or j in changed]
     print(f"{len(jobs)} clips, {len(jobs) - len(todo)} up to date in {audio.AUDIO_DIR}, {len(todo)} to make")
