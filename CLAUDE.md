@@ -18,7 +18,7 @@ Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL 
 - No network calls except localhost. No new dependencies without asking.
 - Do not rename JSON fields or ids from content/content.json and content/rules.json.
 - ng is one tile.
-- Learner data stays in the local SQLite file. Never commit *.db or real child data. Use fake names in seed data. audio_cache/ IS committed (generated clips take about 2 hours to remake): after pregen_audio.py remakes clips, commit audio_cache/ too, including _settings.json; audio_cache/try_* (listening tests) stays local.
+- Learner data stays in the local SQLite file. Never commit *.db or real child data. Use fake names in seed data. audio_cache/ IS committed (generated clips take about 2 hours to remake): after pregen_audio.py remakes clips, commit audio_cache/ too, including _settings.json; audio_cache/try_* (the OmniVoice listening-test clips) is committed too, for the team to compare.
 - Never invent Tagalog text. Use only text from content files, test_prompts.py prompts, or templates I paste. If a template is missing, use the generic fallback below and tell me.
 
 ## Layout and how to run
