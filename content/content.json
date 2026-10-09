@@ -1,0 +1,4885 @@
+{
+  "version": "0.1",
+  "language": "fil",
+  "levels": [
+    1,
+    2
+  ],
+  "notes": "Starter content for the hackathon demo. AI-assisted draft: a Filipino speaker must check every item, then set reviewed to true. 'kind' is 'word' or 'syllable'. 'ng' is one tile. 'interests' is the interest catalog (the tutor or the learner picks up to 3 for each learner). 'story_templates' are personal fallback stories that code fills with the learner's first name and an object from one of the learner's interests; they need no model. All stories are individual: one learner, one story. 'story_plots' are safe plot outlines in English; code picks one and the model writes it in Filipino. 'story_examples' is the one-shot example for the story prompt at each level.",
+  "skills": [
+    {
+      "id": "sk_vowels",
+      "order": 1,
+      "category": "letter_sound",
+      "name_fil": "Mga patinig: a, e, i, o, u",
+      "name_en": "Vowel sounds",
+      "level": 1,
+      "letters": [
+        "a",
+        "e",
+        "i",
+        "o",
+        "u"
+      ],
+      "prerequisites": [],
+      "mistake_types": [
+        "P_SUB_VOWEL"
+      ],
+      "core": true
+    },
+    {
+      "id": "sk_letters_1",
+      "order": 2,
+      "category": "letter_sound",
+      "name_fil": "Unang mga katinig: m, s, b, t, k",
+      "name_en": "First consonants",
+      "level": 1,
+      "letters": [
+        "m",
+        "s",
+        "b",
+        "t",
+        "k"
+      ],
+      "prerequisites": [
+        "sk_vowels"
+      ],
+      "mistake_types": [
+        "P_SUB_CONS"
+      ],
+      "core": true
+    },
+    {
+      "id": "sk_cv_1",
+      "order": 3,
+      "category": "syllable",
+      "name_fil": "Pantig: ma, se, bi, to, ku",
+      "name_en": "CV syllables with set 1",
+      "level": 1,
+      "letters": [
+        "m",
+        "s",
+        "b",
+        "t",
+        "k",
+        "a",
+        "e",
+        "i",
+        "o",
+        "u"
+      ],
+      "prerequisites": [
+        "sk_letters_1"
+      ],
+      "mistake_types": [
+        "P_SUB_VOWEL",
+        "P_SUB_CONS",
+        "O_ORDER"
+      ],
+      "core": true
+    },
+    {
+      "id": "sk_cvcv_1",
+      "order": 4,
+      "category": "word",
+      "name_fil": "Salitang may dalawang pantig",
+      "name_en": "Two-syllable CV-CV words",
+      "level": 1,
+      "letters": [
+        "m",
+        "s",
+        "b",
+        "t",
+        "k",
+        "a",
+        "e",
+        "i",
+        "o",
+        "u"
+      ],
+      "prerequisites": [
+        "sk_cv_1"
+      ],
+      "mistake_types": [
+        "P_SUB_VOWEL",
+        "P_SUB_CONS",
+        "O_ORDER",
+        "S_SYLL_MISS"
+      ],
+      "core": true
+    },
+    {
+      "id": "sk_letters_2",
+      "order": 5,
+      "category": "letter_sound",
+      "name_fil": "Susunod na mga katinig",
+      "name_en": "Next consonants",
+      "level": 1,
+      "letters": [
+        "l",
+        "y",
+        "n",
+        "g",
+        "p",
+        "r",
+        "d",
+        "h",
+        "w"
+      ],
+      "prerequisites": [
+        "sk_cvcv_1"
+      ],
+      "mistake_types": [
+        "P_SUB_CONS"
+      ],
+      "core": false
+    },
+    {
+      "id": "sk_cv_2",
+      "order": 6,
+      "category": "syllable",
+      "name_fil": "Pantig ng susunod na mga katinig",
+      "name_en": "CV syllables with set 2",
+      "level": 1,
+      "letters": [
+        "l",
+        "y",
+        "n",
+        "g",
+        "p",
+        "r",
+        "d",
+        "h",
+        "w"
+      ],
+      "prerequisites": [
+        "sk_letters_2"
+      ],
+      "mistake_types": [
+        "P_SUB_VOWEL",
+        "P_SUB_CONS"
+      ],
+      "core": false
+    },
+    {
+      "id": "sk_ng",
+      "order": 7,
+      "category": "syllable",
+      "name_fil": "Ang titik ng",
+      "name_en": "The letter ng",
+      "level": 1,
+      "letters": [
+        "ng"
+      ],
+      "prerequisites": [
+        "sk_cvcv_1"
+      ],
+      "mistake_types": [
+        "O_NG",
+        "P_SUB_CONS"
+      ],
+      "core": true
+    },
+    {
+      "id": "sk_cvc_final",
+      "order": 8,
+      "category": "word",
+      "name_fil": "Salitang nagtatapos sa katinig",
+      "name_en": "Words that end in a consonant",
+      "level": 1,
+      "letters": [],
+      "prerequisites": [
+        "sk_cvcv_1"
+      ],
+      "mistake_types": [
+        "P_OMIT_FINAL",
+        "P_SUB_CONS",
+        "P_SUB_VOWEL"
+      ],
+      "core": true
+    },
+    {
+      "id": "sk_sentence_1",
+      "order": 9,
+      "category": "sentence",
+      "name_fil": "Simpleng pangungusap",
+      "name_en": "Basic sentence: capital letter and period",
+      "level": 1,
+      "letters": [],
+      "prerequisites": [
+        "sk_cvcv_1"
+      ],
+      "mistake_types": [
+        "SN_ORDER",
+        "SN_PUNCT"
+      ],
+      "core": true
+    },
+    {
+      "id": "sk_comp_literal",
+      "order": 10,
+      "category": "comprehension",
+      "name_fil": "Sino, saan, ano",
+      "name_en": "Who, where, what",
+      "level": 1,
+      "letters": [],
+      "prerequisites": [],
+      "mistake_types": [
+        "C_LITERAL"
+      ],
+      "core": true
+    },
+    {
+      "id": "sk_cvc_mid",
+      "order": 11,
+      "category": "word",
+      "name_fil": "Saradong pantig sa gitna",
+      "name_en": "Closed syllables in the middle",
+      "level": 2,
+      "letters": [],
+      "prerequisites": [
+        "sk_cvc_final"
+      ],
+      "mistake_types": [
+        "P_OMIT_MID",
+        "S_SYLL_MISS"
+      ],
+      "core": false
+    },
+    {
+      "id": "sk_clusters",
+      "order": 12,
+      "category": "word",
+      "name_fil": "Klaster",
+      "name_en": "Consonant clusters",
+      "level": 2,
+      "letters": [],
+      "prerequisites": [
+        "sk_cvc_final"
+      ],
+      "mistake_types": [
+        "P_OMIT_MID",
+        "O_ORDER"
+      ],
+      "core": false
+    },
+    {
+      "id": "sk_long_words",
+      "order": 13,
+      "category": "word",
+      "name_fil": "Mahahabang salita",
+      "name_en": "Words with three or more syllables",
+      "level": 2,
+      "letters": [],
+      "prerequisites": [
+        "sk_cvc_final"
+      ],
+      "mistake_types": [
+        "S_SYLL_MISS",
+        "P_OMIT_MID"
+      ],
+      "core": false
+    },
+    {
+      "id": "sk_sentence_2",
+      "order": 14,
+      "category": "sentence",
+      "name_fil": "Mas mahabang pangungusap",
+      "name_en": "Longer sentences and question marks",
+      "level": 2,
+      "letters": [],
+      "prerequisites": [
+        "sk_sentence_1"
+      ],
+      "mistake_types": [
+        "SN_ORDER",
+        "SN_PUNCT"
+      ],
+      "core": false
+    },
+    {
+      "id": "sk_comp_sequence",
+      "order": 15,
+      "category": "comprehension",
+      "name_fil": "Pagkakasunod at pangunahing ideya",
+      "name_en": "Story order and main idea",
+      "level": 2,
+      "letters": [],
+      "prerequisites": [
+        "sk_comp_literal"
+      ],
+      "mistake_types": [
+        "C_SEQUENCE",
+        "C_INFER"
+      ],
+      "core": false
+    },
+    {
+      "id": "sk_comp_feeling",
+      "order": 16,
+      "category": "comprehension",
+      "name_fil": "Damdamin at hinuha",
+      "name_en": "Feelings and simple inference",
+      "level": 2,
+      "letters": [],
+      "prerequisites": [
+        "sk_comp_literal"
+      ],
+      "mistake_types": [
+        "C_INFER"
+      ],
+      "core": false
+    }
+  ],
+  "words": [
+    {
+      "id": "w_aso",
+      "kind": "word",
+      "text": "aso",
+      "syllables": [
+        "a",
+        "so"
+      ],
+      "tiles": [
+        "a",
+        "s",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "aso",
+      "meaning_en": "dog",
+      "distractor_tiles": [
+        "u",
+        "e",
+        "i"
+      ]
+    },
+    {
+      "id": "w_ahas",
+      "kind": "word",
+      "text": "ahas",
+      "syllables": [
+        "a",
+        "has"
+      ],
+      "tiles": [
+        "a",
+        "h",
+        "a",
+        "s"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "ahas",
+      "meaning_en": "snake",
+      "distractor_tiles": [
+        "k",
+        "e",
+        "i"
+      ]
+    },
+    {
+      "id": "w_elepante",
+      "kind": "word",
+      "text": "elepante",
+      "syllables": [
+        "e",
+        "le",
+        "pan",
+        "te"
+      ],
+      "tiles": [
+        "e",
+        "l",
+        "e",
+        "p",
+        "a",
+        "n",
+        "t",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "elepante",
+      "meaning_en": "elephant",
+      "distractor_tiles": [
+        "i",
+        "r",
+        "b"
+      ]
+    },
+    {
+      "id": "w_eroplano",
+      "kind": "word",
+      "text": "eroplano",
+      "syllables": [
+        "e",
+        "ro",
+        "pla",
+        "no"
+      ],
+      "tiles": [
+        "e",
+        "r",
+        "o",
+        "p",
+        "l",
+        "a",
+        "n",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "eroplano",
+      "meaning_en": "airplane",
+      "distractor_tiles": [
+        "i",
+        "u",
+        "b"
+      ]
+    },
+    {
+      "id": "w_ibon",
+      "kind": "word",
+      "text": "ibon",
+      "syllables": [
+        "i",
+        "bon"
+      ],
+      "tiles": [
+        "i",
+        "b",
+        "o",
+        "n"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "ibon",
+      "meaning_en": "bird",
+      "distractor_tiles": [
+        "e",
+        "d",
+        "p"
+      ]
+    },
+    {
+      "id": "w_isda",
+      "kind": "word",
+      "text": "isda",
+      "syllables": [
+        "is",
+        "da"
+      ],
+      "tiles": [
+        "i",
+        "s",
+        "d",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "isda",
+      "meaning_en": "fish",
+      "distractor_tiles": [
+        "e",
+        "b",
+        "t"
+      ]
+    },
+    {
+      "id": "w_oso",
+      "kind": "word",
+      "text": "oso",
+      "syllables": [
+        "o",
+        "so"
+      ],
+      "tiles": [
+        "o",
+        "s",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "oso",
+      "meaning_en": "bear",
+      "distractor_tiles": [
+        "u",
+        "a",
+        "e"
+      ]
+    },
+    {
+      "id": "w_okra",
+      "kind": "word",
+      "text": "okra",
+      "syllables": [
+        "o",
+        "kra"
+      ],
+      "tiles": [
+        "o",
+        "k",
+        "r",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "okra",
+      "meaning_en": "okra",
+      "distractor_tiles": [
+        "u",
+        "g",
+        "l"
+      ]
+    },
+    {
+      "id": "w_ubas",
+      "kind": "word",
+      "text": "ubas",
+      "syllables": [
+        "u",
+        "bas"
+      ],
+      "tiles": [
+        "u",
+        "b",
+        "a",
+        "s"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "ubas",
+      "meaning_en": "grapes",
+      "distractor_tiles": [
+        "o",
+        "d",
+        "p"
+      ]
+    },
+    {
+      "id": "w_uod",
+      "kind": "word",
+      "text": "uod",
+      "syllables": [
+        "u",
+        "od"
+      ],
+      "tiles": [
+        "u",
+        "o",
+        "d"
+      ],
+      "skill_ids": [
+        "sk_vowels"
+      ],
+      "level": 1,
+      "tts_text": "uod",
+      "meaning_en": "worm",
+      "distractor_tiles": [
+        "b",
+        "t",
+        "a"
+      ]
+    },
+    {
+      "id": "w_mani",
+      "kind": "word",
+      "text": "mani",
+      "syllables": [
+        "ma",
+        "ni"
+      ],
+      "tiles": [
+        "m",
+        "a",
+        "n",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_letters_1"
+      ],
+      "level": 1,
+      "tts_text": "mani",
+      "meaning_en": "peanut",
+      "distractor_tiles": [
+        "ng",
+        "e",
+        "o"
+      ]
+    },
+    {
+      "id": "w_mata",
+      "kind": "word",
+      "text": "mata",
+      "syllables": [
+        "ma",
+        "ta"
+      ],
+      "tiles": [
+        "m",
+        "a",
+        "t",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_letters_1",
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "mata",
+      "meaning_en": "eye",
+      "distractor_tiles": [
+        "n",
+        "d",
+        "e"
+      ]
+    },
+    {
+      "id": "w_saging",
+      "kind": "word",
+      "text": "saging",
+      "syllables": [
+        "sa",
+        "ging"
+      ],
+      "tiles": [
+        "s",
+        "a",
+        "g",
+        "i",
+        "ng"
+      ],
+      "skill_ids": [
+        "sk_letters_1"
+      ],
+      "level": 1,
+      "tts_text": "saging",
+      "meaning_en": "banana",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "k"
+      ]
+    },
+    {
+      "id": "w_sapatos",
+      "kind": "word",
+      "text": "sapatos",
+      "syllables": [
+        "sa",
+        "pa",
+        "tos"
+      ],
+      "tiles": [
+        "s",
+        "a",
+        "p",
+        "a",
+        "t",
+        "o",
+        "s"
+      ],
+      "skill_ids": [
+        "sk_letters_1",
+        "sk_long_words"
+      ],
+      "level": 1,
+      "tts_text": "sapatos",
+      "meaning_en": "shoes",
+      "distractor_tiles": [
+        "b",
+        "d",
+        "u"
+      ]
+    },
+    {
+      "id": "w_bola",
+      "kind": "word",
+      "text": "bola",
+      "syllables": [
+        "bo",
+        "la"
+      ],
+      "tiles": [
+        "b",
+        "o",
+        "l",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_letters_1"
+      ],
+      "level": 1,
+      "tts_text": "bola",
+      "meaning_en": "ball",
+      "distractor_tiles": [
+        "d",
+        "p",
+        "u"
+      ]
+    },
+    {
+      "id": "w_bata",
+      "kind": "word",
+      "text": "bata",
+      "syllables": [
+        "ba",
+        "ta"
+      ],
+      "tiles": [
+        "b",
+        "a",
+        "t",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_letters_1",
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "bata",
+      "meaning_en": "child",
+      "distractor_tiles": [
+        "d",
+        "p",
+        "e"
+      ]
+    },
+    {
+      "id": "w_tasa",
+      "kind": "word",
+      "text": "tasa",
+      "syllables": [
+        "ta",
+        "sa"
+      ],
+      "tiles": [
+        "t",
+        "a",
+        "s",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_letters_1",
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "tasa",
+      "meaning_en": "cup",
+      "distractor_tiles": [
+        "d",
+        "e",
+        "i"
+      ]
+    },
+    {
+      "id": "w_tubig",
+      "kind": "word",
+      "text": "tubig",
+      "syllables": [
+        "tu",
+        "big"
+      ],
+      "tiles": [
+        "t",
+        "u",
+        "b",
+        "i",
+        "g"
+      ],
+      "skill_ids": [
+        "sk_letters_1",
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "tubig",
+      "meaning_en": "water",
+      "distractor_tiles": [
+        "d",
+        "o",
+        "p"
+      ]
+    },
+    {
+      "id": "w_kamay",
+      "kind": "word",
+      "text": "kamay",
+      "syllables": [
+        "ka",
+        "may"
+      ],
+      "tiles": [
+        "k",
+        "a",
+        "m",
+        "a",
+        "y"
+      ],
+      "skill_ids": [
+        "sk_letters_1"
+      ],
+      "level": 1,
+      "tts_text": "kamay",
+      "meaning_en": "hand",
+      "distractor_tiles": [
+        "g",
+        "n",
+        "w"
+      ]
+    },
+    {
+      "id": "w_kotse",
+      "kind": "word",
+      "text": "kotse",
+      "syllables": [
+        "kot",
+        "se"
+      ],
+      "tiles": [
+        "k",
+        "o",
+        "t",
+        "s",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_letters_1"
+      ],
+      "level": 1,
+      "tts_text": "kotse",
+      "meaning_en": "car",
+      "distractor_tiles": [
+        "g",
+        "u",
+        "d"
+      ]
+    },
+    {
+      "id": "w_mama",
+      "kind": "word",
+      "text": "mama",
+      "syllables": [
+        "ma",
+        "ma"
+      ],
+      "tiles": [
+        "m",
+        "a",
+        "m",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "mama",
+      "meaning_en": "mother",
+      "distractor_tiles": [
+        "n",
+        "e",
+        "i"
+      ]
+    },
+    {
+      "id": "w_mesa",
+      "kind": "word",
+      "text": "mesa",
+      "syllables": [
+        "me",
+        "sa"
+      ],
+      "tiles": [
+        "m",
+        "e",
+        "s",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "mesa",
+      "meaning_en": "table",
+      "distractor_tiles": [
+        "n",
+        "i",
+        "o"
+      ]
+    },
+    {
+      "id": "w_sako",
+      "kind": "word",
+      "text": "sako",
+      "syllables": [
+        "sa",
+        "ko"
+      ],
+      "tiles": [
+        "s",
+        "a",
+        "k",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "sako",
+      "meaning_en": "sack",
+      "distractor_tiles": [
+        "g",
+        "u",
+        "e"
+      ]
+    },
+    {
+      "id": "w_baka",
+      "kind": "word",
+      "text": "baka",
+      "syllables": [
+        "ba",
+        "ka"
+      ],
+      "tiles": [
+        "b",
+        "a",
+        "k",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "baka",
+      "meaning_en": "cow",
+      "distractor_tiles": [
+        "d",
+        "p",
+        "g"
+      ]
+    },
+    {
+      "id": "w_keso",
+      "kind": "word",
+      "text": "keso",
+      "syllables": [
+        "ke",
+        "so"
+      ],
+      "tiles": [
+        "k",
+        "e",
+        "s",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "keso",
+      "meaning_en": "cheese",
+      "distractor_tiles": [
+        "g",
+        "i",
+        "u"
+      ]
+    },
+    {
+      "id": "w_kama",
+      "kind": "word",
+      "text": "kama",
+      "syllables": [
+        "ka",
+        "ma"
+      ],
+      "tiles": [
+        "k",
+        "a",
+        "m",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "kama",
+      "meaning_en": "bed",
+      "distractor_tiles": [
+        "g",
+        "n",
+        "e"
+      ]
+    },
+    {
+      "id": "w_tuta",
+      "kind": "word",
+      "text": "tuta",
+      "syllables": [
+        "tu",
+        "ta"
+      ],
+      "tiles": [
+        "t",
+        "u",
+        "t",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "tuta",
+      "meaning_en": "puppy",
+      "distractor_tiles": [
+        "d",
+        "o",
+        "e"
+      ]
+    },
+    {
+      "id": "w_bibe",
+      "kind": "word",
+      "text": "bibe",
+      "syllables": [
+        "bi",
+        "be"
+      ],
+      "tiles": [
+        "b",
+        "i",
+        "b",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "bibe",
+      "meaning_en": "duck",
+      "distractor_tiles": [
+        "d",
+        "p",
+        "a"
+      ]
+    },
+    {
+      "id": "w_kubo",
+      "kind": "word",
+      "text": "kubo",
+      "syllables": [
+        "ku",
+        "bo"
+      ],
+      "tiles": [
+        "k",
+        "u",
+        "b",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cvcv_1"
+      ],
+      "level": 1,
+      "tts_text": "kubo",
+      "meaning_en": "hut",
+      "distractor_tiles": [
+        "g",
+        "d",
+        "p"
+      ]
+    },
+    {
+      "id": "w_ngipin",
+      "kind": "word",
+      "text": "ngipin",
+      "syllables": [
+        "ngi",
+        "pin"
+      ],
+      "tiles": [
+        "ng",
+        "i",
+        "p",
+        "i",
+        "n"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "ngipin",
+      "meaning_en": "teeth",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "e"
+      ]
+    },
+    {
+      "id": "w_ngiti",
+      "kind": "word",
+      "text": "ngiti",
+      "syllables": [
+        "ngi",
+        "ti"
+      ],
+      "tiles": [
+        "ng",
+        "i",
+        "t",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "ngiti",
+      "meaning_en": "smile",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "e"
+      ]
+    },
+    {
+      "id": "w_nguso",
+      "kind": "word",
+      "text": "nguso",
+      "syllables": [
+        "ngu",
+        "so"
+      ],
+      "tiles": [
+        "ng",
+        "u",
+        "s",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "nguso",
+      "meaning_en": "snout",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "a"
+      ]
+    },
+    {
+      "id": "w_langit",
+      "kind": "word",
+      "text": "langit",
+      "syllables": [
+        "la",
+        "ngit"
+      ],
+      "tiles": [
+        "l",
+        "a",
+        "ng",
+        "i",
+        "t"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "langit",
+      "meaning_en": "sky",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "r"
+      ]
+    },
+    {
+      "id": "w_sanga",
+      "kind": "word",
+      "text": "sanga",
+      "syllables": [
+        "sa",
+        "nga"
+      ],
+      "tiles": [
+        "s",
+        "a",
+        "ng",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "sanga",
+      "meaning_en": "branch",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "e"
+      ]
+    },
+    {
+      "id": "w_bunga",
+      "kind": "word",
+      "text": "bunga",
+      "syllables": [
+        "bu",
+        "nga"
+      ],
+      "tiles": [
+        "b",
+        "u",
+        "ng",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "bunga",
+      "meaning_en": "fruit",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "d"
+      ]
+    },
+    {
+      "id": "w_singsing",
+      "kind": "word",
+      "text": "singsing",
+      "syllables": [
+        "sing",
+        "sing"
+      ],
+      "tiles": [
+        "s",
+        "i",
+        "ng",
+        "s",
+        "i",
+        "ng"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "singsing",
+      "meaning_en": "ring",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "e"
+      ]
+    },
+    {
+      "id": "w_bangka",
+      "kind": "word",
+      "text": "bangka",
+      "syllables": [
+        "bang",
+        "ka"
+      ],
+      "tiles": [
+        "b",
+        "a",
+        "ng",
+        "k",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "bangka",
+      "meaning_en": "boat",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "d"
+      ]
+    },
+    {
+      "id": "w_kangkong",
+      "kind": "word",
+      "text": "kangkong",
+      "syllables": [
+        "kang",
+        "kong"
+      ],
+      "tiles": [
+        "k",
+        "a",
+        "ng",
+        "k",
+        "o",
+        "ng"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "kangkong",
+      "meaning_en": "water spinach",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "u"
+      ]
+    },
+    {
+      "id": "w_ngayon",
+      "kind": "word",
+      "text": "ngayon",
+      "syllables": [
+        "nga",
+        "yon"
+      ],
+      "tiles": [
+        "ng",
+        "a",
+        "y",
+        "o",
+        "n"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "ngayon",
+      "meaning_en": "now",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "w"
+      ]
+    },
+    {
+      "id": "w_bahay",
+      "kind": "word",
+      "text": "bahay",
+      "syllables": [
+        "ba",
+        "hay"
+      ],
+      "tiles": [
+        "b",
+        "a",
+        "h",
+        "a",
+        "y"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "bahay",
+      "meaning_en": "house",
+      "distractor_tiles": [
+        "d",
+        "p",
+        "k"
+      ]
+    },
+    {
+      "id": "w_aklat",
+      "kind": "word",
+      "text": "aklat",
+      "syllables": [
+        "ak",
+        "lat"
+      ],
+      "tiles": [
+        "a",
+        "k",
+        "l",
+        "a",
+        "t"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "aklat",
+      "meaning_en": "book",
+      "distractor_tiles": [
+        "g",
+        "r",
+        "d"
+      ]
+    },
+    {
+      "id": "w_ilog",
+      "kind": "word",
+      "text": "ilog",
+      "syllables": [
+        "i",
+        "log"
+      ],
+      "tiles": [
+        "i",
+        "l",
+        "o",
+        "g"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "ilog",
+      "meaning_en": "river",
+      "distractor_tiles": [
+        "e",
+        "r",
+        "u"
+      ]
+    },
+    {
+      "id": "w_dahon",
+      "kind": "word",
+      "text": "dahon",
+      "syllables": [
+        "da",
+        "hon"
+      ],
+      "tiles": [
+        "d",
+        "a",
+        "h",
+        "o",
+        "n"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "dahon",
+      "meaning_en": "leaf",
+      "distractor_tiles": [
+        "b",
+        "t",
+        "k"
+      ]
+    },
+    {
+      "id": "w_lapis",
+      "kind": "word",
+      "text": "lapis",
+      "syllables": [
+        "la",
+        "pis"
+      ],
+      "tiles": [
+        "l",
+        "a",
+        "p",
+        "i",
+        "s"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "lapis",
+      "meaning_en": "pencil",
+      "distractor_tiles": [
+        "r",
+        "b",
+        "e"
+      ]
+    },
+    {
+      "id": "w_kahon",
+      "kind": "word",
+      "text": "kahon",
+      "syllables": [
+        "ka",
+        "hon"
+      ],
+      "tiles": [
+        "k",
+        "a",
+        "h",
+        "o",
+        "n"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "kahon",
+      "meaning_en": "box",
+      "distractor_tiles": [
+        "g",
+        "u",
+        "m"
+      ]
+    },
+    {
+      "id": "w_unan",
+      "kind": "word",
+      "text": "unan",
+      "syllables": [
+        "u",
+        "nan"
+      ],
+      "tiles": [
+        "u",
+        "n",
+        "a",
+        "n"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "unan",
+      "meaning_en": "pillow",
+      "distractor_tiles": [
+        "o",
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "w_gatas",
+      "kind": "word",
+      "text": "gatas",
+      "syllables": [
+        "ga",
+        "tas"
+      ],
+      "tiles": [
+        "g",
+        "a",
+        "t",
+        "a",
+        "s"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "gatas",
+      "meaning_en": "milk",
+      "distractor_tiles": [
+        "k",
+        "d",
+        "e"
+      ]
+    },
+    {
+      "id": "w_papel",
+      "kind": "word",
+      "text": "papel",
+      "syllables": [
+        "pa",
+        "pel"
+      ],
+      "tiles": [
+        "p",
+        "a",
+        "p",
+        "e",
+        "l"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "papel",
+      "meaning_en": "paper",
+      "distractor_tiles": [
+        "b",
+        "i",
+        "r"
+      ]
+    },
+    {
+      "id": "w_bulak",
+      "kind": "word",
+      "text": "bulak",
+      "syllables": [
+        "bu",
+        "lak"
+      ],
+      "tiles": [
+        "b",
+        "u",
+        "l",
+        "a",
+        "k"
+      ],
+      "skill_ids": [
+        "sk_cvc_final"
+      ],
+      "level": 1,
+      "tts_text": "bulak",
+      "meaning_en": "cotton",
+      "distractor_tiles": [
+        "d",
+        "p",
+        "o"
+      ]
+    },
+    {
+      "id": "w_kandila",
+      "kind": "word",
+      "text": "kandila",
+      "syllables": [
+        "kan",
+        "di",
+        "la"
+      ],
+      "tiles": [
+        "k",
+        "a",
+        "n",
+        "d",
+        "i",
+        "l",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cvc_mid"
+      ],
+      "level": 2,
+      "tts_text": "kandila",
+      "meaning_en": "candle",
+      "distractor_tiles": [
+        "g",
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "w_bundok",
+      "kind": "word",
+      "text": "bundok",
+      "syllables": [
+        "bun",
+        "dok"
+      ],
+      "tiles": [
+        "b",
+        "u",
+        "n",
+        "d",
+        "o",
+        "k"
+      ],
+      "skill_ids": [
+        "sk_cvc_mid"
+      ],
+      "level": 2,
+      "tts_text": "bundok",
+      "meaning_en": "mountain",
+      "distractor_tiles": [
+        "p",
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "w_pinto",
+      "kind": "word",
+      "text": "pinto",
+      "syllables": [
+        "pin",
+        "to"
+      ],
+      "tiles": [
+        "p",
+        "i",
+        "n",
+        "t",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cvc_mid"
+      ],
+      "level": 2,
+      "tts_text": "pinto",
+      "meaning_en": "door",
+      "distractor_tiles": [
+        "b",
+        "e",
+        "m"
+      ]
+    },
+    {
+      "id": "w_lampara",
+      "kind": "word",
+      "text": "lampara",
+      "syllables": [
+        "lam",
+        "pa",
+        "ra"
+      ],
+      "tiles": [
+        "l",
+        "a",
+        "m",
+        "p",
+        "a",
+        "r",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cvc_mid"
+      ],
+      "level": 2,
+      "tts_text": "lampara",
+      "meaning_en": "lamp",
+      "distractor_tiles": [
+        "n",
+        "b",
+        "e"
+      ]
+    },
+    {
+      "id": "w_sinturon",
+      "kind": "word",
+      "text": "sinturon",
+      "syllables": [
+        "sin",
+        "tu",
+        "ron"
+      ],
+      "tiles": [
+        "s",
+        "i",
+        "n",
+        "t",
+        "u",
+        "r",
+        "o",
+        "n"
+      ],
+      "skill_ids": [
+        "sk_cvc_mid"
+      ],
+      "level": 2,
+      "tts_text": "sinturon",
+      "meaning_en": "belt",
+      "distractor_tiles": [
+        "e",
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "w_bulaklak",
+      "kind": "word",
+      "text": "bulaklak",
+      "syllables": [
+        "bu",
+        "lak",
+        "lak"
+      ],
+      "tiles": [
+        "b",
+        "u",
+        "l",
+        "a",
+        "k",
+        "l",
+        "a",
+        "k"
+      ],
+      "skill_ids": [
+        "sk_cvc_mid"
+      ],
+      "level": 2,
+      "tts_text": "bulaklak",
+      "meaning_en": "flower",
+      "distractor_tiles": [
+        "d",
+        "p",
+        "o"
+      ]
+    },
+    {
+      "id": "w_plato",
+      "kind": "word",
+      "text": "plato",
+      "syllables": [
+        "pla",
+        "to"
+      ],
+      "tiles": [
+        "p",
+        "l",
+        "a",
+        "t",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_clusters"
+      ],
+      "level": 2,
+      "tts_text": "plato",
+      "meaning_en": "plate",
+      "distractor_tiles": [
+        "b",
+        "r",
+        "d"
+      ]
+    },
+    {
+      "id": "w_braso",
+      "kind": "word",
+      "text": "braso",
+      "syllables": [
+        "bra",
+        "so"
+      ],
+      "tiles": [
+        "b",
+        "r",
+        "a",
+        "s",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_clusters"
+      ],
+      "level": 2,
+      "tts_text": "braso",
+      "meaning_en": "arm",
+      "distractor_tiles": [
+        "d",
+        "p",
+        "l"
+      ]
+    },
+    {
+      "id": "w_trak",
+      "kind": "word",
+      "text": "trak",
+      "syllables": [
+        "trak"
+      ],
+      "tiles": [
+        "t",
+        "r",
+        "a",
+        "k"
+      ],
+      "skill_ids": [
+        "sk_clusters"
+      ],
+      "level": 2,
+      "tts_text": "trak",
+      "meaning_en": "truck",
+      "distractor_tiles": [
+        "d",
+        "l",
+        "g"
+      ]
+    },
+    {
+      "id": "w_prutas",
+      "kind": "word",
+      "text": "prutas",
+      "syllables": [
+        "pru",
+        "tas"
+      ],
+      "tiles": [
+        "p",
+        "r",
+        "u",
+        "t",
+        "a",
+        "s"
+      ],
+      "skill_ids": [
+        "sk_clusters"
+      ],
+      "level": 2,
+      "tts_text": "prutas",
+      "meaning_en": "fruit",
+      "distractor_tiles": [
+        "b",
+        "l",
+        "o"
+      ]
+    },
+    {
+      "id": "w_klase",
+      "kind": "word",
+      "text": "klase",
+      "syllables": [
+        "kla",
+        "se"
+      ],
+      "tiles": [
+        "k",
+        "l",
+        "a",
+        "s",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_clusters"
+      ],
+      "level": 2,
+      "tts_text": "klase",
+      "meaning_en": "class",
+      "distractor_tiles": [
+        "g",
+        "r",
+        "i"
+      ]
+    },
+    {
+      "id": "w_tren",
+      "kind": "word",
+      "text": "tren",
+      "syllables": [
+        "tren"
+      ],
+      "tiles": [
+        "t",
+        "r",
+        "e",
+        "n"
+      ],
+      "skill_ids": [
+        "sk_clusters"
+      ],
+      "level": 2,
+      "tts_text": "tren",
+      "meaning_en": "train",
+      "distractor_tiles": [
+        "d",
+        "l",
+        "i"
+      ]
+    },
+    {
+      "id": "w_globo",
+      "kind": "word",
+      "text": "globo",
+      "syllables": [
+        "glo",
+        "bo"
+      ],
+      "tiles": [
+        "g",
+        "l",
+        "o",
+        "b",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_clusters"
+      ],
+      "level": 2,
+      "tts_text": "globo",
+      "meaning_en": "globe",
+      "distractor_tiles": [
+        "k",
+        "r",
+        "u"
+      ]
+    },
+    {
+      "id": "w_gripo",
+      "kind": "word",
+      "text": "gripo",
+      "syllables": [
+        "gri",
+        "po"
+      ],
+      "tiles": [
+        "g",
+        "r",
+        "i",
+        "p",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_clusters"
+      ],
+      "level": 2,
+      "tts_text": "gripo",
+      "meaning_en": "faucet",
+      "distractor_tiles": [
+        "k",
+        "l",
+        "e"
+      ]
+    },
+    {
+      "id": "w_kalabaw",
+      "kind": "word",
+      "text": "kalabaw",
+      "syllables": [
+        "ka",
+        "la",
+        "baw"
+      ],
+      "tiles": [
+        "k",
+        "a",
+        "l",
+        "a",
+        "b",
+        "a",
+        "w"
+      ],
+      "skill_ids": [
+        "sk_long_words"
+      ],
+      "level": 2,
+      "tts_text": "kalabaw",
+      "meaning_en": "carabao",
+      "distractor_tiles": [
+        "g",
+        "r",
+        "d"
+      ]
+    },
+    {
+      "id": "w_paaralan",
+      "kind": "word",
+      "text": "paaralan",
+      "syllables": [
+        "pa",
+        "a",
+        "ra",
+        "lan"
+      ],
+      "tiles": [
+        "p",
+        "a",
+        "a",
+        "r",
+        "a",
+        "l",
+        "a",
+        "n"
+      ],
+      "skill_ids": [
+        "sk_long_words"
+      ],
+      "level": 2,
+      "tts_text": "paaralan",
+      "meaning_en": "school",
+      "distractor_tiles": [
+        "b",
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "w_saranggola",
+      "kind": "word",
+      "text": "saranggola",
+      "syllables": [
+        "sa",
+        "rang",
+        "go",
+        "la"
+      ],
+      "tiles": [
+        "s",
+        "a",
+        "r",
+        "a",
+        "ng",
+        "g",
+        "o",
+        "l",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_long_words"
+      ],
+      "level": 2,
+      "tts_text": "saranggola",
+      "meaning_en": "kite",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "k"
+      ]
+    },
+    {
+      "id": "w_palengke",
+      "kind": "word",
+      "text": "palengke",
+      "syllables": [
+        "pa",
+        "leng",
+        "ke"
+      ],
+      "tiles": [
+        "p",
+        "a",
+        "l",
+        "e",
+        "ng",
+        "k",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_long_words"
+      ],
+      "level": 2,
+      "tts_text": "palengke",
+      "meaning_en": "market",
+      "distractor_tiles": [
+        "n",
+        "g",
+        "b"
+      ]
+    },
+    {
+      "id": "w_tinapay",
+      "kind": "word",
+      "text": "tinapay",
+      "syllables": [
+        "ti",
+        "na",
+        "pay"
+      ],
+      "tiles": [
+        "t",
+        "i",
+        "n",
+        "a",
+        "p",
+        "a",
+        "y"
+      ],
+      "skill_ids": [
+        "sk_long_words"
+      ],
+      "level": 2,
+      "tts_text": "tinapay",
+      "meaning_en": "bread",
+      "distractor_tiles": [
+        "d",
+        "e",
+        "m"
+      ]
+    },
+    {
+      "id": "w_kamatis",
+      "kind": "word",
+      "text": "kamatis",
+      "syllables": [
+        "ka",
+        "ma",
+        "tis"
+      ],
+      "tiles": [
+        "k",
+        "a",
+        "m",
+        "a",
+        "t",
+        "i",
+        "s"
+      ],
+      "skill_ids": [
+        "sk_long_words"
+      ],
+      "level": 2,
+      "tts_text": "kamatis",
+      "meaning_en": "tomato",
+      "distractor_tiles": [
+        "g",
+        "n",
+        "d"
+      ]
+    },
+    {
+      "id": "w_kalapati",
+      "kind": "word",
+      "text": "kalapati",
+      "syllables": [
+        "ka",
+        "la",
+        "pa",
+        "ti"
+      ],
+      "tiles": [
+        "k",
+        "a",
+        "l",
+        "a",
+        "p",
+        "a",
+        "t",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_long_words"
+      ],
+      "level": 2,
+      "tts_text": "kalapati",
+      "meaning_en": "pigeon",
+      "distractor_tiles": [
+        "g",
+        "r",
+        "b"
+      ]
+    },
+    {
+      "id": "y_ma",
+      "kind": "syllable",
+      "text": "ma",
+      "syllables": [
+        "ma"
+      ],
+      "tiles": [
+        "m",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "ma",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "e"
+      ]
+    },
+    {
+      "id": "y_me",
+      "kind": "syllable",
+      "text": "me",
+      "syllables": [
+        "me"
+      ],
+      "tiles": [
+        "m",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "me",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "i"
+      ]
+    },
+    {
+      "id": "y_mi",
+      "kind": "syllable",
+      "text": "mi",
+      "syllables": [
+        "mi"
+      ],
+      "tiles": [
+        "m",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "mi",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "e"
+      ]
+    },
+    {
+      "id": "y_mo",
+      "kind": "syllable",
+      "text": "mo",
+      "syllables": [
+        "mo"
+      ],
+      "tiles": [
+        "m",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "mo",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "u"
+      ]
+    },
+    {
+      "id": "y_mu",
+      "kind": "syllable",
+      "text": "mu",
+      "syllables": [
+        "mu"
+      ],
+      "tiles": [
+        "m",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "mu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "o"
+      ]
+    },
+    {
+      "id": "y_sa",
+      "kind": "syllable",
+      "text": "sa",
+      "syllables": [
+        "sa"
+      ],
+      "tiles": [
+        "s",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "sa",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "e",
+        "i"
+      ]
+    },
+    {
+      "id": "y_se",
+      "kind": "syllable",
+      "text": "se",
+      "syllables": [
+        "se"
+      ],
+      "tiles": [
+        "s",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "se",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "i",
+        "a"
+      ]
+    },
+    {
+      "id": "y_si",
+      "kind": "syllable",
+      "text": "si",
+      "syllables": [
+        "si"
+      ],
+      "tiles": [
+        "s",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "si",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "e",
+        "a"
+      ]
+    },
+    {
+      "id": "y_so",
+      "kind": "syllable",
+      "text": "so",
+      "syllables": [
+        "so"
+      ],
+      "tiles": [
+        "s",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "so",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "u",
+        "a"
+      ]
+    },
+    {
+      "id": "y_su",
+      "kind": "syllable",
+      "text": "su",
+      "syllables": [
+        "su"
+      ],
+      "tiles": [
+        "s",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "su",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "o",
+        "a"
+      ]
+    },
+    {
+      "id": "y_ba",
+      "kind": "syllable",
+      "text": "ba",
+      "syllables": [
+        "ba"
+      ],
+      "tiles": [
+        "b",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "ba",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "p"
+      ]
+    },
+    {
+      "id": "y_be",
+      "kind": "syllable",
+      "text": "be",
+      "syllables": [
+        "be"
+      ],
+      "tiles": [
+        "b",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "be",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "p"
+      ]
+    },
+    {
+      "id": "y_bi",
+      "kind": "syllable",
+      "text": "bi",
+      "syllables": [
+        "bi"
+      ],
+      "tiles": [
+        "b",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "bi",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "p"
+      ]
+    },
+    {
+      "id": "y_bo",
+      "kind": "syllable",
+      "text": "bo",
+      "syllables": [
+        "bo"
+      ],
+      "tiles": [
+        "b",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "bo",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "p"
+      ]
+    },
+    {
+      "id": "y_bu",
+      "kind": "syllable",
+      "text": "bu",
+      "syllables": [
+        "bu"
+      ],
+      "tiles": [
+        "b",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "bu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "p"
+      ]
+    },
+    {
+      "id": "y_ta",
+      "kind": "syllable",
+      "text": "ta",
+      "syllables": [
+        "ta"
+      ],
+      "tiles": [
+        "t",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "ta",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "e"
+      ]
+    },
+    {
+      "id": "y_te",
+      "kind": "syllable",
+      "text": "te",
+      "syllables": [
+        "te"
+      ],
+      "tiles": [
+        "t",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "te",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "i"
+      ]
+    },
+    {
+      "id": "y_ti",
+      "kind": "syllable",
+      "text": "ti",
+      "syllables": [
+        "ti"
+      ],
+      "tiles": [
+        "t",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "ti",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "e"
+      ]
+    },
+    {
+      "id": "y_to",
+      "kind": "syllable",
+      "text": "to",
+      "syllables": [
+        "to"
+      ],
+      "tiles": [
+        "t",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "to",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "u"
+      ]
+    },
+    {
+      "id": "y_tu",
+      "kind": "syllable",
+      "text": "tu",
+      "syllables": [
+        "tu"
+      ],
+      "tiles": [
+        "t",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "tu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "d",
+        "o"
+      ]
+    },
+    {
+      "id": "y_ka",
+      "kind": "syllable",
+      "text": "ka",
+      "syllables": [
+        "ka"
+      ],
+      "tiles": [
+        "k",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "ka",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "g",
+        "e"
+      ]
+    },
+    {
+      "id": "y_ke",
+      "kind": "syllable",
+      "text": "ke",
+      "syllables": [
+        "ke"
+      ],
+      "tiles": [
+        "k",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "ke",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "g",
+        "i"
+      ]
+    },
+    {
+      "id": "y_ki",
+      "kind": "syllable",
+      "text": "ki",
+      "syllables": [
+        "ki"
+      ],
+      "tiles": [
+        "k",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "ki",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "g",
+        "e"
+      ]
+    },
+    {
+      "id": "y_ko",
+      "kind": "syllable",
+      "text": "ko",
+      "syllables": [
+        "ko"
+      ],
+      "tiles": [
+        "k",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "ko",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "g",
+        "u"
+      ]
+    },
+    {
+      "id": "y_ku",
+      "kind": "syllable",
+      "text": "ku",
+      "syllables": [
+        "ku"
+      ],
+      "tiles": [
+        "k",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_1"
+      ],
+      "level": 1,
+      "tts_text": "ku",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "g",
+        "o"
+      ]
+    },
+    {
+      "id": "y_la",
+      "kind": "syllable",
+      "text": "la",
+      "syllables": [
+        "la"
+      ],
+      "tiles": [
+        "l",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "la",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "r",
+        "e"
+      ]
+    },
+    {
+      "id": "y_le",
+      "kind": "syllable",
+      "text": "le",
+      "syllables": [
+        "le"
+      ],
+      "tiles": [
+        "l",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "le",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "r",
+        "i"
+      ]
+    },
+    {
+      "id": "y_li",
+      "kind": "syllable",
+      "text": "li",
+      "syllables": [
+        "li"
+      ],
+      "tiles": [
+        "l",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "li",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "r",
+        "e"
+      ]
+    },
+    {
+      "id": "y_lo",
+      "kind": "syllable",
+      "text": "lo",
+      "syllables": [
+        "lo"
+      ],
+      "tiles": [
+        "l",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "lo",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "r",
+        "u"
+      ]
+    },
+    {
+      "id": "y_lu",
+      "kind": "syllable",
+      "text": "lu",
+      "syllables": [
+        "lu"
+      ],
+      "tiles": [
+        "l",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "lu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "r",
+        "o"
+      ]
+    },
+    {
+      "id": "y_ya",
+      "kind": "syllable",
+      "text": "ya",
+      "syllables": [
+        "ya"
+      ],
+      "tiles": [
+        "y",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ya",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "w",
+        "e"
+      ]
+    },
+    {
+      "id": "y_ye",
+      "kind": "syllable",
+      "text": "ye",
+      "syllables": [
+        "ye"
+      ],
+      "tiles": [
+        "y",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ye",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "w",
+        "i"
+      ]
+    },
+    {
+      "id": "y_yi",
+      "kind": "syllable",
+      "text": "yi",
+      "syllables": [
+        "yi"
+      ],
+      "tiles": [
+        "y",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "yi",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "w",
+        "e"
+      ]
+    },
+    {
+      "id": "y_yo",
+      "kind": "syllable",
+      "text": "yo",
+      "syllables": [
+        "yo"
+      ],
+      "tiles": [
+        "y",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "yo",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "w",
+        "u"
+      ]
+    },
+    {
+      "id": "y_yu",
+      "kind": "syllable",
+      "text": "yu",
+      "syllables": [
+        "yu"
+      ],
+      "tiles": [
+        "y",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "yu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "w",
+        "o"
+      ]
+    },
+    {
+      "id": "y_na",
+      "kind": "syllable",
+      "text": "na",
+      "syllables": [
+        "na"
+      ],
+      "tiles": [
+        "n",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "na",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "y_ne",
+      "kind": "syllable",
+      "text": "ne",
+      "syllables": [
+        "ne"
+      ],
+      "tiles": [
+        "n",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ne",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "y_ni",
+      "kind": "syllable",
+      "text": "ni",
+      "syllables": [
+        "ni"
+      ],
+      "tiles": [
+        "n",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ni",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "y_no",
+      "kind": "syllable",
+      "text": "no",
+      "syllables": [
+        "no"
+      ],
+      "tiles": [
+        "n",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "no",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "y_nu",
+      "kind": "syllable",
+      "text": "nu",
+      "syllables": [
+        "nu"
+      ],
+      "tiles": [
+        "n",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "nu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "m",
+        "ng"
+      ]
+    },
+    {
+      "id": "y_ga",
+      "kind": "syllable",
+      "text": "ga",
+      "syllables": [
+        "ga"
+      ],
+      "tiles": [
+        "g",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ga",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "e"
+      ]
+    },
+    {
+      "id": "y_ge",
+      "kind": "syllable",
+      "text": "ge",
+      "syllables": [
+        "ge"
+      ],
+      "tiles": [
+        "g",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ge",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "i"
+      ]
+    },
+    {
+      "id": "y_gi",
+      "kind": "syllable",
+      "text": "gi",
+      "syllables": [
+        "gi"
+      ],
+      "tiles": [
+        "g",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "gi",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "e"
+      ]
+    },
+    {
+      "id": "y_go",
+      "kind": "syllable",
+      "text": "go",
+      "syllables": [
+        "go"
+      ],
+      "tiles": [
+        "g",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "go",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "u"
+      ]
+    },
+    {
+      "id": "y_gu",
+      "kind": "syllable",
+      "text": "gu",
+      "syllables": [
+        "gu"
+      ],
+      "tiles": [
+        "g",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "gu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "o"
+      ]
+    },
+    {
+      "id": "y_pa",
+      "kind": "syllable",
+      "text": "pa",
+      "syllables": [
+        "pa"
+      ],
+      "tiles": [
+        "p",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "pa",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "e"
+      ]
+    },
+    {
+      "id": "y_pe",
+      "kind": "syllable",
+      "text": "pe",
+      "syllables": [
+        "pe"
+      ],
+      "tiles": [
+        "p",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "pe",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "i"
+      ]
+    },
+    {
+      "id": "y_pi",
+      "kind": "syllable",
+      "text": "pi",
+      "syllables": [
+        "pi"
+      ],
+      "tiles": [
+        "p",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "pi",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "e"
+      ]
+    },
+    {
+      "id": "y_po",
+      "kind": "syllable",
+      "text": "po",
+      "syllables": [
+        "po"
+      ],
+      "tiles": [
+        "p",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "po",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "u"
+      ]
+    },
+    {
+      "id": "y_pu",
+      "kind": "syllable",
+      "text": "pu",
+      "syllables": [
+        "pu"
+      ],
+      "tiles": [
+        "p",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "pu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "o"
+      ]
+    },
+    {
+      "id": "y_ra",
+      "kind": "syllable",
+      "text": "ra",
+      "syllables": [
+        "ra"
+      ],
+      "tiles": [
+        "r",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ra",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "l",
+        "e"
+      ]
+    },
+    {
+      "id": "y_re",
+      "kind": "syllable",
+      "text": "re",
+      "syllables": [
+        "re"
+      ],
+      "tiles": [
+        "r",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "re",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "l",
+        "i"
+      ]
+    },
+    {
+      "id": "y_ri",
+      "kind": "syllable",
+      "text": "ri",
+      "syllables": [
+        "ri"
+      ],
+      "tiles": [
+        "r",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ri",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "l",
+        "e"
+      ]
+    },
+    {
+      "id": "y_ro",
+      "kind": "syllable",
+      "text": "ro",
+      "syllables": [
+        "ro"
+      ],
+      "tiles": [
+        "r",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ro",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "l",
+        "u"
+      ]
+    },
+    {
+      "id": "y_ru",
+      "kind": "syllable",
+      "text": "ru",
+      "syllables": [
+        "ru"
+      ],
+      "tiles": [
+        "r",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ru",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "l",
+        "o"
+      ]
+    },
+    {
+      "id": "y_da",
+      "kind": "syllable",
+      "text": "da",
+      "syllables": [
+        "da"
+      ],
+      "tiles": [
+        "d",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "da",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "t"
+      ]
+    },
+    {
+      "id": "y_de",
+      "kind": "syllable",
+      "text": "de",
+      "syllables": [
+        "de"
+      ],
+      "tiles": [
+        "d",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "de",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "t"
+      ]
+    },
+    {
+      "id": "y_di",
+      "kind": "syllable",
+      "text": "di",
+      "syllables": [
+        "di"
+      ],
+      "tiles": [
+        "d",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "di",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "t"
+      ]
+    },
+    {
+      "id": "y_do",
+      "kind": "syllable",
+      "text": "do",
+      "syllables": [
+        "do"
+      ],
+      "tiles": [
+        "d",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "do",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "t"
+      ]
+    },
+    {
+      "id": "y_du",
+      "kind": "syllable",
+      "text": "du",
+      "syllables": [
+        "du"
+      ],
+      "tiles": [
+        "d",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "du",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "b",
+        "t"
+      ]
+    },
+    {
+      "id": "y_ha",
+      "kind": "syllable",
+      "text": "ha",
+      "syllables": [
+        "ha"
+      ],
+      "tiles": [
+        "h",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ha",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "e"
+      ]
+    },
+    {
+      "id": "y_he",
+      "kind": "syllable",
+      "text": "he",
+      "syllables": [
+        "he"
+      ],
+      "tiles": [
+        "h",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "he",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "i"
+      ]
+    },
+    {
+      "id": "y_hi",
+      "kind": "syllable",
+      "text": "hi",
+      "syllables": [
+        "hi"
+      ],
+      "tiles": [
+        "h",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "hi",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "e"
+      ]
+    },
+    {
+      "id": "y_ho",
+      "kind": "syllable",
+      "text": "ho",
+      "syllables": [
+        "ho"
+      ],
+      "tiles": [
+        "h",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "ho",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "u"
+      ]
+    },
+    {
+      "id": "y_hu",
+      "kind": "syllable",
+      "text": "hu",
+      "syllables": [
+        "hu"
+      ],
+      "tiles": [
+        "h",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "hu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "k",
+        "o"
+      ]
+    },
+    {
+      "id": "y_wa",
+      "kind": "syllable",
+      "text": "wa",
+      "syllables": [
+        "wa"
+      ],
+      "tiles": [
+        "w",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "wa",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "y",
+        "e"
+      ]
+    },
+    {
+      "id": "y_we",
+      "kind": "syllable",
+      "text": "we",
+      "syllables": [
+        "we"
+      ],
+      "tiles": [
+        "w",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "we",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "y",
+        "i"
+      ]
+    },
+    {
+      "id": "y_wi",
+      "kind": "syllable",
+      "text": "wi",
+      "syllables": [
+        "wi"
+      ],
+      "tiles": [
+        "w",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "wi",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "y",
+        "e"
+      ]
+    },
+    {
+      "id": "y_wo",
+      "kind": "syllable",
+      "text": "wo",
+      "syllables": [
+        "wo"
+      ],
+      "tiles": [
+        "w",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "wo",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "y",
+        "u"
+      ]
+    },
+    {
+      "id": "y_wu",
+      "kind": "syllable",
+      "text": "wu",
+      "syllables": [
+        "wu"
+      ],
+      "tiles": [
+        "w",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_cv_2"
+      ],
+      "level": 1,
+      "tts_text": "wu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "y",
+        "o"
+      ]
+    },
+    {
+      "id": "y_nga",
+      "kind": "syllable",
+      "text": "nga",
+      "syllables": [
+        "nga"
+      ],
+      "tiles": [
+        "ng",
+        "a"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "nga",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "g"
+      ]
+    },
+    {
+      "id": "y_nge",
+      "kind": "syllable",
+      "text": "nge",
+      "syllables": [
+        "nge"
+      ],
+      "tiles": [
+        "ng",
+        "e"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "nge",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "g"
+      ]
+    },
+    {
+      "id": "y_ngi",
+      "kind": "syllable",
+      "text": "ngi",
+      "syllables": [
+        "ngi"
+      ],
+      "tiles": [
+        "ng",
+        "i"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "ngi",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "g"
+      ]
+    },
+    {
+      "id": "y_ngo",
+      "kind": "syllable",
+      "text": "ngo",
+      "syllables": [
+        "ngo"
+      ],
+      "tiles": [
+        "ng",
+        "o"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "ngo",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "g"
+      ]
+    },
+    {
+      "id": "y_ngu",
+      "kind": "syllable",
+      "text": "ngu",
+      "syllables": [
+        "ngu"
+      ],
+      "tiles": [
+        "ng",
+        "u"
+      ],
+      "skill_ids": [
+        "sk_ng"
+      ],
+      "level": 1,
+      "tts_text": "ngu",
+      "meaning_en": null,
+      "distractor_tiles": [
+        "n",
+        "g"
+      ]
+    }
+  ],
+  "sentences": [
+    {
+      "id": "sn_001",
+      "text": "Si Ana ay nasa bahay.",
+      "word_tiles": [
+        "Si",
+        "Ana",
+        "ay",
+        "nasa",
+        "bahay."
+      ],
+      "skill_ids": [
+        "sk_sentence_1"
+      ],
+      "level": 1
+    },
+    {
+      "id": "sn_002",
+      "text": "May aso si Ben.",
+      "word_tiles": [
+        "May",
+        "aso",
+        "si",
+        "Ben."
+      ],
+      "skill_ids": [
+        "sk_sentence_1"
+      ],
+      "level": 1
+    },
+    {
+      "id": "sn_003",
+      "text": "Ang bata ay masaya.",
+      "word_tiles": [
+        "Ang",
+        "bata",
+        "ay",
+        "masaya."
+      ],
+      "skill_ids": [
+        "sk_sentence_1"
+      ],
+      "level": 1
+    },
+    {
+      "id": "sn_004",
+      "text": "Malaki ang bahay.",
+      "word_tiles": [
+        "Malaki",
+        "ang",
+        "bahay."
+      ],
+      "skill_ids": [
+        "sk_sentence_1"
+      ],
+      "level": 1
+    },
+    {
+      "id": "sn_005",
+      "text": "Kumain si Lola ng saging.",
+      "word_tiles": [
+        "Kumain",
+        "si",
+        "Lola",
+        "ng",
+        "saging."
+      ],
+      "skill_ids": [
+        "sk_sentence_1"
+      ],
+      "level": 1
+    },
+    {
+      "id": "sn_006",
+      "text": "Ang ibon ay nasa puno.",
+      "word_tiles": [
+        "Ang",
+        "ibon",
+        "ay",
+        "nasa",
+        "puno."
+      ],
+      "skill_ids": [
+        "sk_sentence_1"
+      ],
+      "level": 1
+    },
+    {
+      "id": "sn_007",
+      "text": "Pula ang bola.",
+      "word_tiles": [
+        "Pula",
+        "ang",
+        "bola."
+      ],
+      "skill_ids": [
+        "sk_sentence_1"
+      ],
+      "level": 1
+    },
+    {
+      "id": "sn_008",
+      "text": "Uminom si Ben ng tubig.",
+      "word_tiles": [
+        "Uminom",
+        "si",
+        "Ben",
+        "ng",
+        "tubig."
+      ],
+      "skill_ids": [
+        "sk_sentence_1"
+      ],
+      "level": 1
+    }
+  ],
+  "stories": [
+    {
+      "id": "st_l1_001",
+      "title": "Ang Bahay ni Ana",
+      "level": 1,
+      "skill_ids": [
+        "sk_cvc_final",
+        "sk_comp_literal"
+      ],
+      "target_word_ids": [
+        "w_bahay",
+        "w_aso"
+      ],
+      "interests": [
+        "family",
+        "animals"
+      ],
+      "word_count": 27,
+      "paragraphs": [
+        "Si Ana ay may bahay. Malaki ang bahay ni Ana.",
+        "May aso si Ana. Bantay ang pangalan ng aso.",
+        "Masaya si Ana at si Bantay sa bahay."
+      ],
+      "questions": [
+        {
+          "id": "q_l1_001_1",
+          "type": "who",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Sino ang may aso?",
+          "choices": [
+            "Ana",
+            "Ben",
+            "Lola"
+          ],
+          "answer": "Ana"
+        },
+        {
+          "id": "q_l1_001_2",
+          "type": "what",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Ano ang pangalan ng aso?",
+          "choices": [
+            "Bantay",
+            "Muning",
+            "Tagpi"
+          ],
+          "answer": "Bantay"
+        },
+        {
+          "id": "q_l1_001_3",
+          "type": "where",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Saan masaya si Ana at si Bantay?",
+          "choices": [
+            "sa bahay",
+            "sa ilog",
+            "sa paaralan"
+          ],
+          "answer": "sa bahay"
+        }
+      ],
+      "source": "ai_assisted",
+      "reviewed": false,
+      "approved_by_tutor": true
+    },
+    {
+      "id": "st_l1_002",
+      "title": "Ang Bangka ni Tatay",
+      "level": 1,
+      "skill_ids": [
+        "sk_ng",
+        "sk_comp_literal"
+      ],
+      "target_word_ids": [
+        "w_bangka",
+        "w_langit",
+        "w_ilog"
+      ],
+      "interests": [
+        "family",
+        "nature"
+      ],
+      "word_count": 25,
+      "paragraphs": [
+        "May bangka si Tatay. Pumunta sila ni Ben sa ilog.",
+        "Nakita ni Ben ang isda. Ngumiti si Ben.",
+        "\"Ang ganda ng langit!\" sabi ni Ben."
+      ],
+      "questions": [
+        {
+          "id": "q_l1_002_1",
+          "type": "what",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Ano ang mayroon si Tatay?",
+          "choices": [
+            "bangka",
+            "kotse",
+            "bisikleta"
+          ],
+          "answer": "bangka"
+        },
+        {
+          "id": "q_l1_002_2",
+          "type": "where",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Saan sila pumunta?",
+          "choices": [
+            "sa ilog",
+            "sa palengke",
+            "sa bundok"
+          ],
+          "answer": "sa ilog"
+        },
+        {
+          "id": "q_l1_002_3",
+          "type": "what",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Ano ang nakita ni Ben?",
+          "choices": [
+            "isda",
+            "ibon",
+            "baka"
+          ],
+          "answer": "isda"
+        }
+      ],
+      "source": "ai_assisted",
+      "reviewed": false,
+      "approved_by_tutor": true
+    },
+    {
+      "id": "st_l1_003",
+      "title": "Ang Baka sa Kubo",
+      "level": 1,
+      "skill_ids": [
+        "sk_cvcv_1",
+        "sk_comp_literal"
+      ],
+      "target_word_ids": [
+        "w_kubo",
+        "w_baka",
+        "w_tubig"
+      ],
+      "interests": [
+        "animals",
+        "helping"
+      ],
+      "word_count": 28,
+      "paragraphs": [
+        "May kubo si Lolo. May baka sa tabi ng kubo.",
+        "Kumakain ng damo ang baka. Nagdala si Mila ng tubig.",
+        "Uminom ang baka. \"Salamat, Mila!\" sabi ni Lolo."
+      ],
+      "questions": [
+        {
+          "id": "q_l1_003_1",
+          "type": "who",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Sino ang may kubo?",
+          "choices": [
+            "Lolo",
+            "Mila",
+            "Tatay"
+          ],
+          "answer": "Lolo"
+        },
+        {
+          "id": "q_l1_003_2",
+          "type": "what",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Ano ang kinakain ng baka?",
+          "choices": [
+            "damo",
+            "saging",
+            "tinapay"
+          ],
+          "answer": "damo"
+        },
+        {
+          "id": "q_l1_003_3",
+          "type": "what",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Ano ang dinala ni Mila?",
+          "choices": [
+            "tubig",
+            "gatas",
+            "keso"
+          ],
+          "answer": "tubig"
+        }
+      ],
+      "source": "ai_assisted",
+      "reviewed": false,
+      "approved_by_tutor": true
+    },
+    {
+      "id": "st_l2_001",
+      "title": "Ang Saranggola ni Paolo",
+      "level": 2,
+      "skill_ids": [
+        "sk_long_words",
+        "sk_comp_sequence",
+        "sk_comp_feeling"
+      ],
+      "target_word_ids": [
+        "w_saranggola",
+        "w_papel"
+      ],
+      "interests": [
+        "play",
+        "family"
+      ],
+      "word_count": 56,
+      "paragraphs": [
+        "Gumawa si Paolo ng saranggola. Gumamit siya ng papel, kawayan, at tali. Pula at dilaw ang kanyang saranggola.",
+        "Pumunta si Paolo sa bukid kasama si Kuya Jun. Malakas ang hangin. Lumipad nang mataas ang saranggola.",
+        "Pero biglang naputol ang tali! Nalungkot si Paolo. \"Gagawa tayo ng bago bukas,\" sabi ni Kuya Jun. Ngumiti ulit si Paolo."
+      ],
+      "questions": [
+        {
+          "id": "q_l2_001_1",
+          "type": "sequence",
+          "skill_id": "sk_comp_sequence",
+          "prompt": "Ano ang unang ginawa ni Paolo?",
+          "choices": [
+            "Gumawa siya ng saranggola.",
+            "Pumunta siya sa bukid.",
+            "Nalungkot siya."
+          ],
+          "answer": "Gumawa siya ng saranggola."
+        },
+        {
+          "id": "q_l2_001_2",
+          "type": "feeling",
+          "skill_id": "sk_comp_feeling",
+          "prompt": "Ano ang naramdaman ni Paolo nang maputol ang tali?",
+          "choices": [
+            "nalungkot",
+            "natuwa",
+            "nagalit"
+          ],
+          "answer": "nalungkot"
+        },
+        {
+          "id": "q_l2_001_3",
+          "type": "main_idea",
+          "skill_id": "sk_comp_sequence",
+          "prompt": "Tungkol saan ang kuwento?",
+          "choices": [
+            "ang saranggola ni Paolo",
+            "ang bukid ni Lolo",
+            "ang aso ni Kuya Jun"
+          ],
+          "answer": "ang saranggola ni Paolo"
+        }
+      ],
+      "source": "ai_assisted",
+      "reviewed": false,
+      "approved_by_tutor": true
+    },
+    {
+      "id": "st_l2_002",
+      "title": "Sa Palengke",
+      "level": 2,
+      "skill_ids": [
+        "sk_long_words",
+        "sk_comp_sequence",
+        "sk_comp_feeling"
+      ],
+      "target_word_ids": [
+        "w_palengke",
+        "w_kamatis",
+        "w_tinapay"
+      ],
+      "interests": [
+        "food",
+        "helping",
+        "family"
+      ],
+      "word_count": 48,
+      "paragraphs": [
+        "Sabado ng umaga. Pumunta si Nanay at si Lisa sa palengke. Bumili sila ng kamatis, isda, at tinapay.",
+        "Mabigat ang basket. Tinulungan ni Lisa si Nanay na buhatin ito.",
+        "Pagdating sa bahay, nagluto si Nanay ng sinigang. \"Salamat sa tulong mo, anak,\" sabi ni Nanay. Masaya si Lisa."
+      ],
+      "questions": [
+        {
+          "id": "q_l2_002_1",
+          "type": "where",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Saan pumunta si Nanay at si Lisa?",
+          "choices": [
+            "sa palengke",
+            "sa paaralan",
+            "sa simbahan"
+          ],
+          "answer": "sa palengke"
+        },
+        {
+          "id": "q_l2_002_2",
+          "type": "sequence",
+          "skill_id": "sk_comp_sequence",
+          "prompt": "Alin ang huling nangyari?",
+          "choices": [
+            "Nagpasalamat si Nanay kay Lisa.",
+            "Pumunta sila sa palengke.",
+            "Bumili sila ng tinapay."
+          ],
+          "answer": "Nagpasalamat si Nanay kay Lisa."
+        },
+        {
+          "id": "q_l2_002_3",
+          "type": "feeling",
+          "skill_id": "sk_comp_feeling",
+          "prompt": "Bakit masaya si Lisa?",
+          "choices": [
+            "Natulungan niya si Nanay.",
+            "Nakakita siya ng aso.",
+            "Nanalo siya sa laro."
+          ],
+          "answer": "Natulungan niya si Nanay."
+        }
+      ],
+      "source": "ai_assisted",
+      "reviewed": false,
+      "approved_by_tutor": true
+    },
+    {
+      "id": "st_l2_003",
+      "title": "Ang Kalabaw ni Mang Tonyo",
+      "level": 2,
+      "skill_ids": [
+        "sk_long_words",
+        "sk_comp_sequence"
+      ],
+      "target_word_ids": [
+        "w_kalabaw"
+      ],
+      "interests": [
+        "animals",
+        "farm",
+        "weather"
+      ],
+      "word_count": 53,
+      "paragraphs": [
+        "Si Mang Tonyo ay isang magsasaka. May kalabaw siya na si Kalog. Tuwing umaga, tumutulong si Kalog sa bukid.",
+        "Isang araw, umulan nang malakas. Basang-basa si Kalog. Dinala siya ni Mang Tonyo sa ilalim ng malaking puno.",
+        "Nang tumigil ang ulan, bumalik sila sa bukid. \"Mabuti at ligtas tayo,\" sabi ni Mang Tonyo."
+      ],
+      "questions": [
+        {
+          "id": "q_l2_003_1",
+          "type": "who",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Sino si Kalog?",
+          "choices": [
+            "ang kalabaw ni Mang Tonyo",
+            "ang aso ni Mang Tonyo",
+            "ang anak ni Mang Tonyo"
+          ],
+          "answer": "ang kalabaw ni Mang Tonyo"
+        },
+        {
+          "id": "q_l2_003_2",
+          "type": "sequence",
+          "skill_id": "sk_comp_sequence",
+          "prompt": "Ano ang ginawa ni Mang Tonyo nang umulan?",
+          "choices": [
+            "Dinala niya si Kalog sa ilalim ng puno.",
+            "Pumunta siya sa palengke.",
+            "Natulog siya."
+          ],
+          "answer": "Dinala niya si Kalog sa ilalim ng puno."
+        },
+        {
+          "id": "q_l2_003_3",
+          "type": "main_idea",
+          "skill_id": "sk_comp_sequence",
+          "prompt": "Tungkol saan ang kuwento?",
+          "choices": [
+            "Inalagaan ni Mang Tonyo si Kalog sa ulan.",
+            "Bumili si Mang Tonyo ng kalabaw.",
+            "Naglaro si Kalog sa ilog."
+          ],
+          "answer": "Inalagaan ni Mang Tonyo si Kalog sa ulan."
+        }
+      ],
+      "source": "ai_assisted",
+      "reviewed": false,
+      "approved_by_tutor": true
+    }
+  ],
+  "task_types": [
+    {
+      "id": "dictation_letters",
+      "input": "letter_tiles",
+      "uses": "words",
+      "tts": true,
+      "min_level": 1
+    },
+    {
+      "id": "dictation_syllables",
+      "input": "syllable_tiles",
+      "uses": "words",
+      "tts": true,
+      "min_level": 1
+    },
+    {
+      "id": "missing_letter",
+      "input": "one_tile",
+      "uses": "words",
+      "tts": true,
+      "min_level": 1
+    },
+    {
+      "id": "sentence_builder",
+      "input": "word_tiles",
+      "uses": "sentences",
+      "tts": true,
+      "min_level": 1
+    },
+    {
+      "id": "story_questions",
+      "input": "tap_choice",
+      "uses": "stories",
+      "tts": true,
+      "min_level": 1
+    },
+    {
+      "id": "read_along",
+      "input": "none",
+      "uses": "stories",
+      "tts": true,
+      "min_level": 1,
+      "scored": false,
+      "note": "Individual: the learner listens to his or her own story with word highlights before the story questions. Not scored."
+    }
+  ],
+  "interests": [
+    {
+      "id": "int_animals",
+      "label_fil": "Hayop",
+      "label_en": "Animals",
+      "icon": "🐶",
+      "words": [
+        "aso",
+        "pusa",
+        "ibon",
+        "isda",
+        "baka",
+        "kalabaw",
+        "tuta",
+        "bibe"
+      ],
+      "objects": [
+        "laruang aso",
+        "laruang pusa",
+        "laruang kalabaw"
+      ]
+    },
+    {
+      "id": "int_basketball",
+      "label_fil": "Basketbol",
+      "label_en": "Basketball",
+      "icon": "🏀",
+      "words": [
+        "bola",
+        "laro",
+        "takbo",
+        "talon",
+        "koponan"
+      ],
+      "objects": [
+        "bola",
+        "sapatos"
+      ]
+    },
+    {
+      "id": "int_food",
+      "label_fil": "Pagkain",
+      "label_en": "Food",
+      "icon": "🍌",
+      "words": [
+        "saging",
+        "mangga",
+        "tinapay",
+        "kanin",
+        "keso",
+        "gatas"
+      ],
+      "objects": [
+        "tinapay",
+        "mangga",
+        "saging"
+      ]
+    },
+    {
+      "id": "int_vehicles",
+      "label_fil": "Sasakyan",
+      "label_en": "Vehicles",
+      "icon": "🚙",
+      "words": [
+        "dyip",
+        "bangka",
+        "trak",
+        "tren",
+        "kotse",
+        "bisikleta"
+      ],
+      "objects": [
+        "laruang dyip",
+        "laruang trak",
+        "laruang tren"
+      ]
+    },
+    {
+      "id": "int_nature",
+      "label_fil": "Kalikasan",
+      "label_en": "Nature",
+      "icon": "🌳",
+      "words": [
+        "puno",
+        "bulaklak",
+        "dahon",
+        "ilog",
+        "langit",
+        "ulan"
+      ],
+      "objects": [
+        "bulaklak",
+        "dahon"
+      ]
+    },
+    {
+      "id": "int_drawing",
+      "label_fil": "Pagguhit",
+      "label_en": "Drawing",
+      "icon": "✏️",
+      "words": [
+        "lapis",
+        "papel",
+        "kulay",
+        "krayola",
+        "guhit"
+      ],
+      "objects": [
+        "lapis",
+        "krayola",
+        "papel"
+      ]
+    },
+    {
+      "id": "int_music",
+      "label_fil": "Musika",
+      "label_en": "Music",
+      "icon": "🎵",
+      "words": [
+        "kanta",
+        "sayaw",
+        "gitara",
+        "tambol"
+      ],
+      "objects": [
+        "gitara",
+        "tambol"
+      ]
+    },
+    {
+      "id": "int_toys",
+      "label_fil": "Laruan",
+      "label_en": "Toys and play",
+      "icon": "🪁",
+      "words": [
+        "saranggola",
+        "manika",
+        "bola",
+        "taguan",
+        "laro"
+      ],
+      "objects": [
+        "saranggola",
+        "manika",
+        "bola"
+      ]
+    },
+    {
+      "id": "int_farm",
+      "label_fil": "Bukid",
+      "label_en": "Farm",
+      "icon": "🌾",
+      "words": [
+        "bukid",
+        "palay",
+        "mais",
+        "kalabaw",
+        "magsasaka"
+      ],
+      "objects": [
+        "mais",
+        "laruang kalabaw"
+      ]
+    },
+    {
+      "id": "int_space",
+      "label_fil": "Kalawakan",
+      "label_en": "Space",
+      "icon": "🌙",
+      "words": [
+        "buwan",
+        "bituin",
+        "araw",
+        "langit"
+      ],
+      "objects": [
+        "laruang rocket",
+        "larawan ng buwan"
+      ]
+    },
+    {
+      "id": "int_school",
+      "label_fil": "Paaralan",
+      "label_en": "School and books",
+      "icon": "📚",
+      "words": [
+        "aklat",
+        "guro",
+        "klase",
+        "lapis",
+        "papel"
+      ],
+      "objects": [
+        "aklat",
+        "bag"
+      ]
+    },
+    {
+      "id": "int_family",
+      "label_fil": "Pamilya",
+      "label_en": "Family",
+      "icon": "👨‍👩‍👧",
+      "words": [
+        "Nanay",
+        "Tatay",
+        "Lola",
+        "Lolo",
+        "Kuya",
+        "Ate"
+      ],
+      "objects": [
+        "larawan ng pamilya"
+      ]
+    }
+  ],
+  "story_templates": [
+    {
+      "id": "tpl_l1_001",
+      "level": 1,
+      "title": "Ang {object} ni {name}",
+      "skill_ids": [
+        "sk_comp_literal"
+      ],
+      "paragraphs": [
+        "Si {name} ay may {object}. Maganda ang {object} ni {name}.",
+        "Dinala niya ang {object} kay Lola.",
+        "\"Ang ganda!\" sabi ni Lola. Masaya si {name}."
+      ],
+      "questions": [
+        {
+          "type": "who",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Sino ang may {object}?",
+          "choices": [
+            "{name}",
+            "Lola",
+            "Tatay"
+          ],
+          "answer": "{name}"
+        },
+        {
+          "type": "what",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Ano ang mayroon si {name}?",
+          "choices": [
+            "{object}",
+            "{other_object_1}",
+            "{other_object_2}"
+          ],
+          "answer": "{object}"
+        },
+        {
+          "type": "who",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Kanino dinala ni {name} ang {object}?",
+          "choices": [
+            "kay Lola",
+            "kay Tatay",
+            "kay Kuya"
+          ],
+          "answer": "kay Lola"
+        }
+      ]
+    },
+    {
+      "id": "tpl_l1_002",
+      "level": 1,
+      "title": "Si {name} at ang Ulan",
+      "skill_ids": [
+        "sk_comp_literal"
+      ],
+      "paragraphs": [
+        "Umaga na. Gising na si {name}. Kinuha niya ang {object}.",
+        "Pero umulan nang malakas! Naglaro si {name} sa loob ng bahay.",
+        "Masaya pa rin si {name}."
+      ],
+      "questions": [
+        {
+          "type": "who",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Sino ang gising na?",
+          "choices": [
+            "{name}",
+            "Lolo",
+            "Ate"
+          ],
+          "answer": "{name}"
+        },
+        {
+          "type": "what",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Ano ang kinuha ni {name}?",
+          "choices": [
+            "{object}",
+            "{other_object_1}",
+            "{other_object_2}"
+          ],
+          "answer": "{object}"
+        },
+        {
+          "type": "where",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Saan naglaro si {name}?",
+          "choices": [
+            "sa loob ng bahay",
+            "sa ilog",
+            "sa bukid"
+          ],
+          "answer": "sa loob ng bahay"
+        }
+      ]
+    },
+    {
+      "id": "tpl_l2_001",
+      "level": 2,
+      "title": "Ang Nawawalang {object}",
+      "skill_ids": [
+        "sk_comp_sequence",
+        "sk_comp_feeling"
+      ],
+      "paragraphs": [
+        "Hinahanap ni {name} ang kanyang {object}. Wala ito sa mesa. Wala rin ito sa kama. Nalungkot si {name}.",
+        "Tinulungan siya ni Kuya. Tumingin sila sa ilalim ng upuan. Nandoon ang {object}!",
+        "\"Salamat, Kuya!\" sabi ni {name}. Natuwa si {name}. Mula noon, inilalagay na niya ang {object} sa kahon."
+      ],
+      "questions": [
+        {
+          "type": "sequence",
+          "skill_id": "sk_comp_sequence",
+          "prompt": "Ano ang unang nangyari?",
+          "choices": [
+            "Hinahanap ni {name} ang {object}.",
+            "Nakita nila ang {object}.",
+            "Nagpasalamat si {name} kay Kuya."
+          ],
+          "answer": "Hinahanap ni {name} ang {object}."
+        },
+        {
+          "type": "feeling",
+          "skill_id": "sk_comp_feeling",
+          "prompt": "Ano ang naramdaman ni {name} nang hindi niya makita ang {object}?",
+          "choices": [
+            "nalungkot",
+            "natuwa",
+            "nagalit"
+          ],
+          "answer": "nalungkot"
+        },
+        {
+          "type": "where",
+          "skill_id": "sk_comp_literal",
+          "prompt": "Saan nila nakita ang {object}?",
+          "choices": [
+            "sa ilalim ng upuan",
+            "sa mesa",
+            "sa kama"
+          ],
+          "answer": "sa ilalim ng upuan"
+        }
+      ]
+    }
+  ],
+  "story_plots": [
+    {
+      "id": "plot_l1_park",
+      "level": 1,
+      "characters": [
+        "Kuya"
+      ],
+      "outline_en": "In the morning, {name} takes the {object} to the park. {name} sees Kuya there. They play together and share. They go home happy."
+    },
+    {
+      "id": "plot_l1_rain",
+      "level": 1,
+      "characters": [
+        "Nanay"
+      ],
+      "outline_en": "It rains hard. {name} cannot play outside. {name} plays with the {object} inside the house. Nanay smiles at {name}."
+    },
+    {
+      "id": "plot_l1_clean",
+      "level": 1,
+      "characters": [
+        "Tatay"
+      ],
+      "outline_en": "{name} helps Tatay clean the house. {name} finds the {object} under the bed. Tatay says thank you to {name}."
+    },
+    {
+      "id": "plot_l2_market",
+      "level": 2,
+      "characters": [
+        "Nanay"
+      ],
+      "outline_en": "{name} brings the {object} and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket is heavy. {name} helps carry it. At home, Nanay cooks lunch. Nanay thanks {name}."
+    },
+    {
+      "id": "plot_l2_gift",
+      "level": 2,
+      "characters": [
+        "Lola"
+      ],
+      "outline_en": "It is Lola's birthday. {name} wants to give her a gift. {name} draws a picture of the {object}. The picture is beautiful. Lola is very happy. She hugs {name}."
+    },
+    {
+      "id": "plot_l2_wind",
+      "level": 2,
+      "characters": [
+        "Nanay"
+      ],
+      "outline_en": "{name} plays with the {object} in the yard. The wind becomes strong and dark clouds come. {name} goes inside before the rain. Nanay says that {name} is careful. After the rain, {name} plays again."
+    }
+  ],
+  "story_examples": {
+    "1": {
+      "name": "Carlo",
+      "object": "payong",
+      "plot_en": "Carlo has an umbrella. The umbrella is nice. Carlo brings it to Lola. Lola likes it. Carlo is happy.",
+      "story_fil": "Si Carlo ay may payong. Maganda ang payong ni Carlo. Dinala niya ang payong kay Lola. \"Ang ganda!\" sabi ni Lola. Masaya si Carlo."
+    },
+    "2": {
+      "name": "Carlo",
+      "object": "payong",
+      "plot_en": "Carlo looks for his umbrella. It is not on the table or the bed. Carlo is sad. Kuya helps him. They find it under the chair. Carlo thanks Kuya. Now he keeps the umbrella in a box.",
+      "story_fil": "Hinahanap ni Carlo ang kanyang payong. Wala ito sa mesa. Wala rin ito sa kama. Nalungkot si Carlo. Tinulungan siya ni Kuya. Tumingin sila sa ilalim ng upuan. Nandoon ang payong! \"Salamat, Kuya!\" sabi ni Carlo. Natuwa si Carlo. Mula noon, inilalagay na niya ang payong sa kahon."
+    }
+  }
+}
