@@ -4,27 +4,12 @@ import Slot from '../components/Slot.jsx'
 import FeedbackBanner from '../components/FeedbackBanner.jsx'
 import FeedbackOverlay from '../components/FeedbackOverlay.jsx'
 import TurnSwitchScreen from './TurnSwitchScreen.jsx'
-import { MOCK_SESSION_ID, getNextTurn, submitAnswer } from '../mocks/api.js'
+import SpeakerIcon from '../components/SpeakerIcon.jsx'
+import { getNextTurn, submitAnswer } from '../mocks/api.js'
 import { t } from '../strings.js'
 import './TileBoardScreen.css'
 
-const SESSION_ID = MOCK_SESSION_ID
 const SHAKE_MS = 450
-
-function SpeakerIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
-      <path
-        d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"
-        stroke="currentColor"
-        strokeWidth="2"
-        fill="none"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
 
 function playAudio(url) {
   if (!url) return
@@ -58,7 +43,7 @@ function buildBoard(turn) {
   return { model: null, base, consumed }
 }
 
-export default function TileBoardScreen() {
+export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDone }) {
   const [turn, setTurn] = useState(null)
   const [board, setBoard] = useState(null)
   const [slots, setSlots] = useState([])
@@ -94,18 +79,18 @@ export default function TileBoardScreen() {
 
   useEffect(() => {
     let cancelled = false
-    getNextTurn(SESSION_ID)
+    getNextTurn(sessionId)
       .then((next) => !cancelled && applyTurn(next))
       .catch(() => !cancelled && setStatus('error'))
     return () => {
       cancelled = true
       clearTimeout(shakeTimer.current)
     }
-  }, [applyTurn])
+  }, [applyTurn, sessionId])
 
   const loadTurn = () => {
     setStatus('loading')
-    getNextTurn(SESSION_ID)
+    getNextTurn(sessionId)
       .then(applyTurn)
       .catch(() => setStatus('error'))
   }
@@ -131,7 +116,8 @@ export default function TileBoardScreen() {
       itemStart.current = Date.now()
       playAudio(turn.item.prompt_audio)
     }
-    return <TurnSwitchScreen name={turn.child_name} onStart={start} />
+    const picture = learners.find((l) => l.id === turn.child_id)?.picture
+    return <TurnSwitchScreen name={turn.child_name} picture={picture} onStart={start} />
   }
 
   const keepCase = turn.task_type === 'sentence_builder'
@@ -166,7 +152,7 @@ export default function TileBoardScreen() {
   const checkAnswer = async () => {
     setBusy(true)
     try {
-      const response = await submitAnswer(SESSION_ID, {
+      const response = await submitAnswer(sessionId, {
         child_id: turn.child_id,
         item_id: turn.item.id,
         given: slots.map((s) => s.text),
@@ -285,7 +271,11 @@ export default function TileBoardScreen() {
 
       <footer className="board__actions">
         {result?.next_action === 'next' ? (
-          <button type="button" className="action action--primary action--glow" onClick={loadTurn}>
+          <button
+            type="button"
+            className="action action--primary action--glow"
+            onClick={() => (isPhaseOver() ? onDone() : loadTurn())}
+          >
             {t.next}
           </button>
         ) : (

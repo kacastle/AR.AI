@@ -1,5 +1,5 @@
 .turn-switch {
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--bar-h));
   padding: 32px 16px;
   display: flex;
   flex-direction: column;

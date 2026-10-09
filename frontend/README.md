@@ -15,8 +15,9 @@ npm run preview  # serve the build
 
 ```
 src/
-  screens/      Full-page screens (TileBoardScreen, TurnSwitchScreen)
-  components/   Reusable UI (Tile, Slot, FeedbackBanner, FeedbackOverlay)
+  screens/      Full-page screens (TutorLogin, GroupSetup, ReadAlong, TurnSwitch, TileBoard,
+                StoryQuestion, TutorSummary)
+  components/   Reusable UI (Tile, Slot, FeedbackBanner, FeedbackOverlay, LearnerPicture, TutorBar)
   mocks/api.js  Offline mock of GET /api/sessions/{id}/next and POST /api/sessions/{id}/answer,
                 following backend/API_CONTRACT.md (hint ladder, prefill, feedback lines from content/rules.json)
   strings.js    All UI text (Filipino). Feedback lines come from the API.
@@ -43,3 +44,18 @@ src/
   shows the answer and the learner rebuilds it.
 - Buttons and tiles grow on hover (`scale(1.08)`) and shrink when pressed (`scale(0.95)`); "Susunod" glows.
   Animations are cut short under `prefers-reduced-motion`.
+
+## Session flow (App.jsx)
+
+Login (any PIN, demo stub) → Group setup (attendance; `present` keeps group order) → Read-along
+(`read_along_story_id`) → tiles phase → stories phase → Tutor summary. Each phase calls
+`POST /api/sessions/{id}/phase`; the tutor bar shows time left from `ends_at` and has "Laktawan" to skip
+ahead for a fast demo. The tiles phase ends at the first finished turn after `ends_at`.
+
+Read-along highlights words using `words[].start_ms/end_ms`; it follows the story audio when it plays,
+otherwise a timer on the same timings. Tap a word to hear it; "Muling Pakinggan" repeats the paragraph.
+
+Story questions are **not in API_CONTRACT.md yet**. `getStoryTurn()` / `submitStoryAnswer()` in the mock
+are a proposal using content.json `stories[].questions` (one question per turn, learners in turn order;
+a second wrong answer shows the answer). Question audio uses `/api/audio/{question_id}.wav`, which is
+also not a contract key yet.
