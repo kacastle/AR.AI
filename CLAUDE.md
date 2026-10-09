@@ -1,12 +1,12 @@
 Project: ReadingTutor PH. Offline tutor's assistant for DepEd ARAL-Reading, Key Stage 1, Filipino. One tutor, one laptop, 3 learners, 60 minutes or less. Fully offline.
 
 ## Who owns what
-I am Person 2. I own backend/, scripts/, tests/. Do not edit frontend/ (Person 1, not started yet) or content/ (Person 3, Kiefer). content/ files are read-only inputs and may be replaced by newer versions at any time (content v0.2 is in content/ now).
+I am Person 2. I own backend/, scripts/, tests/. Do not edit frontend/ (Person 1) or content/ (Person 3, Kiefer). content/ files are read-only inputs and may be replaced by newer versions at any time (content v0.2 is in content/ now).
 
 ## Stack
 Python FastAPI + Pydantic, SQLite, Ollama with JSON output, MMS-TTS facebook/mms-tts-tgl. Windows with PowerShell, venv in .venv.
 Installed in .venv: fastapi, uvicorn, transformers, torch (CPU build), pytest. Ask before adding anything else.
-Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL (default gemma3n:e4b until the model comparison picks one). Never write "3B" in code, docs or comments; use the real model name.
+Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL (default gemma4:e4b, the model content/test_prompts.py v0.3 is tuned for). Never write "3B" in code, docs or comments; use the real model name.
 
 ## Principles
 - Rules decide what to teach. The model only writes stories, practice words, feedback wording and summaries inside limits.
@@ -23,16 +23,18 @@ Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL 
 
 ## Layout and how to run
 Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv active.
-- backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state). Still to come: llm/, tts/. Each folder has an __init__.py.
-- tests/ (repo root): API and content tests (test_api.py, test_content.py). The prompt test harness is content/test_prompts.py. backend/tests/: engine unit tests (classifier, scoring, selector, rotation, review) with a shared conftest.py. `python -m pytest` runs both.
-- scripts/: test_ollama.py, test_tts.py, simulate.py (3-learner session through the real API). Still to come: pregen_audio.py, seed_demo.py.
+- backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), records.py (skill states and session stats from the database), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state, feedback), llm/ (harness loads content/test_prompts.py; jobs; worker = background thread), tts/ (audio plan, clip building, MMS speaker). Each folder has an __init__.py.
+- tests/ (repo root): API, content, audio, model-job and testbench tests (test_api.py, test_content.py, test_audio.py, test_llm.py, test_testbench.py); tests/conftest.py sets LLM_WORKER=0. The prompt test harness is content/test_prompts.py. backend/tests/: engine unit tests (classifier, scoring, selector, rotation, review) with a shared conftest.py. `python -m pytest` runs both.
+- scripts/: test_ollama.py, test_tts.py, simulate.py (3-learner session through the real API), pregen_audio.py, testbench.py + testbench/ (real frontend against the real backend), pull_models.sh. Still to come: seed_demo.py.
 - content/ (Person 3), frontend/ (Person 1).
 - Imports: package style only, for example `from backend.db import ...`. Never `from db import ...`.
 - Server: `uvicorn backend.main:app --reload --reload-dir backend --port 8000`
 - Tests: `python -m pytest`
 - Content check (for Person 3): `python -m backend.content` prints OK or a numbered list of problems.
 - Simulation: `python scripts/simulate.py`
-- Scripts: `python scripts/pregen_audio.py`
+- Scripts: `python scripts/pregen_audio.py` (`--force` remakes all, `--check` only checks)
+- Testbench: `python scripts/testbench.py` then http://localhost:5173 (first time: `cd frontend; npm ci`)
+- Model worker: on by default in the server; `$env:LLM_WORKER="0"` turns it off. Needs Ollama running with OLLAMA_MODEL pulled.
 - Database: data/tutor.db (gitignored). `DB_PATH` overrides it. New columns are added automatically on startup.
 - Demo timing: `$env:DEMO_FAST="1"` uses rules.json session.demo_fast (1-minute phases, 20-second items).
 - Offline mode (PowerShell): `$env:HF_HUB_OFFLINE="1"; $env:TRANSFORMERS_OFFLINE="1"`
@@ -46,7 +48,8 @@ Story, practice words, feedback and summary prompts come from content/prompts.md
 POST /api/tutor/login; GET /api/groups/{id}; POST /api/groups; POST /api/sessions; GET /api/stories/{id}; POST /api/sessions/{id}/phase; GET /api/sessions/{id}/next; POST /api/sessions/{id}/answer; GET /api/sessions/{id}/summary; GET /api/children/{id}/sheet; GET /api/approvals; POST /api/approvals/{id}; GET /api/audio/{key}.wav.
 Person 1 builds against these shapes, so never change or rename a field without telling me first. Every shape, with one example response, lives in backend/API_CONTRACT.md. Keep that file in sync with the code. CORS allows http://localhost:5173.
 
-Next turn: child_id, child_name, turn_number, task_type, item (id, prompt_audio, slots, tiles, syllables), support_level, prefill, seconds.
+Next turn: child_id, child_name, turn_number, task_type, item (id, prompt_audio, slots, tiles, syllables), support_level, prefill, gap_slot, seconds.
+- gap_slot: for missing_letter, the 0-based box the learner fills; null otherwise.
 - task_type: dictation_letters, dictation_syllables, missing_letter, sentence_builder (from rules.json selection.task_types_by_category).
 - prefill has one entry per slot; "" = empty slot. show = full answer, guide = first tile, alone = all empty; missing_letter = every slot except the gap.
 Answer: child_id, item_id, given, hints_used, attempt, time_ms.
@@ -55,13 +58,13 @@ Result: correct, mistake_type, feedback (message_fil, hint_fil), hint (kind, aud
 hint.kind: replay_by_syllable, highlight_slot, first_tile.
 Other shapes (keep flat and simple, reuse content.json field names):
 - login: body {pin}, returns {ok} (demo stub: any PIN works)
-- groups: group with learners (name, picture, profile); profile must be in rules.json placement.profiles
+- groups: group with learners (name, picture, profile, interests); profile must be in rules.json placement.profiles; interests optional, up to 3 content.json interest ids
 - sessions: body {group_id, present[]}, returns session with read_along_story_id
-- stories: {title, paragraphs, words[{text, start_ms, end_ms}], audio_url} (word timings are estimates until pregen_audio.py)
+- stories: {title, paragraphs, words[{text, start_ms, end_ms}], audio_url} (real word timings after pregen_audio.py); approved model stories (gs_ ids) too
 - phase: body {phase}, returns {phase, ends_at}
-- summary: learners[{child_id, summary, next_focus_skill, next_method}] and group_note (English fallback template from prompts.md section 4)
+- summary: learners[{child_id, summary, next_focus_skill, next_method}] and group_note (the model's summary once it is ready and current, else the English fallback template from prompts.md section 4)
 - sheet: name, date, 5 words with syllables, 1 sentence, home_line_fil
-- approvals: waiting AI items; POST body {approve}, returns {ok}
+- approvals: waiting model items (story, words); POST body {approve}, returns {ok}
 
 ## Engine rules
 All numbers are read from content/rules.json. The values below are the current ones.
@@ -77,7 +80,7 @@ All numbers are read from content/rules.json. The values below are the current o
 - Correction steps: hint 1 replay_by_syllable, hint 2 highlight_slot, hint 3 first_tile, then next_action show_answer so the learner rebuilds it, then next.
 
 ## Fixed feedback templates (message_fil / hint_fil)
-The code uses rules.json feedback_templates: CORRECT (rotates its 3 lines) and SHOW_ANSWER. Mistake feedback is not wired yet.
+The code uses rules.json feedback_templates for every code (confirmed): CORRECT (rotates its 3 lines), SHOW_ANSWER and each mistake code, with {name}, {syllables_hyphen}, {syllables_last_caps} and {slots} filled from the item (so the hints below say the current word's syllables). The lines below are the examples for bahay, mesa and sapatos.
 - P_OMIT_FINAL: Malapit na, {name}! / Pakinggan ang huling pantig: ba-HAY.
 - P_SUB_VOWEL: Magaling ang subok mo! / Pakinggan: me-sa. E ba o I?
 - O_NG: Kaya mo ito! / Hanapin ang tile na ng.
@@ -90,7 +93,11 @@ The code uses rules.json feedback_templates: CORRECT (rotates its 3 lines) and S
 - P2-1 done: Pydantic shapes, SQLite tables, content loader and checks, every endpoint returns its shape with real content, API_CONTRACT.md.
 - P2-3 done: classifier with tests (backend/engine/classifier.py).
 - P2-4 done: scoring, selector, rotation, review and placement with tests, wired into /next and /answer; simulate.py shows 3 learners changing skill and support level.
-- Not wired yet: classifier in /answer (mistake_type is still null, so there is no mistake feedback), placement endpoint and session flow, end_with_easy_item, alerts, llm/, tts/, pregen_audio.py, seed_demo.py.
+- P2-5 done: classifier and template feedback in /answer, correction steps (attempt 5 ends the item), events.turn_number; gap_slot in /next.
+- P2-2 done: pregen_audio.py with MMS-TTS (model input built the MMS way, sentence by sentence, natural stories with word timings, recording overrides in content/recordings/, remakes clips whose text changed). Open: pick the voice settings (audio_cache/try_*.wav), and record syl_a/e/o/u (the model cannot say lone vowels).
+- P2-6 done: background model worker (backend/llm/) with gemma4:e4b: personal stories and practice words to /api/approvals, model summary in /summary; prompts and checks from content/test_prompts.py; retry once, then fallback.
+- Testbench: scripts/testbench.py runs the real frontend against the real backend.
+- Not wired yet: placement endpoint and session flow, end_with_easy_item, SLOW rule, alerts, seed_demo.py, model feedback wording, audio for model stories.
 - Content issue for Person 3: sk_letters_2 has no words, so sk_cv_2 (which needs it mastered) can never unlock.
 
 ## Working rules for the agent
