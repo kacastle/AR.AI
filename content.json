@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "language": "fil",
   "levels": [
     1,
@@ -4825,7 +4825,21 @@
       "characters": [
         "Kuya"
       ],
-      "outline_en": "In the morning, {name} takes the {object} to the park. {name} sees Kuya there. They play together and share. They go home happy."
+      "outline_en": "In the morning, {name} brings the {object} to the park. There, {name} sees Kuya. {name} shares the {object} with Kuya, so they play together. Then they go home happy.",
+      "beats_en": [
+        "In the morning, {name} brings the {object} to the park. There, {name} sees Kuya.",
+        "{name} shares the {object} with Kuya, so they play together. Then they go home happy."
+      ],
+      "word_bank_fil": [
+        "dinala",
+        "parke",
+        "nakita",
+        "ibinahagi",
+        "naglaro",
+        "sabay",
+        "umuwi",
+        "masaya"
+      ]
     },
     {
       "id": "plot_l1_rain",
@@ -4833,7 +4847,21 @@
       "characters": [
         "Nanay"
       ],
-      "outline_en": "It rains hard. {name} cannot play outside. {name} plays with the {object} inside the house. Nanay smiles at {name}."
+      "outline_en": "It rains hard, so {name} cannot play outside. But {name} has the {object}. {name} plays with the {object} inside the house. Nanay sees {name} and smiles.",
+      "beats_en": [
+        "It rains hard, so {name} cannot play outside. But {name} has the {object}.",
+        "{name} plays with the {object} inside the house. Nanay sees {name} and smiles."
+      ],
+      "word_bank_fil": [
+        "umuulan",
+        "malakas",
+        "sa labas",
+        "sa loob ng bahay",
+        "naglaro",
+        "nakita",
+        "ngumiti",
+        "masaya"
+      ]
     },
     {
       "id": "plot_l1_clean",
@@ -4841,7 +4869,21 @@
       "characters": [
         "Tatay"
       ],
-      "outline_en": "{name} helps Tatay clean the house. {name} finds the {object} under the bed. Tatay says thank you to {name}."
+      "outline_en": "{name} helps Tatay clean the house. The {object} has been lost for days. Under the bed, {name} finds the {object}! Tatay thanks {name}, and {name} smiles.",
+      "beats_en": [
+        "{name} helps Tatay clean the house. The {object} has been lost for days.",
+        "Under the bed, {name} finds the {object}! Tatay thanks {name}, and {name} smiles."
+      ],
+      "word_bank_fil": [
+        "tumulong",
+        "naglinis",
+        "bahay",
+        "nawala",
+        "ilalim ng kama",
+        "nakita",
+        "salamat",
+        "ngumiti"
+      ]
     },
     {
       "id": "plot_l2_market",
@@ -4849,7 +4891,26 @@
       "characters": [
         "Nanay"
       ],
-      "outline_en": "{name} brings the {object} and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket is heavy. {name} helps carry it. At home, Nanay cooks lunch. Nanay thanks {name}."
+      "outline_en": "{name} brings the {object} and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket becomes heavy. So {name} puts the {object} in a bag and helps Nanay carry the basket. At home, Nanay cooks lunch and thanks {name}. While waiting, {name} plays with the {object}.",
+      "beats_en": [
+        "{name} brings the {object} and goes to the market with Nanay. They buy fish, tomatoes, and bread.",
+        "The basket becomes heavy. So {name} puts the {object} in a bag and helps Nanay carry the basket.",
+        "At home, Nanay cooks lunch and thanks {name}. While waiting, {name} plays with the {object}."
+      ],
+      "word_bank_fil": [
+        "palengke",
+        "isda",
+        "kamatis",
+        "tinapay",
+        "basket",
+        "mabigat",
+        "binuhat",
+        "bag",
+        "tanghalian",
+        "nagluto",
+        "nagpasalamat",
+        "habang naghihintay"
+      ]
     },
     {
       "id": "plot_l2_gift",
@@ -4857,7 +4918,23 @@
       "characters": [
         "Lola"
       ],
-      "outline_en": "It is Lola's birthday. {name} wants to give her a gift. {name} draws a picture of the {object}. The picture is beautiful. Lola is very happy. She hugs {name}."
+      "outline_en": "It is Lola's birthday. {name} wants to give her a gift, so {name} draws a picture of the {object}. {name} colors the picture carefully, and it becomes beautiful. {name} gives the picture to Lola. Lola is very happy and hugs {name}.",
+      "beats_en": [
+        "It is Lola's birthday. {name} wants to give her a gift, so {name} draws a picture of the {object}.",
+        "{name} colors the picture carefully, and it becomes beautiful.",
+        "{name} gives the picture to Lola. Lola is very happy and hugs {name}."
+      ],
+      "word_bank_fil": [
+        "kaarawan",
+        "regalo",
+        "gumuhit",
+        "larawan",
+        "kinulayan",
+        "maganda",
+        "ibinigay",
+        "tuwang-tuwa",
+        "niyakap"
+      ]
     },
     {
       "id": "plot_l2_wind",
@@ -4865,21 +4942,129 @@
       "characters": [
         "Nanay"
       ],
-      "outline_en": "{name} plays with the {object} in the yard. The wind becomes strong and dark clouds come. {name} goes inside before the rain. Nanay says that {name} is careful. After the rain, {name} plays again."
+      "outline_en": "{name} plays with the {object} in the yard. But the wind becomes strong and dark clouds come. So {name} quickly brings the {object} inside before the rain. Nanay says that {name} is careful. After the rain, {name} plays with the {object} again.",
+      "beats_en": [
+        "{name} plays with the {object} in the yard.",
+        "But the wind becomes strong and dark clouds come. So {name} quickly brings the {object} inside before the rain.",
+        "Nanay says that {name} is careful. After the rain, {name} plays with the {object} again."
+      ],
+      "word_bank_fil": [
+        "bakuran",
+        "naglaro",
+        "malakas",
+        "hangin",
+        "maitim",
+        "ulap",
+        "agad",
+        "pumasok",
+        "bago umulan",
+        "maingat",
+        "pagkatapos ng ulan"
+      ]
     }
   ],
   "story_examples": {
     "1": {
       "name": "Carlo",
       "object": "payong",
-      "plot_en": "Carlo has an umbrella. The umbrella is nice. Carlo brings it to Lola. Lola likes it. Carlo is happy.",
-      "story_fil": "Si Carlo ay may payong. Maganda ang payong ni Carlo. Dinala niya ang payong kay Lola. \"Ang ganda!\" sabi ni Lola. Masaya si Carlo."
+      "characters": [
+        "Lola"
+      ],
+      "beats_en": [
+        "It rains hard. Lola is at the store without an umbrella, so Carlo takes the umbrella.",
+        "Carlo brings it to Lola. They walk home dry, and Lola thanks Carlo."
+      ],
+      "output": {
+        "title": "Ang Payong ni Carlo",
+        "paragraphs": [
+          "Umuulan nang malakas sa labas. Walang payong si Lola sa tindahan. Kaya kinuha ni Carlo ang payong.",
+          "Agad niyang dinala ang payong kay Lola. Sabay silang umuwi nang tuyo. \"Salamat, Carlo!\" sabi ni Lola."
+        ],
+        "questions": [
+          {
+            "type": "who",
+            "prompt": "Sino ang walang payong?",
+            "choices": [
+              "Lola",
+              "Kuya",
+              "Tatay"
+            ],
+            "answer": "Lola"
+          },
+          {
+            "type": "what",
+            "prompt": "Ano ang dinala ni Carlo kay Lola?",
+            "choices": [
+              "bola",
+              "payong",
+              "aklat"
+            ],
+            "answer": "payong"
+          },
+          {
+            "type": "where",
+            "prompt": "Nasaan si Lola?",
+            "choices": [
+              "sa parke",
+              "sa ilog",
+              "sa tindahan"
+            ],
+            "answer": "sa tindahan"
+          }
+        ]
+      }
     },
     "2": {
       "name": "Carlo",
       "object": "payong",
-      "plot_en": "Carlo looks for his umbrella. It is not on the table or the bed. Carlo is sad. Kuya helps him. They find it under the chair. Carlo thanks Kuya. Now he keeps the umbrella in a box.",
-      "story_fil": "Hinahanap ni Carlo ang kanyang payong. Wala ito sa mesa. Wala rin ito sa kama. Nalungkot si Carlo. Tinulungan siya ni Kuya. Tumingin sila sa ilalim ng upuan. Nandoon ang payong! \"Salamat, Kuya!\" sabi ni Carlo. Natuwa si Carlo. Mula noon, inilalagay na niya ang payong sa kahon."
+      "characters": [
+        "Kuya"
+      ],
+      "beats_en": [
+        "Carlo looks for his umbrella. It is not on the table or the bed, so Carlo is sad because it is raining.",
+        "Kuya helps him. They look under the chair and find the umbrella there.",
+        "Carlo thanks Kuya, and they walk together in the rain. Now Carlo keeps the umbrella in a box."
+      ],
+      "output": {
+        "title": "Nasaan ang Payong?",
+        "paragraphs": [
+          "Hinanap ni Carlo ang kanyang payong sa bahay. Wala ito sa mesa at sa kama. Kaya nalungkot si Carlo dahil umuulan sa labas.",
+          "Nakita siya ni Kuya at agad siyang tinulungan. Sabay silang tumingin sa ilalim ng upuan. Doon nila nakita ang payong ni Carlo!",
+          "\"Salamat, Kuya!\" masayang sabi ni Carlo. Pagkatapos, sabay silang naglakad sa ulan. Mula noon, nasa kahon na ang payong."
+        ],
+        "questions": [
+          {
+            "type": "sequence",
+            "prompt": "Ano ang unang nangyari?",
+            "choices": [
+              "Hinanap ni Carlo ang payong.",
+              "Nakita nila ang payong sa ilalim ng upuan.",
+              "Naglakad sila sa ulan."
+            ],
+            "answer": "Hinanap ni Carlo ang payong."
+          },
+          {
+            "type": "feeling",
+            "prompt": "Ano ang naramdaman ni Carlo nang hindi niya makita ang payong?",
+            "choices": [
+              "natuwa",
+              "nalungkot",
+              "nagalit"
+            ],
+            "answer": "nalungkot"
+          },
+          {
+            "type": "where",
+            "prompt": "Saan nila nakita ang payong?",
+            "choices": [
+              "sa loob ng bag",
+              "sa ilalim ng puno",
+              "sa ilalim ng upuan"
+            ],
+            "answer": "sa ilalim ng upuan"
+          }
+        ]
+      }
     }
   }
 }

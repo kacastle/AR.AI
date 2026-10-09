@@ -1,4 +1,4 @@
-# Adaptive rules (v0.1)
+# Adaptive rules (v0.2)
 
 This file explains `rules.json`. The code reads all numbers from `rules.json`. Do not put these numbers in the code.
 
@@ -144,6 +144,14 @@ Settings are in `rules.json` → `personalization`. The interest catalog is in `
 
 Each learner gets one personal story in each session, during his or her story turn. The learner is the main character. Code chooses a plot from `story_plots` (not used in the last 2 sessions) and one object from the learner's interests; the model only writes that plot in Filipino (see `prompts.md` section 1).
 
+**Story shape (so the story flows when read aloud)**
+
+- Each plot in `story_plots` has `beats_en`: one beat for each paragraph (Level 1: 2 beats, Level 2: 3 beats). The beats go beginning → problem or turn → happy ending, and each beat leads to the next one ("so", "but", "then").
+- The `{object}` matters in the first and the last beat. Do not write a plot in which the object appears once and is then forgotten.
+- Each plot has `word_bank_fil`: correct Filipino words for that plot (for example `tanghalian`, not "lunch"; `gumuhit`, not "nag-drawing"). Small models invent verb forms when they do not get these words.
+- The numbers are in `rules.json` → `story_levels.<level>`: `paragraphs`, `sentences_per_paragraph`, `target_words_per_sentence`, `min_sentences`/`max_sentences`, and `required_question_types`. Linking words are in `story_style.connectors_fil`.
+- A new plot needs `id`, `level`, `characters`, `beats_en`, `word_bank_fil`, and `outline_en` (= the beats joined).
+
 **Fallback order:** an approved model story for that learner → a filled template from `story_templates` → a library story. Templates need no model, so personalization always works.
 
 **Filling a template (code)**
@@ -163,4 +171,6 @@ Each learner gets one personal story in each session, during his or her story tu
 
 - All Filipino lines in `feedback_templates` are drafts. A Filipino speaker must check them.
 - `safety.blocklist` is a starter list. Person 3 extends it.
+- Each `story_examples.<level>.output` in `content.json` must pass `check_story` in `test_prompts.py`. The model copies the length and shape of the example, so an example that breaks the rules teaches the model to break them.
+- The v0.2 examples, plot beats, and word banks are drafts. A Filipino speaker must check them.
 - If `rules.json` changes, restart the backend. Do not edit numbers in the code.

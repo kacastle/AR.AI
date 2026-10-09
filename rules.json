@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "score": {
     "alpha": 0.3,
     "start_score": 0.0,
@@ -164,24 +164,42 @@
       "min_words": 20,
       "max_words": 40,
       "max_words_per_sentence": 8,
+      "min_sentences": 4,
+      "max_sentences": 8,
+      "paragraphs": 2,
+      "sentences_per_paragraph": 3,
+      "target_words_per_sentence": [4, 6],
       "question_types": [
         "who",
         "where",
         "what"
-      ]
+      ],
+      "required_question_types": []
     },
     "2": {
       "min_words": 45,
       "max_words": 80,
       "max_words_per_sentence": 12,
+      "min_sentences": 8,
+      "max_sentences": 10,
+      "paragraphs": 3,
+      "sentences_per_paragraph": 3,
+      "target_words_per_sentence": [6, 8],
       "question_types": [
         "sequence",
         "feeling",
         "main_idea",
         "who",
         "where"
-      ]
+      ],
+      "required_question_types": ["sequence", "feeling"]
     }
+  },
+  "story_style": {
+    "connectors_fil": ["Pagkatapos", "Kaya", "Pero", "Nang", "Doon", "Agad", "Sa wakas"],
+    "pronouns_fil": ["siya", "niya", "sila", "nila"],
+    "questions_per_story": 3,
+    "choices_per_question": 3
   },
   "mistake_types": {
     "P_SUB_VOWEL": {
