@@ -62,6 +62,7 @@ Code chooses the plot, the object, the question types, and the example. The mode
 | `{word_bank}` | The plot's `word_bank_fil` |
 | `{connectors}` | `rules.json` → `story_style.connectors_fil` |
 | `{other_names}` | The plot's `characters` (for example "Nanay") |
+| `{feeling_words}` | `rules.json` → `story_style.feeling_words_fil` (allowed answers for feeling questions) |
 | `{distractor_names}` | `rules.json` → `personalization.neutral_distractor_names` (wrong choices for who questions) |
 | `{paragraphs}`, `{sentences_per_paragraph}`, `{min_words}`, `{max_words}`, `{max_words_per_sentence}` | `rules.json` → `story_levels.<level>` |
 | `{min_wps}`, `{max_wps}` | `rules.json` → `story_levels.<level>.target_words_per_sentence` |
@@ -94,7 +95,8 @@ Shape:
 
 Flow:
 - After the first sentence, start most sentences with a linking word ({connectors}) or with siya, niya, sila.
-- Write the name {name} in the first paragraph and in the last paragraph. In the other sentences, use siya or niya.
+- Write the name {name} in the first paragraph and in the last paragraph, as the person who does something in the sentence. Never add the name at the end of a sentence after a comma. In the other sentences, use siya or niya.
+- Give each part of the plot time: the last paragraph finishes the plot; it does not jump to the end.
 - Write the word "{object}" in the first paragraph and again in the last paragraph. In the last paragraph, write "{object}" itself, not "ito" or "niya".
 - No filler sentences, no lesson, and no "Sana..." at the end. The last sentence ends the plot happily.
 
@@ -110,7 +112,8 @@ Questions:
 - Each question has exactly 3 short, different choices in Filipino. Never 4.
 - Copy the answer letter for letter from one of the choices.
 - For who, what, where, and feeling questions, the answer uses words that are written in the story. Do not ask about something the story does not say.
-- For a feeling question, the answer is a feeling word that is written in the story (for example masaya, natuwa, nalungkot). Do not guess a feeling such as "pagod" if the story does not say it.
+- For a feeling question, the answer is one of these feeling words, and the story says it: {feeling_words}. Do not guess a feeling that the story does not say.
+- For a where question, the answer is a place from the story and starts with "sa".
 - In a who question, the 3 choices are people: {name}, {other_names}, or {distractor_names}.
 
 Example. Main character: {example_name}. Object: {example_object}. Other characters: {example_other_names}.

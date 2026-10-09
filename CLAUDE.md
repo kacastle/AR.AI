@@ -24,7 +24,7 @@ Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL 
 ## Layout and how to run
 Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv active.
 - backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state). Still to come: llm/, tts/. Each folder has an __init__.py.
-- tests/ (repo root): API, content and prompt tests (test_api.py, test_content.py, test_prompts.py). backend/tests/: engine unit tests (classifier, scoring, selector, rotation, review) with a shared conftest.py. `python -m pytest` runs both.
+- tests/ (repo root): API and content tests (test_api.py, test_content.py). The prompt test harness is content/test_prompts.py. backend/tests/: engine unit tests (classifier, scoring, selector, rotation, review) with a shared conftest.py. `python -m pytest` runs both.
 - scripts/: test_ollama.py, test_tts.py, simulate.py (3-learner session through the real API). Still to come: pregen_audio.py, seed_demo.py.
 - content/ (Person 3), frontend/ (Person 1).
 - Imports: package style only, for example `from backend.db import ...`. Never `from db import ...`.
@@ -39,7 +39,7 @@ Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv 
 - Docs page: http://localhost:8000/docs
 
 ## Model prompts and checks
-tests/test_prompts.py (Person 3's v0.2) holds the prompt text and the check functions I use to compare models. It reads content/ through CONTENT_DIR and writes its results*.csv and stories_for_review*.md files next to itself. Reuse them; do not write a second copy of any prompt or check. If code must move, move it into backend/llm/ and make test_prompts.py import from there.
+content/test_prompts.py (v0.3; runs on Ollama gemma4:e4b by default) holds the prompt text and the check functions I use to compare models. It reads the content files next to it and writes its results*.csv and stories_for_review*.md files next to itself. Reuse them; do not write a second copy of any prompt or check. If code must move, move it into backend/llm/ and make test_prompts.py import from there.
 Story, practice words, feedback and summary prompts come from content/prompts.md. Retry a failed output once, then use the library or template fallback.
 
 ## API

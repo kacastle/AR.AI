@@ -4472,11 +4472,7 @@
         "tuta",
         "bibe"
       ],
-      "objects": [
-        "laruang aso",
-        "laruang pusa",
-        "laruang kalabaw"
-      ]
+      "objects": []
     },
     {
       "id": "int_basketball",
@@ -4616,8 +4612,7 @@
         "magsasaka"
       ],
       "objects": [
-        "mais",
-        "laruang kalabaw"
+        "mais"
       ]
     },
     {
@@ -4632,8 +4627,7 @@
         "langit"
       ],
       "objects": [
-        "laruang roket",
-        "teleskopyo"
+        "laruang roket"
       ]
     },
     {
@@ -4825,10 +4819,11 @@
       "characters": [
         "Kuya"
       ],
-      "outline_en": "In the morning, {name} brings the {object} to the park. There, {name} sees Kuya. {name} shares the {object} with Kuya, so they play together. Then they go home happy.",
+      "outline_en": "In the morning, {name} brings the {object} to the park. There, {name} sees Kuya. Kuya has nothing to play with, so {name} shares the {object} with Kuya. They play together with the {object} all morning. Then they walk home happy.",
       "beats_en": [
         "In the morning, {name} brings the {object} to the park. There, {name} sees Kuya.",
-        "{name} shares the {object} with Kuya, so they play together. Then they go home happy."
+        "Kuya has nothing to play with, so {name} shares the {object} with Kuya.",
+        "They play together with the {object} all morning. Then they walk home happy."
       ],
       "word_bank_fil": [
         "dinala",
@@ -4839,6 +4834,15 @@
         "sabay",
         "umuwi",
         "masaya"
+      ],
+      "fits_objects": [
+        "bola",
+        "saranggola",
+        "manika",
+        "laruang dyip",
+        "laruang trak",
+        "laruang tren",
+        "laruang roket"
       ]
     },
     {
@@ -4847,10 +4851,11 @@
       "characters": [
         "Nanay"
       ],
-      "outline_en": "It rains hard, so {name} cannot play outside. But {name} has the {object}. {name} plays with the {object} inside the house. Nanay sees {name} and smiles.",
+      "outline_en": "It rains hard, so {name} cannot play outside. {name} is sad. But {name} has the {object}. {name} plays with the {object} inside the house. Nanay sees {name} playing and smiles. {name} is happy with the {object}.",
       "beats_en": [
-        "It rains hard, so {name} cannot play outside. But {name} has the {object}.",
-        "{name} plays with the {object} inside the house. Nanay sees {name} and smiles."
+        "It rains hard, so {name} cannot play outside. {name} is sad.",
+        "But {name} has the {object}. {name} plays with the {object} inside the house.",
+        "Nanay sees {name} playing and smiles. {name} is happy with the {object}."
       ],
       "word_bank_fil": [
         "umuulan",
@@ -4860,7 +4865,17 @@
         "naglaro",
         "nakita",
         "ngumiti",
-        "masaya"
+        "masaya",
+        "nalungkot"
+      ],
+      "fits_objects": [
+        "manika",
+        "laruang dyip",
+        "laruang trak",
+        "laruang tren",
+        "laruang roket",
+        "gitara",
+        "tambol"
       ]
     },
     {
@@ -4869,9 +4884,10 @@
       "characters": [
         "Tatay"
       ],
-      "outline_en": "{name} helps Tatay clean the house. The {object} has been lost for days. Under the bed, {name} finds the {object}! Tatay thanks {name}, and {name} smiles.",
+      "outline_en": "{name} helps Tatay clean the house. The {object} has been lost for days. {name} looks on the table and in the box, but the {object} is not there. Under the bed, {name} finds the {object}! Tatay thanks {name}, and {name} smiles.",
       "beats_en": [
         "{name} helps Tatay clean the house. The {object} has been lost for days.",
+        "{name} looks on the table and in the box, but the {object} is not there.",
         "Under the bed, {name} finds the {object}! Tatay thanks {name}, and {name} smiles."
       ],
       "word_bank_fil": [
@@ -4882,7 +4898,22 @@
         "ilalim ng kama",
         "nakita",
         "salamat",
-        "ngumiti"
+        "ngumiti",
+        "mesa",
+        "kahon"
+      ],
+      "fits_objects": [
+        "bola",
+        "sapatos",
+        "lapis",
+        "krayola",
+        "manika",
+        "laruang dyip",
+        "laruang trak",
+        "laruang tren",
+        "laruang roket",
+        "aklat",
+        "bag"
       ]
     },
     {
@@ -4910,21 +4941,26 @@
         "nagluto",
         "nagpasalamat",
         "habang naghihintay"
+      ],
+      "fits_objects": [
+        "bola",
+        "manika",
+        "laruang dyip",
+        "laruang trak",
+        "laruang tren",
+        "laruang roket"
       ]
     },
     {
       "id": "plot_l2_gift",
       "level": 2,
-      "avoid_objects": [
-        "larawan ng pamilya"
-      ],
       "characters": [
         "Lola"
       ],
-      "outline_en": "It is Lola's birthday. {name} wants to give her a gift, so {name} draws a picture of the {object}. {name} colors the picture carefully, and it becomes beautiful. {name} gives the picture to Lola. Lola is very happy and hugs {name}.",
+      "outline_en": "It is Lola's birthday. {name} wants to give her a gift, so {name} draws a picture of Lola with the {object}. {name} colors the picture of Lola carefully, and it becomes beautiful. {name} gives the picture to Lola. Lola is very happy and hugs {name}.",
       "beats_en": [
-        "It is Lola's birthday. {name} wants to give her a gift, so {name} draws a picture of the {object}.",
-        "{name} colors the picture carefully, and it becomes beautiful.",
+        "It is Lola's birthday. {name} wants to give her a gift, so {name} draws a picture of Lola with the {object}.",
+        "{name} colors the picture of Lola carefully, and it becomes beautiful.",
         "{name} gives the picture to Lola. Lola is very happy and hugs {name}."
       ],
       "word_bank_fil": [
@@ -4937,6 +4973,11 @@
         "ibinigay",
         "tuwang-tuwa",
         "niyakap"
+      ],
+      "fits_objects": [
+        "lapis",
+        "krayola",
+        "papel"
       ]
     },
     {
@@ -4962,7 +5003,18 @@
         "pumasok",
         "bago umulan",
         "maingat",
-        "pagkatapos ng ulan"
+        "pagkatapos ng ulan",
+        "lumakas ang hangin",
+        "dumating ang maitim na ulap"
+      ],
+      "fits_objects": [
+        "bola",
+        "saranggola",
+        "manika",
+        "laruang dyip",
+        "laruang trak",
+        "laruang tren",
+        "laruang roket"
       ]
     }
   ],

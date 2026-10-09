@@ -8,14 +8,16 @@ calls the local Ollama model, runs the checks from prompts.md, and saves:
   - stories_for_review.md    every story, for the Filipino speaker to rate 1-5
 
 Usage (from the folder with content.json, rules.json, prompts.md):
-  LM Studio (start the local server in LM Studio first):
-    python test_prompts.py --backend lmstudio --list-models
-    python test_prompts.py --backend lmstudio --model <model-id> --runs 10
-  Ollama:
-    python test_prompts.py --backend ollama --model <model-name> --runs 10
+  Ollama (default; model gemma4:e4b, first: ollama pull gemma4:e4b):
+    python test_prompts.py --runs 10
+    python test_prompts.py --list-models
   One prompt only:
-    python test_prompts.py --backend lmstudio --model <model-id> --prompt story --runs 5
-  No model (checks this script):
+    python test_prompts.py --prompt story --runs 5
+  Second seed (to confirm a pass rate):
+    python test_prompts.py --runs 10 --seed 2
+  LM Studio instead (start the local server in LM Studio first):
+    python test_prompts.py --backend lmstudio --model google/gemma-4-e4b --runs 10
+  No model (self-test of this script):
     python test_prompts.py --mock
 
 No extra packages are necessary (standard library only).
@@ -24,10 +26,9 @@ import argparse, csv, json, random, re, time, urllib.request, urllib.error
 from pathlib import Path
 
 HERE = Path(__file__).parent
-CONTENT_DIR = HERE.parent / "content"
-CONTENT = json.loads((CONTENT_DIR / "content.json").read_text(encoding="utf-8"))
-RULES = json.loads((CONTENT_DIR / "rules.json").read_text(encoding="utf-8"))
-PROMPTS_MD = (CONTENT_DIR / "prompts.md").read_text(encoding="utf-8")
+CONTENT = json.loads((HERE / "content.json").read_text(encoding="utf-8"))
+RULES = json.loads((HERE / "rules.json").read_text(encoding="utf-8"))
+PROMPTS_MD = (HERE / "prompts.md").read_text(encoding="utf-8")
 
 SKILLS = {s["id"]: s for s in CONTENT["skills"]}
 INTERESTS = {i["id"]: i for i in CONTENT["interests"]}
@@ -35,6 +36,7 @@ WORDS = [w for w in CONTENT["words"] if w["kind"] == "word"]
 BLOCKLIST = [b.lower() for b in RULES["safety"]["blocklist"]]
 JUDGMENTAL = [b.lower() for b in RULES["safety"]["judgmental_en"] + RULES["safety"]["judgmental_fil"]]
 NEUTRAL_NAMES = RULES["personalization"]["neutral_distractor_names"]
+FEELINGS = RULES["story_style"]["feeling_words_fil"]
 SYLLABLES = {w["text"]: w["syllables"] for w in WORDS}
 VOWELS = set("aeiou")
 
@@ -258,6 +260,9 @@ def check_story(out, v, learner):
         fails.append("ends_with_sana")
     if len(re.findall(r"\b" + re.escape(learner["name"]) + r"\b", text)) < RULES["personalization"]["personal_story"]["min_name_mentions"]:
         fails.append("name_under_2")
+    # Review r4: "Umuwi sila nang masaya, si Ana." - the name added at the end only to reach the count.
+    if re.search(r",\s*(?:si|ni|kay)\s+" + re.escape(learner["name"]) + r"\s*[.!?]", text, re.I):
+        fails.append("name_tacked_on")
     # rules.md 9: the object matters in the first and the last beat. The full phrase is in the first
     # paragraph; later, the head noun is enough ("laruang aso" ... "aso").
     if not has_object(paras[0], v["object"]):
@@ -292,6 +297,11 @@ def check_story(out, v, learner):
                 for w in words_in(c):
                     if w[0].isupper() and w.lower() not in PARTICLES and w.lower() not in name_ok:
                         fails.append("who_choice_not_allowed_" + w)
+        # Review r4: a where answer "nawala" and a feeling answer "maingat" passed.
+        if qtype == "where" and not re.match(r"(?:sa|nasa)\s", ans.strip().lower()):
+            fails.append("where_not_a_place")
+        if qtype == "feeling" and not any(in_story(w, FEELINGS) for w in words_in(ans.lower())):
+            fails.append("feeling_not_a_feeling_word")
         if qtype in ("who", "what", "where", "feeling"):
             content = [w for w in words_in(ans.lower()) if w not in PARTICLES]
             found = [w for w in content if in_story(w, tokens)]
@@ -412,12 +422,13 @@ def story_schema(paragraphs, qtypes):
 
 def story_case(learner, rnd):
     lv = RULES["story_levels"][str(learner["level"])]
-    ints = [INTERESTS[i] for i in learner["interests"]]
-    obj = rnd.choice(rnd.choice(ints)["objects"])
-    # A plot can list objects that do not fit it ("draws a picture of the larawan ng pamilya").
+    # Each plot lists the objects that fit it (no shoes to play with at the park, no crayons in the rain).
+    # Choose a plot that fits one of the learner's interest objects, then an object that fits the plot.
+    mine = [o for i in learner["interests"] for o in INTERESTS[i]["objects"]]
     plots = [p for p in CONTENT["story_plots"] if p["level"] == learner["level"]
-             and obj not in p.get("avoid_objects", [])]
+             and set(p["fits_objects"]) & set(mine)]
     plot = rnd.choice(plots)
+    obj = rnd.choice([o for o in mine if o in plot["fits_objects"]])
     plot_text = plot["outline_en"].replace("{name}", learner["name"]).replace("{object}", obj)
     skill_words = [w["text"] for w in WORDS if learner["weakest"] in w["skill_ids"]]
     optional = rnd.sample(skill_words, 2)
@@ -431,7 +442,7 @@ def story_case(learner, rnd):
         "word_bank": ", ".join(plot["word_bank_fil"]),
         "connectors": ", ".join(RULES["story_style"]["connectors_fil"]),
         "other_names": ", ".join(plot["characters"]), "level": learner["level"],
-        "distractor_names": ", ".join(NEUTRAL_NAMES),
+        "distractor_names": ", ".join(NEUTRAL_NAMES), "feeling_words": ", ".join(FEELINGS),
         "paragraphs": lv["paragraphs"], "sentences_per_paragraph": lv["sentences_per_paragraph"],
         "min_wps": wlo, "max_wps": whi,
         "min_words": lv["min_words"], "max_words": lv["max_words"],
@@ -496,7 +507,8 @@ def mock_output(kind, v, learner):
         n, o = learner["name"], v["object"]
         oth = v["_other_names_list"][0]
         paras = [f"Umaga na at maaraw sa labas. Dinala ni {n} ang {o}. Nakita niya si {oth} doon.",
-                 f"Kaya sabay silang naglaro ng {o}. Pagkatapos, umuwi na sila sa bahay. Masaya si {n} sa araw na ito."]
+                 f"Kaya sabay silang naglaro ng {o}. Tumawa sila nang malakas. Masaya sila sa labas.",
+                 f"Pagkatapos, umuwi na sila sa bahay. Dala ni {n} ang {o}. Masaya si {n} sa araw na ito."]
         if learner["level"] == 2:
             paras = [f"Umaga na at maaraw sa labas ng bahay. Dinala ni {n} ang {o} sa bakuran. Nakita niya roon si {oth} na nagwawalis.",
                      f"Kaya tinulungan niya si {oth} sa paglilinis ng bakuran. Pagkatapos, sabay silang naglaro ng {o}. Tumawa sila nang malakas at masaya.",
@@ -591,18 +603,20 @@ SETTINGS_BY_KIND = {"story": (0.5, 600), "words": (0.3, 300), "feedback": (0.4, 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="mock")
+    ap.add_argument("--model", default=None, help="default: gemma4:e4b (Ollama), google/gemma-4-e4b (LM Studio)")
     ap.add_argument("--runs", type=int, default=10)
     ap.add_argument("--prompt", default="all", choices=["all", "story", "words", "feedback", "summary"])
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--mock", action="store_true")
-    ap.add_argument("--backend", default="lmstudio", choices=["lmstudio", "ollama"])
+    ap.add_argument("--backend", default="ollama", choices=["ollama", "lmstudio"])
     ap.add_argument("--base-url", default=None, help="default: http://localhost:1234 (LM Studio) or :11434 (Ollama)")
     ap.add_argument("--list-models", action="store_true")
     ap.add_argument("--tag", default="", help="added to the output file names, for example the model name")
     ap.add_argument("--no-retry", action="store_true", help="do not retry a failed check (no pass@2)")
     ap.add_argument("--reasoning", default="none", help="reasoning effort for thinking models (none/low/medium/high)")
     a = ap.parse_args()
+    if a.model is None:
+        a.model = "mock" if a.mock else {"ollama": "gemma4:e4b", "lmstudio": "google/gemma-4-e4b"}[a.backend]
     if a.mock and not selftest():
         raise SystemExit(1)
     if a.list_models:
