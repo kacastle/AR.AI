@@ -24,4 +24,19 @@ export const t = {
   next: 'Susunod',
   // Generic fallback from CLAUDE.md, used while the API sends no feedback for wrong attempts.
   tryAgain: (name) => `Subukan natin ulit, ${name}!`,
+  overlay: {
+    title: 'Malapit na!',
+    hints: {
+      replay_by_syllable: 'Pakinggan ulit ang bawat pantig.',
+      highlight_slot: 'Tingnan ang kahong may ilaw.',
+      first_tile: 'Magsimula tayo sa unang kahon.',
+    },
+    retry: 'Subukan ulit',
+    listenAgain: 'Pakinggan ulit',
+    showAnswer: 'Ipakita ang sagot',
+  },
+  turnSwitch: {
+    start: 'Magsimula',
+    avatar: (name) => `Larawan ni ${name}`,
+  },
 }

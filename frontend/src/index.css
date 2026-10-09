@@ -38,6 +38,9 @@
   --good-ink: #1f6b33;
   --try-bg: #ffe3d6;
   --try-ink: #a3401a;
+  --soft-shadow: rgba(43, 43, 58, 0.12);
+  --soft-shadow-strong: rgba(43, 43, 58, 0.22);
+  --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   font-family: 'Andika', system-ui, sans-serif;
   color: var(--ink);
@@ -54,4 +57,14 @@
 body {
   margin: 0;
   min-height: 100dvh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
 }

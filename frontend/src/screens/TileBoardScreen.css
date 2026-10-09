@@ -107,14 +107,69 @@
   font-size: 24px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 5px 0 var(--card-shadow);
+  --edge: var(--card-shadow);
+  box-shadow: 0 5px 0 var(--edge), 0 8px 16px var(--soft-shadow);
+  transition:
+    transform 220ms var(--bounce),
+    box-shadow 220ms ease;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .action:hover:not(:disabled) {
+    transform: scale(1.08);
+    box-shadow: 0 5px 0 var(--edge), 0 14px 24px var(--soft-shadow-strong);
+  }
+}
+
+.action:active:not(:disabled) {
+  transform: scale(0.95);
+  box-shadow: 0 2px 0 var(--edge), 0 4px 8px var(--soft-shadow);
+  transition-duration: 80ms;
 }
 
 .action--primary {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 5px 0 var(--primary-shadow);
+  --edge: var(--primary-shadow);
+}
+
+.action--glow {
+  animation:
+    action-pop 450ms var(--bounce),
+    action-glow 1.8s ease-in-out 450ms infinite;
+}
+
+@keyframes action-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
+@keyframes action-glow {
+  50% {
+    box-shadow:
+      0 5px 0 var(--edge),
+      0 0 0 6px rgba(47, 168, 79, 0.2),
+      0 0 28px 8px rgba(47, 168, 79, 0.45);
+  }
+}
+
+.board__slots--shake .tile {
+  animation: tile-shake 420ms ease-in-out;
+}
+
+@keyframes tile-shake {
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
 }
 
 .action:disabled {
