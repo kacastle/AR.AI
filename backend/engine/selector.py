@@ -5,7 +5,7 @@ Then task type, item, distractor tiles and prefill. Comprehension skills are not
 they are practiced in the story turn.
 """
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from typing import Optional, Sequence, Union
 
@@ -109,13 +109,16 @@ def _size(item: Entry) -> int:
     return len(item.syllables) if isinstance(item, Word) else len(item.word_tiles)
 
 
-def choose_item(items: list[Entry], used: Sequence[str], level: str) -> Entry:
+def choose_item(items: list[Entry], used: Sequence[str], level: str, prefer: Sequence[str] = ()) -> Entry:
     """Unused items first. easy = fewest syllables, hard = most, normal = content order.
-    used: item ids oldest first. When every item was used, the one seen longest ago comes back."""
+    used: item ids oldest first. When every item was used, the one seen longest ago comes back.
+    prefer: word texts from the learner's interests (content.json interests[].words); used first when unused."""
     last_seen = {item_id: k for k, item_id in enumerate(used)}
     pool = [i for i in items if i.id not in last_seen]
     if not pool:
         return min(items, key=lambda i: last_seen[i.id])
+    liked = [i for i in pool if getattr(i, "text", None) in set(prefer)]
+    pool = liked or pool
     if level == "easy":
         return min(pool, key=_size)
     if level == "hard":
@@ -190,9 +193,14 @@ def _prefill(answer: list[str], support_level: str) -> list[str]:
 
 
 def build_pick(content: Content, skill: Skill, state: SkillState, item: Entry, level: str,
-               is_review: bool, is_easy: bool, rng: random.Random) -> Pick:
+               is_review: bool, is_easy: bool, rng: random.Random, task_type: Optional[str] = None) -> Pick:
+    """task_type: a re-teach method's task type (rules.json reteach.effects), used when it fits the item."""
     rules = content.rules
-    task = choose_task_type(content, skill, state, item)
+    if task_type and task_type in rules.selection.task_types_by_category[skill.category] \
+            and _task_fits(task_type, item, content):
+        task = task_type
+    else:
+        task = choose_task_type(content, skill, state, item)
     count = rules.difficulty.distractor_tiles[level]
     syllables = item.syllables if isinstance(item, Word) else []
     gap = None
@@ -223,15 +231,24 @@ def build_pick(content: Content, skill: Skill, state: SkillState, item: Entry, l
 
 def pick_next(content: Content, states: dict[str, SkillState], today: date, used: Sequence[str],
               first_try_results: list[bool], easy: bool = False,
-              rng: Optional[random.Random] = None) -> Pick:
+              rng: Optional[random.Random] = None, prefer: Sequence[str] = (),
+              method: Optional[dict] = None) -> Pick:
     """The next item for one learner.
 
-    easy=True (from rotation after wrong answers in a row): one easy item from a mastered skill,
-    or from the current skill at easy difficulty if nothing is mastered yet.
+    easy=True (from rotation after wrong answers in a row, or a slow answer): one easy item from a mastered
+    skill, or from the current skill at easy difficulty if nothing is mastered yet.
+    prefer: word texts from the learner's interests. method: a running re-teach method
+    ({"skill_id", "effect": rules.json reteach.effects[...]}): its skill, difficulty and task type.
     """
     rng = rng or random.Random()
     rules = content.rules
-    if easy:
+    task_type = None
+    if method is not None:
+        skill = next(s for s in content.data.skills if s.id == method["skill_id"])
+        is_review = False
+        level = method["effect"].get("difficulty", difficulty(first_try_results, rules))
+        task_type = method["effect"].get("task_type")
+    elif easy:
         mastered = [s for s in tile_skills(content) if _state(states, s.id, rules).mastered]
         skill = mastered[0] if mastered else weakest_unlocked_skill(content, states)
         is_review, level = False, "easy"
@@ -239,5 +256,7 @@ def pick_next(content: Content, states: dict[str, SkillState], today: date, used
         skill, is_review = choose_skill(content, states, today)
         level = difficulty(first_try_results, rules)
     state = _state(states, skill.id, rules)
-    item = choose_item(skill_items(content, skill), used, level)
-    return build_pick(content, skill, state, item, level, is_review, easy, rng)
+    if method is not None and method.get("support") and state.support_level == "alone":
+        state = replace(state, support_level=method["support"])     # re-teach: some help again
+    item = choose_item(skill_items(content, skill), used, level, prefer)
+    return build_pick(content, skill, state, item, level, is_review, easy, rng, task_type)

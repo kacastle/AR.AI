@@ -77,6 +77,64 @@ Response
 ```
 (`words` is shortened here.)
 
+## Story phase: each learner's own story, then its quiz
+`GET /api/stories/{id}` also returns `questions`: `[{"type", "prompt", "choices"}]` (the answer is not sent).
+
+### GET /api/sessions/{id}/story_turn
+Learner by learner (session `present` order): each learner reads **their own** story (`story_id`, from the session's `story_ids`), then answers its questions one at a time. `null` when every learner is done.
+```json
+{"child_id": "c_78552429", "child_name": "Ana", "story_id": "ts_1a2b3c4d", "turn_number": 1, "questions_total": 3,
+ "question": {"id": "ts_1a2b3c4d:0", "type": "who", "prompt": "Sino ang may krayola?",
+              "choices": ["Ana", "Lola", "Tatay"], "prompt_audio": null}}
+```
+
+### POST /api/sessions/{id}/story_answer
+Request: `{"child_id", "question_id", "choice", "attempt"}` (`attempt` 1, then 2 after a wrong answer). `422` when the question is not the learner's; `409` when it is already done.
+- Right: `next_action` `"next"`. Wrong at attempt 1: `"retry"`. Wrong at attempt 2: `"next"` and `answer` = the right choice.
+- `mistake_type` when wrong: `C_LITERAL` (who/what/where), `C_SEQUENCE`, `C_INFER` (feeling/main_idea); `feedback` from rules.json feedback_templates.
+- The **first** answer to each question counts: it scores the question's comprehension skill (`rules.json` → `story_quiz.skill_by_type`). After the learner's last first answer, `quiz` is set: 3 of 3 right = next story one level harder, 0-1 = one level easier, else the same (`story_quiz`), and the next personal story is written right away in the background.
+```json
+{"correct": true, "mistake_type": null, "feedback": {"message_fil": "Tama! Magaling, Ana!", "hint_fil": null},
+ "next_action": "next", "answer": null,
+ "quiz": {"correct": 3, "total": 3, "story_level_before": 1, "story_level": 2}}
+```
+
+## Sign-up and lessons
+### GET /api/interests
+The interest catalog for the learner sign-up (content.json `interests` that have objects): `[{"id", "label_fil", "label_en", "icon"}]`. The tutor creates the group with each learner's name, picture, interests (ids from this list) and `diagnostic`.
+
+### Lessons in the next turn (backend/lessons.py)
+`GET /api/sessions/{id}/next` returns `lesson` (or `null`): teach before this item. A lesson comes before the learner's first item of a skill (`reason: "new"`) and, in another style, when a re-teach method starts (`reason: "reteach"`). `style` is `visual` (the example word's tiles, `highlight` = tiles to light up, and its syllables), `steps` (`steps`: the word built syllable by syllable) or `story` (`story.sentences` with `story.words` lit up: a checked, approved model lesson story, prompts.md section 7, else a content sentence). Whether a lesson worked (rules.json `lessons`) is remembered per learner; the next lesson prefers a style that worked.
+```json
+{"skill_id": "sk_vowels", "skill_name_fil": "Mga patinig: a, e, i, o, u", "skill_name_en": "Vowel sounds",
+ "reason": "new", "style": "visual",
+ "example": {"text": "ahas", "tiles": ["a", "h", "a", "s"], "syllables": ["a", "has"], "highlight": [0, 2]},
+ "steps": ["a", "ahas"], "more_words": [{"text": "ibon", "syllables": ["i", "bon"]}], "story": null}
+```
+`POST /api/sessions/{id}/answer` also returns `mastered_skill` (the skill's `name_fil`) when the answer mastered a skill.
+
+## Learner loop (backend/adapt.py)
+- **Diagnostic.** `POST /api/groups` learners take `"diagnostic": true` (default false). Their first tile turns are placement items (`mode: "placement"`): support `alone`, one try, encouragement, no hints. When it ends (rules.json `placement`), passed skills count as mastered and `profile` is set (`low_emergent` / `high_emergent`).
+- **Next turn** (`GET /api/sessions/{id}/next`) also returns `mode` (`placement`, `reteach`, `easy`, `practice`), `method` and `method_note` (the running re-teach method and its `description_en`, for the tutor), `stars`, `streak`. Items whose word is in the learner's interest `words` come first.
+- **Answer** (`POST /api/sessions/{id}/answer`) also returns `stars`, `streak` and `method_started`. A first try slower than `timing.slow_seconds` makes the learner's next item easy.
+- **Re-teach.** When the same first-try mistake comes back (`rules.json` → `reteach`), the next `items_after` items use a method (task type, difficulty, some support). Whether it worked is remembered per learner: a method that worked comes first next time, one that did not is skipped.
+
+### GET /api/children/{id}/profile
+For the tutor and parents.
+```json
+{"child_id": "c_78552429", "name": "Ana", "profile": "high_emergent",
+ "interests": [{"id": "int_drawing", "label": "Drawing", "icon": "✏️"}],
+ "diagnostic": "done", "story_level": 2, "pace": "fast",
+ "current_skill": {"id": "sk_cvc_final", "name": "Final consonants", "score": 0.42},
+ "mastered": [{"id": "sk_vowels", "name": "Vowel sounds", "score": 0.7}],
+ "strengths": [], "needs_work": [{"id": "sk_cvc_final", "name": "Final consonants", "score": 0.42}],
+ "methods": [{"mistake_type": "P_OMIT_FINAL", "mistake": "Final consonant left out", "method": "syllable_color_clap",
+              "method_description": "Split the word into colored syllables and clap each one. Focus on the last sound.",
+              "correct": 2, "total": 3, "worked": true}],
+ "stars": 14, "streak": 3,
+ "sessions": [{"session_id": "s_97aadbd0", "date": "2026-10-10", "correct": 7, "total": 9}]}
+```
+
 ## POST /api/sessions/{id}/phase
 `phase` is one of `tiles`, `stories`, `summary`. `ends_at` is local time with offset. The phase lengths come from `rules.json` → `session` (35 / 15 / 10 min). With `DEMO_FAST=1` (rules.json `session.demo_fast`) every phase is 1 minute and `/next` gives `seconds: 20`, so a demo session takes about 3 minutes.
 Setting `summary` queues the model summary, then each learner's personal story for the next session.
@@ -188,6 +246,7 @@ Printable practice sheet. No scores.
 ```
 
 ## GET /api/approvals
+With `AUTO_APPROVE=1` (demos only), checked model stories and words are approved when they are saved, so this list stays empty.
 Model items waiting for the tutor, oldest first. Every item passed the checks in `content/test_prompts.py` (a failed one is retried once, then dropped). `kind`:
 - `story`: a personal story, with its audio already made (`GET /api/audio/{payload.id}.wav`, so the tutor can listen before approving). `payload` has the same fields as content.json `stories` (`id` is `gs_…`, `source` is `"model"`), plus `model`, `plot_id` and `object`. Once approved, `GET /api/stories/{payload.id}` serves it, `approved_by_tutor` becomes `true`, and the learner gets it in the next session's `story_ids`.
 - `words`: practice words. `payload` = `{"skill_id", "words": [{"text", "word_id", "syllables", "meaning_en"}], "model"}`; only content.json words. Once approved, they go on the learner's practice sheet while the learner is on that skill.

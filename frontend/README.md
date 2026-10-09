@@ -15,8 +15,9 @@ npm run preview  # serve the build
 
 ```
 src/
-  screens/      Full-page screens (TileBoardScreen)
-  components/   Reusable UI (Tile, Slot, FeedbackBanner)
+  screens/      Full-page screens (TutorLogin, GroupSetup, ReadAlong, TurnSwitch, TileBoard,
+                StoryQuestion, TutorSummary)
+  components/   Reusable UI (Tile, Slot, FeedbackBanner, FeedbackOverlay, LearnerPicture, TutorBar)
   mocks/api.js  Offline mock of GET /api/sessions/{id}/next and POST /api/sessions/{id}/answer,
                 following backend/API_CONTRACT.md (hint ladder, prefill, feedback lines from content/rules.json)
   strings.js    All UI text (Filipino). Feedback lines come from the API.
@@ -34,3 +35,62 @@ src/
   answer as a model and the learner rebuilds it.
 - Hints: `highlight_slot` / `first_tile` outline a box; `replay_by_syllable` plays `hint.audio`.
 - `ng` is one tile.
+
+## Screens and feedback
+
+- `TurnSwitchScreen` shows a big avatar, "Ikaw na, [Name]!" and "Magsimula" whenever `child_id` changes.
+- A wrong answer shakes the tiles, then `FeedbackOverlay` pops up. It shows the API's `feedback` when sent,
+  otherwise a hint line for `hint.kind`. On `next_action: "show_answer"` its "Ipakita ang sagot" button
+  shows the answer and the learner rebuilds it.
+- Buttons and tiles grow on hover (`scale(1.08)`) and shrink when pressed (`scale(0.95)`); "Susunod" glows.
+  Animations are cut short under `prefers-reduced-motion`.
+
+## Session flow (App.jsx)
+
+Landing page (`LandingPage.jsx`, the start screen; no header there) → Login (any PIN, demo stub) → Group setup (attendance; `present` keeps group order) → Read-along
+(`read_along_story_id`) → tiles phase → stories phase → Tutor summary. Each phase calls
+`POST /api/sessions/{id}/phase`; the tutor bar shows time left from `ends_at` and has "Laktawan" to skip
+ahead for a fast demo. The tiles phase ends at the first finished turn after `ends_at`.
+
+Read-along highlights words using `words[].start_ms/end_ms`; it follows the story audio when it plays,
+otherwise a timer on the same timings. Tap a word to hear it; "Muling Pakinggan" repeats the paragraph.
+
+Story questions are **not in API_CONTRACT.md yet**. `getStoryTurn()` / `submitStoryAnswer()` in the mock
+are a proposal using content.json `stories[].questions` (one question per turn, learners in turn order;
+a second wrong answer shows the answer). Question audio uses `/api/audio/{question_id}.wav`, which is
+also not a contract key yet.
+
+## Mock or real backend
+
+All screens call `src/api.js`. `.env` sets the mode:
+
+```
+VITE_USE_MOCK=true                        # default: offline demo data (src/mocks/api.js)
+VITE_API_BASE_URL=http://localhost:8000   # used when VITE_USE_MOCK=false
+```
+
+To use the real backend without editing `.env`: `VITE_USE_MOCK=false npm run dev` (or put the line in
+`.env.local`, which git ignores). Start the backend first:
+`uvicorn backend.main:app --reload --reload-dir backend --port 8000` (add `DEMO_FAST=1` for 1-minute phases).
+
+- Real mode creates the demo group (Teacher Liza: Ana, Ben, Mila) with `POST /api/groups` once and keeps
+  its id in `localStorage` (`rtph.group_id`).
+- Audio paths from the API (`/api/audio/...`) are prefixed with `VITE_API_BASE_URL`.
+- If the backend can't be reached before a session starts, the app switches to the demo data and the
+  corner note says "Hindi maabot ang server. Demo na datos muna." After a real session has started,
+  errors show on the screen instead, so real and demo data never mix.
+- The dev server must run on port 5173: the backend's CORS only allows `http://localhost:5173`.
+  A blocked CORS request looks the same as an unreachable server, so it also falls back to demo data.
+- Story questions always run locally (no endpoint in `API_CONTRACT.md` yet).
+
+## Branding, loading, sound and accessibility
+
+- `Header` (every screen): "100% Offline | Ligtas ang Datos" pill, the logo (`src/assets/logo.png`;
+  `logo-trim.png` is the same image cropped to the artwork), a sound toggle and a high-contrast toggle.
+- `LoadingOverlay`: full-screen logo with the book glowing and a page flipping. Used for group, session,
+  story, turn and summary loads; it fades in after 200 ms so quick loads don't flash. The mock waits
+  900 ms on session start and summary so it shows in demos.
+- `sfx.js`: Web Audio "pop" when a tile is placed and a chime on correct answers. The sound toggle only
+  mutes these effects, not the spoken prompts. Settings are stored in `localStorage` (`preferences.js`).
+- Turn switch slides in from the right and out to the left; each turn slides in.
+- High contrast (`data-contrast="high"` on `<html>`): yellow on black, tiles 88px / text 48px.

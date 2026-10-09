@@ -1,0 +1,43 @@
+prompt,model,run,learner,result,failed_checks,seconds,output,result_after_retry,retry_failed_checks
+lesson,google/gemma-4-e4b,1,Ana,PASS,,4.2,"{
+  ""sentences"": [
+    ""Si Ana, masayang may krayola."",
+    ""May ngiti siya sa kanyang nguso."",
+    ""Tingnan mo ang kulay na ito.""
+  ]
+}",PASS,
+lesson,google/gemma-4-e4b,2,Ben,PASS,,4.1,"{
+  ""sentences"": [
+    ""Si Ben, mahal ang laruang trak."",
+    ""Tingnan mo ang bahay at unan."",
+    ""Masaya si Ben sa kanilang lahat.""
+  ]
+}",PASS,
+lesson,google/gemma-4-e4b,3,Mila,PASS,,4.1,"{
+  ""sentences"": [
+    ""Si Mila at ang laruang roket."",
+    ""May kalapati, may tinapay sa mesa."",
+    ""Masaya si Mila, lahat ay nakita.""
+  ]
+}",PASS,
+lesson,google/gemma-4-e4b,4,Ana,PASS,,4.1,"{
+  ""sentences"": [
+    ""Si Ana, masaya sa krayola."",
+    ""Ang langit ay kulay asul ngiti."",
+    ""Gumuhit ka ng malaking ngiti.""
+  ]
+}",PASS,
+lesson,google/gemma-4-e4b,5,Ben,PASS,,4.3,"{
+  ""sentences"": [
+    ""Si Ben ay masaya sa laruang trak."",
+    ""May tubig ba sa malaking kahon?"",
+    ""Linisin natin ang tubig sa kahon.""
+  ]
+}",PASS,
+lesson,google/gemma-4-e4b,6,Mila,PASS,,4.3,"{
+  ""sentences"": [
+    ""Si Mila ay masaya sa laruang roket."",
+    ""Suot niya ang bagong sapatos at tinapay."",
+    ""Kumain si Mila ng tinapay pagkatapos maglaro.""
+  ]
+}",PASS,

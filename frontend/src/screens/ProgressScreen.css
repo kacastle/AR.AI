@@ -1,0 +1,88 @@
+.progress__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.progress__facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem 1.5rem;
+  margin: 1rem 0;
+}
+
+.progress__facts div {
+  text-align: center;
+}
+
+.progress__facts dt {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #555);
+}
+
+.progress__facts dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.progress__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+}
+
+.progress__block {
+  margin: 0.75rem 0;
+}
+
+.progress__heading {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.progress__skills,
+.progress__sessions,
+.progress__methods {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.progress__skill,
+.progress__sessions li {
+  display: grid;
+  grid-template-columns: 1fr 6rem auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+}
+
+.progress__skill {
+  grid-template-columns: 1fr 6rem;
+}
+
+.progress__methods li {
+  padding: 0.2rem 0;
+}
+
+.progress__bar {
+  display: block;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-surface-muted, #e8e4da);
+  overflow: hidden;
+}
+
+.progress__bar span {
+  display: block;
+  height: 100%;
+  background: var(--color-primary, #2f7d4f);
+}
+
+.progress__none {
+  margin: 0;
+  color: var(--color-text-muted, #555);
+}

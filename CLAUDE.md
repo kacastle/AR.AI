@@ -35,6 +35,7 @@ Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv 
 - Scripts: `python scripts/pregen_audio.py` (`--force` remakes all, `--check` only checks). A full run takes about an hour on the CPU (about 8 s per clip, about 65 s per story).
 - Testbench: `python scripts/testbench.py` then http://localhost:5173 (first time: `cd frontend; npm ci`)
 - Model worker: on by default in the server; warms up the model and the voice at startup; logs the seconds of every model and voice call ("[llm] HH:MM:SS ... 12.3 s, ok"). `$env:LLM_WORKER="0"` turns it off. Needs Ollama running with OLLAMA_MODEL pulled.
+- Demo auto-approve: `$env:AUTO_APPROVE="1"` approves checked model stories and practice words as soon as they are saved (backend/llm/jobs.py `_save`), so they reach learners without POST /api/approvals. Demos only, never with real children.
 - Demo run: `python scripts/demo_session.py` (DEMO_FAST session with 3 fake learners, real model; prints every model call time).
 - Database: data/tutor.db (gitignored). `DB_PATH` overrides it. New columns are added automatically on startup.
 - Demo timing: `$env:DEMO_FAST="1"` uses rules.json session.demo_fast (1-minute phases, 20-second items).
@@ -46,7 +47,7 @@ content/test_prompts.py (v0.3; runs on Ollama gemma4:e4b by default) holds the p
 Story, practice words, feedback and summary prompts come from content/prompts.md. Retry a failed output once, then use the library or template fallback.
 
 ## API
-POST /api/tutor/login; GET /api/groups/{id}; POST /api/groups; POST /api/sessions; GET /api/stories/{id}; POST /api/sessions/{id}/phase; GET /api/sessions/{id}/next; POST /api/sessions/{id}/answer; GET /api/sessions/{id}/summary; GET /api/children/{id}/sheet; GET /api/approvals; POST /api/approvals/{id}; GET /api/audio/{key}.wav.
+POST /api/tutor/login; GET /api/groups/{id}; POST /api/groups; POST /api/sessions; GET /api/stories/{id}; POST /api/sessions/{id}/phase; GET /api/sessions/{id}/next; POST /api/sessions/{id}/answer; GET /api/sessions/{id}/story_turn; POST /api/sessions/{id}/story_answer (each learner's own story quiz; moves children.story_level, queues the next story); GET /api/children/{id}/profile; GET /api/interests; GET /api/sessions/{id}/summary; GET /api/children/{id}/sheet; GET /api/approvals; POST /api/approvals/{id}; GET /api/audio/{key}.wav.
 Person 1 builds against these shapes, so never change or rename a field without telling me first. Every shape, with one example response, lives in backend/API_CONTRACT.md. Keep that file in sync with the code. CORS allows http://localhost:5173.
 
 Next turn: child_id, child_name, turn_number, task_type, item (id, prompt_audio, slots, tiles, syllables), support_level, prefill, gap_slot, seconds.
@@ -100,7 +101,9 @@ The code uses rules.json feedback_templates for every code (confirmed): CORRECT 
 - P2-6 done: backend/llm/ client.py (Ollama, localhost only, pauses 30 s after a refused connection), prompts.py and checks.py (thin layers over content/test_prompts.py: no second copy), fallbacks.py (story order from rules.md 9), jobs.py, worker.py (background thread). Stories get audio before they reach /api/approvals and stay hidden until approved. Retry once on a failed check, never on a missing model. Target words stay optional (Kiefer's v0.3 rules), although the P2-6 spec asked for all of them.
 - P2-8 done: warm-up at startup, timed model calls, job priorities (warm-up, template audio, summary, words, stories), stories queued at the end of the session (prompts.md 0), DEMO_FAST tested, scripts/demo_session.py.
 - P2-7 done: backend/summary.py (numbers incl. alert, prompt values, template with skill names, current model summary); /summary and /sheet work with Ollama off.
-- Testbench: scripts/testbench.py runs the real frontend against the real backend.
+- Testbench: scripts/testbench.py runs the real frontend against the real backend (the frontend's own client, VITE_USE_MOCK=false, through Vite's /api proxy).
+- Sign-up and lessons (demo branch): the tutor signs up each learner (name, picture, interests, diagnostic) in the frontend. backend/lessons.py: a lesson (visual, steps or story) before a learner's first item of a skill and, in another style, when a re-teach starts; whether it worked is remembered (rules.json lessons). Story lessons come from the model (prompts.md section 7, job "lesson", queued at session start and when a re-teach starts). LLM_BACKEND=lmstudio runs the model jobs on LM Studio.
+- Learner loop (demo branch): backend/adapt.py: diagnostic (learner "diagnostic": true), pace and the SLOW rule, re-teach methods remembered per learner (rules.json reteach), stars and streak, interest words first, GET /api/children/{id}/profile. Story phase: each learner's own story, then its quiz; the quiz moves the next story's level (rules.json story_quiz).
 - Not wired yet: placement endpoint and session flow, end_with_easy_item, SLOW rule, alerts, seed_demo.py, model feedback wording, audio for model stories.
 - Content issue for Person 3: sk_letters_2 has no words, so sk_cv_2 (which needs it mastered) can never unlock.
 

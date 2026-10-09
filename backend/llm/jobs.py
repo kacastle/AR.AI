@@ -21,7 +21,7 @@ from typing import Optional
 
 from backend import db, summary
 from backend.content import Content, Word, load_content
-from backend.llm import checks, client, prompts
+from backend.llm import checks, client, fallbacks, prompts
 from backend.records import event_count, learner_info
 from backend.tts import audio
 
@@ -34,10 +34,12 @@ class Job:
     child_id: Optional[str] = None
     session_id: Optional[str] = None
     story_id: Optional[str] = None
+    skill_id: Optional[str] = None    # lesson: the skill to teach (default: the learner's weakest)
 
 
 def model_name() -> str:
-    return os.environ.get("OLLAMA_MODEL", DEFAULT_MODEL)
+    default = "google/gemma-4-e4b" if os.environ.get("LLM_BACKEND") == "lmstudio" else DEFAULT_MODEL
+    return os.environ.get("OLLAMA_MODEL", default)
 
 
 def log(message: str) -> None:
@@ -116,11 +118,21 @@ def _waiting(conn, kind: str, child_id: str) -> bool:
 def _save(kind: str, payload: dict, child_id: Optional[str] = None, session_id: Optional[str] = None,
           item_id: Optional[str] = None, approval: bool = True) -> str:
     item_id = item_id or db.new_id("gen")
+    # Demos only (never with real children): AUTO_APPROVE=1 approves checked model items, as the tutor would
+    # with POST /api/approvals/{id}. Only items that passed their checks reach _save.
+    auto = approval and os.environ.get("AUTO_APPROVE") == "1"
+    if auto and "approved_by_tutor" in payload:
+        payload = {**payload, "approved_by_tutor": True}
     with db.connect() as conn:
         conn.execute("INSERT INTO generated_items (id, kind, child_id, session_id, payload) VALUES (?, ?, ?, ?, ?)",
                      (item_id, kind, child_id, session_id, json.dumps(payload, ensure_ascii=False)))
-        if approval:
+        if auto:
+            conn.execute("INSERT INTO approvals (id, generated_item_id, status, decided_at) "
+                         "VALUES (?, ?, 'approved', datetime('now'))", (db.new_id("a"), item_id))
+        elif approval:
             conn.execute("INSERT INTO approvals (id, generated_item_id) VALUES (?, ?)", (db.new_id("a"), item_id))
+    if auto:
+        log(f"{kind} {item_id}: auto-approved (AUTO_APPROVE=1, demo only)")
     return item_id
 
 
@@ -147,6 +159,10 @@ def run_story(job: Job, content: Content) -> None:
     with db.connect() as conn:
         if _waiting(conn, "story", job.child_id):
             log(f"{label}: one is already waiting for the tutor; skipped")
+            return
+        # One story ahead per learner: the one written right after the quiz is not replaced at session end.
+        if fallbacks._model_story(conn, job.child_id):
+            log(f"{label}: an approved story is waiting to be read; skipped")
             return
         learner = learner_info(conn, content, job.child_id)
     if not learner["interests"]:
@@ -197,6 +213,31 @@ def run_words(job: Job, content: Content) -> None:
     _save("words", {"skill_id": learner["weakest"], "words": chosen, "model": model_name()}, child_id=job.child_id)
 
 
+def run_lesson(job: Job, content: Content) -> None:
+    """A mini lesson story for the lesson player (prompts.md section 7): the learner's name and interest, and
+    words of the skill. Goes to the approval queue; until it is approved, lessons use a content sentence."""
+    label = f"lesson story for {job.child_id}"
+    with db.connect() as conn:
+        learner = learner_info(conn, content, job.child_id)
+        skill_id = job.skill_id or learner["weakest"]
+        rows = conn.execute("SELECT g.payload FROM generated_items g JOIN approvals a ON a.generated_item_id = g.id "
+                            "WHERE g.kind = 'lesson' AND g.child_id = ? AND a.status IN ('pending', 'approved')",
+                            (job.child_id,)).fetchall()
+    if any(json.loads(r["payload"]).get("skill_id") == skill_id for r in rows):
+        log(f"{label}: one for {skill_id} already exists; skipped")
+        return
+    if not any(isinstance(w, Word) and skill_id in w.skill_ids for w in content.data.words):
+        log(f"{label}: {skill_id} has no words to teach; skipped")
+        return
+    v = prompts.lesson_case({**learner, "lesson_skill": skill_id}, random.Random())
+    parsed = generate("lesson", v, learner, label)
+    if parsed is None:
+        return
+    _save("lesson", {"skill_id": skill_id, "sentences": parsed["sentences"], "words": v["_words"],
+                     "object": v["object"], "source": "model", "approved_by_tutor": False, "model": model_name()},
+          child_id=job.child_id)
+
+
 def run_summary(job: Job, content: Content) -> None:
     label = f"summary for {job.session_id}"
     with db.connect() as conn:
@@ -237,10 +278,10 @@ def run_warmup(job: Job, content: Content) -> None:
 
 
 RUNNERS = {"story": run_story, "words": run_words, "summary": run_summary, "story_audio": run_story_audio,
-           "warmup": run_warmup}
+           "warmup": run_warmup, "lesson": run_lesson}
 
 # The worker runs lower numbers first: the summary must never wait behind next session's stories.
-PRIORITY = {"warmup": 0, "story_audio": 1, "summary": 2, "words": 3, "story": 4}
+PRIORITY = {"warmup": 0, "story_audio": 1, "summary": 2, "lesson": 3, "words": 4, "story": 5}
 
 
 def run(job: Job, content: Optional[Content] = None) -> None:

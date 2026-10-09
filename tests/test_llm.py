@@ -138,7 +138,7 @@ class LlmTest(unittest.TestCase):
     def test_session_queues_words_stories_come_at_the_end_and_turns_queue_nothing(self):
         _, session = self.make_session()
         kinds = sorted(j.kind for j in worker.pending() if j.kind != "story_audio")
-        self.assertEqual(kinds, ["words", "words"])
+        self.assertEqual(kinds, ["lesson", "lesson", "words", "words"])   # lesson stories too
         # Filled template stories get their audio in the background too.
         self.assertEqual({j.story_id for j in worker.pending() if j.kind == "story_audio"},
                          {i for i in session["story_ids"].values() if i.startswith("ts_")})
@@ -171,6 +171,49 @@ class LlmTest(unittest.TestCase):
         self.assertEqual((got["title"], got["paragraphs"]), (p["title"], p["paragraphs"]))
         self.assertEqual((got["words"][1]["start_ms"], got["words"][1]["end_ms"]), (100, 180))   # real timings
         self.assertNotIn(story["id"], [a["id"] for a in self.client.get("/api/approvals").json()])
+
+    def test_auto_approve_serves_checked_stories_without_the_tutor(self):
+        os.environ["AUTO_APPROVE"] = "1"                   # demos only
+        try:
+            group, session = self.make_session()
+            self.end_session(session)
+            worker.run_pending()
+        finally:
+            del os.environ["AUTO_APPROVE"]
+        ana = group["learners"][0]["id"]
+        self.assertEqual(self.approvals_for(group), [])     # nothing waits for the tutor
+        row = self.rows("SELECT g.payload, a.status, a.decided_at FROM generated_items g JOIN approvals a "
+                        "ON a.generated_item_id = g.id WHERE g.kind = 'story' AND g.child_id = ?", ana)[0]
+        p = json.loads(row["payload"])
+        self.assertEqual((row["status"], p["approved_by_tutor"]), ("approved", True))
+        self.assertIsNotNone(row["decided_at"])
+        self.assertEqual(self.client.get(f"/api/stories/{p['id']}").status_code, 200)
+        # Without the switch, the next story waits for the tutor again.
+        group2, session2 = self.make_session()
+        self.end_session(session2)
+        worker.run_pending()
+        self.assertTrue(any(a["kind"] == "story" for a in self.approvals_for(group2)))
+
+    def test_quiz_queues_the_next_story_at_the_new_level(self):
+        from backend.main import generated_story, story_questions
+        group, session = self.make_session()
+        ana = group["learners"][0]["id"]
+        story_id = session["story_ids"][ana]
+        story = CONTENT.stories_by_id.get(story_id) or generated_story(story_id)
+        quiz = None
+        for i, q in enumerate(story_questions(story)):                       # all right
+            quiz = self.client.post(f"/api/sessions/{session['id']}/story_answer", json={
+                "child_id": ana, "question_id": f"{story_id}:{i}", "choice": q["answer"]}).json()["quiz"]
+        self.assertEqual(quiz["correct"], 3)
+        worker.run_pending()
+        self.assertIn("story", self.fake.calls)                                # written right after the quiz
+        row = self.rows("SELECT payload FROM generated_items WHERE kind = 'story' AND child_id = ?", ana)
+        self.assertEqual(json.loads(row[-1]["payload"])["level"], quiz["story_level"])
+        # At session end, no second story: the adapted one is still waiting.
+        n = len(row)
+        self.end_session(session)
+        worker.run_pending()
+        self.assertEqual(len(self.rows("SELECT id FROM generated_items WHERE kind = 'story' AND child_id = ?", ana)), n)
 
     def test_failed_check_is_retried_once_then_falls_back(self):
         self.fake.bad = 1                          # first output broken, retry passes

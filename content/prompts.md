@@ -300,3 +300,33 @@ One printable page for each learner. Settings are in `rules.json` → `practice_
 | Model | Story pass rate | Avg seconds (story) | Filipino rating (1–5) | Chosen |
 |---|---|---|---|---|
 | | | | | |
+
+---
+
+## 7. Mini lesson story (teaching, before practice)
+
+The lesson player teaches a skill before the learner practises it, and again when the learner is stuck. It has three explanation styles: **visual** and **step-by-step** are built by code from `content.json` (the word's tiles and syllables), and **story** uses this prompt: a very short story with the learner's name, an object from their interests, and words of the skill. Code checks it; the fallback is a `content.json` sentence of the skill. It runs in the background (never inside a turn) and goes to the approval queue like the personal story.
+
+**Variables:** `{name}`, `{object}` (as in section 1), `{skill_name_en}`, `{pattern_description}` (as in section 2), `{lesson_words}` (2 words of the skill from `content.json`).
+
+**User**
+
+```
+Write a very short story in simple, natural Filipino (Tagalog) that helps a child aged 6 to 8 learn to read some words.
+Main character: {name}. The child loves this object: {object}.
+The words to learn: {lesson_words}. They are {pattern_description}.
+Rules:
+- Exactly 3 sentences. Each sentence has 4 to 8 words.
+- Write the name {name} in the first sentence. Write the word "{object}" in the story.
+- Use each word to learn exactly as written, at least once: {lesson_words}.
+- No other names of people. Only common words that a Grade 1 child knows. No English words.
+- Kind and happy. No violence or fear.
+Output JSON:
+{"sentences": ["", "", ""]}
+```
+
+**Checks**
+
+- [ ] JSON parses; exactly 3 sentences, each 4 to 8 words.
+- [ ] `{name}` and `{object}` appear; every word in `{lesson_words}` appears.
+- [ ] No other person names, no English words, no blocklist word.

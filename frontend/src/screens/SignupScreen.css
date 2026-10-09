@@ -1,0 +1,153 @@
+.signup__learners {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+  gap: 16px;
+}
+
+.signup__card {
+  padding: 16px;
+  border: 4px solid var(--slot-border);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: 0 8px 16px var(--soft-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.signup__row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.signup__avatar {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  animation: signup-bob 2.4s ease-in-out infinite;
+}
+
+.signup__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 700;
+  margin: 0 auto 12px;
+  max-width: 24rem;
+}
+
+.signup__field--grow {
+  flex: 1;
+  margin: 0;
+  max-width: none;
+}
+
+.signup__field input {
+  font: inherit;
+  font-weight: 400;
+  padding: 10px 12px;
+  border: 3px solid var(--slot-border);
+  border-radius: 14px;
+}
+
+.signup__field input:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.signup__remove {
+  min-width: 44px;
+  padding: 8px;
+}
+
+.signup__pictures {
+  display: flex;
+  gap: 8px;
+}
+
+.signup__picture {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  opacity: 0.55;
+  transition:
+    transform 200ms var(--bounce),
+    opacity 150ms ease;
+}
+
+.signup__picture--on {
+  border-color: var(--primary);
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+.signup__label {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+.signup__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.signup__chip {
+  font: inherit;
+  padding: 8px 12px;
+  border: 3px solid var(--slot-border);
+  border-radius: 999px;
+  background: var(--slot-bg);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    transform 200ms var(--bounce),
+    background 150ms ease;
+}
+
+.signup__chip--on {
+  border-color: var(--primary);
+  background: var(--card);
+  transform: scale(1.06);
+  font-weight: 700;
+}
+
+.signup__chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.signup__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signup__add {
+  display: block;
+  margin: 16px auto 0;
+}
+
+@keyframes signup-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signup__avatar {
+    animation: none;
+  }
+}

@@ -4,15 +4,21 @@ One call: POST {BASE_URL}/api/chat with stream false, keep_alive 30m, thinking o
 (or "json") in the format field, as content/prompts.md section 0 asks. Any failure (Ollama not running,
 timeout, bad reply) raises ModelError, which the jobs turn into the fallback. After a refused connection
 (Ollama not running) calls are skipped for PAUSE_SECONDS, so queued jobs fall back at once.
+
+LLM_BACKEND=lmstudio uses LM Studio's local server instead (OpenAI-style POST /v1/chat/completions on
+localhost:1234, the JSON schema as response_format, reasoning_effort none so Gemma 4 does not think).
 """
 import json
+import os
 import time
 import urllib.error
 import urllib.request
 
 from backend.llm.harness import tp
 
-BASE_URL = "http://localhost:11434"
+LMSTUDIO = os.environ.get("LLM_BACKEND") == "lmstudio"
+BASE_URL = "http://localhost:1234" if LMSTUDIO else "http://localhost:11434"
+NAME = "LM Studio" if LMSTUDIO else "Ollama"
 KEEP_ALIVE = "30m"          # the model stays loaded during a session
 TIMEOUT_SECONDS = 300       # a story takes about a minute on the demo laptop
 PAUSE_SECONDS = 30          # after Ollama refused a connection
@@ -28,32 +34,48 @@ def chat(model: str, system: str, user: str, temperature: float, num_predict: in
     """Returns (text, done_reason). The text is cleaned (no code fences or thinking blocks)."""
     global _down_until
     if time.monotonic() < _down_until:
-        raise ModelError(f"Ollama at {BASE_URL} refused a connection less than {PAUSE_SECONDS} s ago; skipped")
-    payload = {
-        "model": model, "stream": False, "keep_alive": KEEP_ALIVE, "think": False,
-        "format": schema or "json",
-        "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        "options": {"temperature": temperature, "num_predict": num_predict},
-    }
-    request = urllib.request.Request(f"{BASE_URL}/api/chat", data=json.dumps(payload).encode("utf-8"),
+        raise ModelError(f"{NAME} at {BASE_URL} refused a connection less than {PAUSE_SECONDS} s ago; skipped")
+    messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
+    if LMSTUDIO:
+        path, payload = "/v1/chat/completions", {
+            "model": model, "stream": False, "messages": messages, "temperature": temperature,
+            "max_tokens": num_predict, "reasoning_effort": "none",
+            "response_format": {"type": "json_schema",
+                                "json_schema": {"name": "output", "schema": schema or {"type": "object"}}},
+        }
+    else:
+        path, payload = "/api/chat", {
+            "model": model, "stream": False, "keep_alive": KEEP_ALIVE, "think": False,
+            "format": schema or "json", "messages": messages,
+            "options": {"temperature": temperature, "num_predict": num_predict},
+        }
+    request = urllib.request.Request(f"{BASE_URL}{path}", data=json.dumps(payload).encode("utf-8"),
                                      headers={"Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
             data = json.loads(response.read())
-        text = data["message"]["content"]
+        if LMSTUDIO:
+            choice = data["choices"][0]
+            text, done = choice["message"]["content"] or "", choice.get("finish_reason", "stop")
+        else:
+            text, done = data["message"]["content"], data.get("done_reason", "stop")
     except urllib.error.URLError as e:
         if isinstance(e.reason, ConnectionRefusedError):      # not running (a timeout is only slow)
             _down_until = time.monotonic() + PAUSE_SECONDS
-        raise ModelError(f"Ollama at {BASE_URL}: {e.reason}") from e
-    except (OSError, ValueError, KeyError, TypeError) as e:  # timeouts are OSErrors too
-        raise ModelError(f"Ollama at {BASE_URL}: {e}") from e
-    return tp.clean_output(text), data.get("done_reason", "stop")
+        raise ModelError(f"{NAME} at {BASE_URL}: {e.reason}") from e
+    except (OSError, ValueError, KeyError, TypeError, IndexError) as e:  # timeouts are OSErrors too
+        raise ModelError(f"{NAME} at {BASE_URL}: {e}") from e
+    return tp.clean_output(text), done
 
 
 def warm(model: str) -> None:
     """Load the model into memory now (Ollama's load call: /api/generate without a prompt), so the
     first real call does not pay for loading. keep_alive keeps it loaded."""
     global _down_until
+    if LMSTUDIO:            # LM Studio loads the model on the first call; check it answers
+        if not available():
+            raise ModelError(f"{NAME} at {BASE_URL} is not running")
+        return
     request = urllib.request.Request(f"{BASE_URL}/api/generate",
                                      data=json.dumps({"model": model, "keep_alive": KEEP_ALIVE}).encode("utf-8"),
                                      headers={"Content-Type": "application/json"})
@@ -69,9 +91,9 @@ def warm(model: str) -> None:
 
 
 def available() -> bool:
-    """True when Ollama answers on localhost (quick check, 2 s)."""
+    """True when the model server answers on localhost (quick check, 2 s)."""
     try:
-        with urllib.request.urlopen(f"{BASE_URL}/api/tags", timeout=2):
+        with urllib.request.urlopen(f"{BASE_URL}{'/v1/models' if LMSTUDIO else '/api/tags'}", timeout=2):
             return True
     except OSError:
         return False

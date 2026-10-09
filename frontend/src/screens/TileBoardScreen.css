@@ -1,5 +1,5 @@
 .board {
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--bar-h) - var(--header-h));
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 16px 32px;
@@ -27,6 +27,13 @@
   margin: 0;
   font-size: 24px;
   text-align: center;
+}
+
+.board__header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
 }
 
 .board__learner {
@@ -107,14 +114,69 @@
   font-size: 24px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 5px 0 var(--card-shadow);
+  --edge: var(--card-shadow);
+  box-shadow: 0 5px 0 var(--edge), 0 8px 16px var(--soft-shadow);
+  transition:
+    transform 220ms var(--bounce),
+    box-shadow 220ms ease;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .action:hover:not(:disabled) {
+    transform: scale(1.08);
+    box-shadow: 0 5px 0 var(--edge), 0 14px 24px var(--soft-shadow-strong);
+  }
+}
+
+.action:active:not(:disabled) {
+  transform: scale(0.95);
+  box-shadow: 0 2px 0 var(--edge), 0 4px 8px var(--soft-shadow);
+  transition-duration: 80ms;
 }
 
 .action--primary {
   background: var(--primary);
   color: #fff;
-  box-shadow: 0 5px 0 var(--primary-shadow);
+  --edge: var(--primary-shadow);
+}
+
+.action--glow {
+  animation:
+    action-pop 450ms var(--bounce),
+    action-glow 1.8s ease-in-out 450ms infinite;
+}
+
+@keyframes action-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
+@keyframes action-glow {
+  50% {
+    box-shadow:
+      0 5px 0 var(--edge),
+      0 0 0 6px rgba(47, 168, 79, 0.2),
+      0 0 28px 8px rgba(47, 168, 79, 0.45);
+  }
+}
+
+.board__slots--shake .tile {
+  animation: tile-shake 420ms ease-in-out;
+}
+
+@keyframes tile-shake {
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
 }
 
 .action:disabled {
@@ -125,4 +187,83 @@
 .action:focus-visible {
   outline: 4px solid var(--focus);
   outline-offset: 3px;
+}
+
+/* Speaker pulse while audio plays. */
+.action--speaking {
+  animation: speak-pulse 1s ease-in-out infinite;
+}
+
+.action--speaking svg path:last-child {
+  animation: speak-waves 500ms ease-in-out infinite alternate;
+}
+
+@keyframes speak-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 5px 0 var(--edge),
+      0 0 0 0 rgba(122, 77, 255, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 5px 0 var(--edge),
+      0 0 0 10px rgba(122, 77, 255, 0.15),
+      0 0 26px 8px rgba(122, 77, 255, 0.35);
+  }
+}
+
+@keyframes speak-waves {
+  from {
+    opacity: 0.25;
+  }
+}
+
+/* A short note for the tutor (diagnostic item, re-teach method, easier item). */
+.board__tutor-note {
+  margin: 0.25rem auto 0;
+  padding: 0.35rem 0.75rem;
+  max-width: 40rem;
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted, #f2f0ea);
+  color: var(--color-text-muted, #555);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.board__streak {
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #ffe9c7;
+}
+
+/* A skill was mastered: a trophy card over the board. */
+.board__mastered {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(30, 30, 50, 0.45);
+  z-index: 50;
+}
+
+.board__mastered-card {
+  padding: 24px 32px;
+  border-radius: 28px;
+  background: var(--card);
+  text-align: center;
+  box-shadow: 0 20px 40px var(--soft-shadow-strong, rgba(0, 0, 0, 0.25));
+}
+
+.board__mastered-badge {
+  display: block;
+  font-size: 4.5rem;
+  animation: float 2.2s ease-in-out infinite;
+}
+
+.board__mastered-name {
+  margin: 0.25rem 0;
+  font-size: 1.6rem;
+  font-weight: 700;
 }

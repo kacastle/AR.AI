@@ -1,8 +1,8 @@
 """Run the real frontend against the real backend, for clicking through turns in the browser.
 
 Starts the backend (uvicorn, first free port from 8000) with its own database, data/testbench.db, and the frontend
-(Vite, port 5173) with scripts/testbench/vite.config.mjs, which swaps the frontend's mock API for real
-calls and proxies /api to the backend. frontend/ is not changed. Ctrl+C stops both.
+(Vite, port 5173) with scripts/testbench/vite.config.mjs, which proxies /api to the backend. The frontend runs
+its own client (frontend/src/api.js) in real mode (VITE_USE_MOCK=false). frontend/ is not changed. Ctrl+C stops both.
 
 Usage: python scripts/testbench.py           keep data/testbench.db between runs
        python scripts/testbench.py --fresh   start with an empty database
@@ -61,7 +61,9 @@ def main():
     if not (ROOT / "audio_cache").is_dir():
         print("No audio yet: run python scripts/pregen_audio.py for the Listen button and hints.")
 
-    env = {**os.environ, "DB_PATH": str(DB), "TESTBENCH_BACKEND": f"http://127.0.0.1:{backend_port}"}
+    env = {**os.environ, "DB_PATH": str(DB), "TESTBENCH_BACKEND": f"http://127.0.0.1:{backend_port}",
+           # The frontend's own client (src/api.js) in real mode, through Vite's /api proxy.
+           "VITE_USE_MOCK": "false", "VITE_API_BASE_URL": f"http://localhost:{FRONTEND_PORT}"}
     backend = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "backend.main:app", "--port", str(backend_port)], cwd=ROOT, env=env)
     frontend = None

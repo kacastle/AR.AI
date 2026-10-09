@@ -84,6 +84,43 @@ CREATE TABLE IF NOT EXISTS approvals (
     status TEXT NOT NULL DEFAULT 'pending',
     decided_at TEXT
 );
+CREATE TABLE IF NOT EXISTS story_answers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    child_id TEXT NOT NULL,
+    story_id TEXT NOT NULL,
+    question_index INTEGER NOT NULL,
+    question_type TEXT NOT NULL,
+    choice TEXT NOT NULL,
+    correct INTEGER NOT NULL,
+    first INTEGER NOT NULL,          -- 1 = the learner's first answer to this question (the one that counts)
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS lesson_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    child_id TEXT NOT NULL,
+    skill_id TEXT NOT NULL,
+    style TEXT NOT NULL,                 -- visual, steps, story (rules.json lessons.styles)
+    reason TEXT NOT NULL,                -- new (first item of the skill) or reteach
+    method_run_id INTEGER,               -- the re-teach run it belongs to
+    session_id TEXT,
+    correct INTEGER NOT NULL DEFAULT 0,  -- first tries right on the next items of the skill
+    total INTEGER NOT NULL DEFAULT 0,
+    worked INTEGER,                      -- NULL until lessons.check_items items were done
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS method_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    child_id TEXT NOT NULL,
+    skill_id TEXT NOT NULL,
+    mistake_type TEXT NOT NULL,
+    method TEXT NOT NULL,
+    items_left INTEGER NOT NULL,
+    correct INTEGER NOT NULL DEFAULT 0,  -- items right on the first try while the method ran
+    total INTEGER NOT NULL DEFAULT 0,
+    worked INTEGER,                      -- NULL while running; 1 or 0 when finished (rules.json reteach.worked_at)
+    started_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -112,6 +149,9 @@ ADDED_COLUMNS = [
     ("sessions", "current_turn", "TEXT"),
     ("events", "turn_number", "INTEGER"),
     ("sessions", "story_ids", "TEXT NOT NULL DEFAULT '{}'"),
+    ("children", "story_level", "INTEGER"),     # set by the story quiz (rules.json story_quiz); NULL before
+    ("children", "placement", "TEXT"),          # 'pending' -> diagnostic items first, 'done'; NULL = no diagnostic
+    ("events", "placement", "INTEGER NOT NULL DEFAULT 0"),   # 1 = a diagnostic (placement) item
 ]
 
 

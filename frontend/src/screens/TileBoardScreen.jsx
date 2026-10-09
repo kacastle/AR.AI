@@ -2,31 +2,20 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Tile from '../components/Tile.jsx'
 import Slot from '../components/Slot.jsx'
 import FeedbackBanner from '../components/FeedbackBanner.jsx'
-import { MOCK_SESSION_ID, getNextTurn, submitAnswer } from '../mocks/api.js'
+import FeedbackOverlay from '../components/FeedbackOverlay.jsx'
+import TurnSwitchScreen from './TurnSwitchScreen.jsx'
+import LessonScreen from './LessonScreen.jsx'
+import Confetti from '../components/Confetti.jsx'
+import LoadingOverlay from '../components/LoadingOverlay.jsx'
+import { playChime, playPop } from '../sfx.js'
+import StarBadge from '../components/StarBadge.jsx'
+import { useAudio } from '../hooks/useAudio.js'
+import SpeakerIcon from '../components/SpeakerIcon.jsx'
+import { getNextTurn, submitAnswer } from '../api.js'
 import { t } from '../strings.js'
 import './TileBoardScreen.css'
 
-const SESSION_ID = MOCK_SESSION_ID
-
-function SpeakerIcon() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
-      <path
-        d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"
-        stroke="currentColor"
-        strokeWidth="2"
-        fill="none"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-function playAudio(url) {
-  if (!url) return
-  new Audio(url).play().catch(() => {})
-}
+const SHAKE_MS = 450
 
 // Turns the API's prefill into the starting board.
 // "show" displays the answer as a model and the learner rebuilds it; other prefill
@@ -55,26 +44,40 @@ function buildBoard(turn) {
   return { model: null, base, consumed }
 }
 
-export default function TileBoardScreen() {
+export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDone }) {
   const [turn, setTurn] = useState(null)
   const [board, setBoard] = useState(null)
   const [slots, setSlots] = useState([])
   const [model, setModel] = useState(null)
   const [result, setResult] = useState(null)
+  const [overlay, setOverlay] = useState(null)
+  const [shake, setShake] = useState(false)
   const [attempt, setAttempt] = useState(1)
   const [hintsUsed, setHintsUsed] = useState(0)
   const [highlight, setHighlight] = useState(null)
+  const [activeChild, setActiveChild] = useState(null)
   const [status, setStatus] = useState('loading')
   const [busy, setBusy] = useState(false)
   const itemStart = useRef(0)
+  const shakeTimer = useRef(null)
+  const speaker = useAudio()
+  const [stars, setStars] = useState({})
+  const [burst, setBurst] = useState(0)
+  const [lessonSeen, setLessonSeen] = useState(null) // turn_number whose lesson was shown
+  const [mastered, setMastered] = useState(null) // skill name to celebrate
 
   const applyTurn = useCallback((next) => {
     const nextBoard = buildBoard(next)
+    clearTimeout(shakeTimer.current)
     setTurn(next)
+    // The server counts stars across sessions; the offline mock does not send them.
+    if (typeof next.stars === 'number') setStars((s) => ({ ...s, [next.child_id]: next.stars }))
     setBoard(nextBoard)
     setSlots(nextBoard.base)
     setModel(nextBoard.model)
     setResult(null)
+    setOverlay(null)
+    setShake(false)
     setAttempt(1)
     setHintsUsed(0)
     setHighlight(null)
@@ -84,23 +87,24 @@ export default function TileBoardScreen() {
 
   useEffect(() => {
     let cancelled = false
-    getNextTurn(SESSION_ID)
+    getNextTurn(sessionId)
       .then((next) => !cancelled && applyTurn(next))
       .catch(() => !cancelled && setStatus('error'))
     return () => {
       cancelled = true
+      clearTimeout(shakeTimer.current)
     }
-  }, [applyTurn])
+  }, [applyTurn, sessionId])
 
   const loadTurn = () => {
     setStatus('loading')
-    getNextTurn(SESSION_ID)
+    getNextTurn(sessionId)
       .then(applyTurn)
       .catch(() => setStatus('error'))
   }
 
   if (status === 'loading') {
-    return <main className="board board--center">{t.loading}</main>
+    return <LoadingOverlay />
   }
 
   if (status === 'error') {
@@ -114,8 +118,30 @@ export default function TileBoardScreen() {
     )
   }
 
+  const needsLesson = Boolean(turn.lesson) && lessonSeen !== turn.turn_number
+
+  if (turn.child_id !== activeChild) {
+    const start = () => {
+      setActiveChild(turn.child_id)
+      itemStart.current = Date.now()
+      if (!needsLesson) speaker.play(turn.item.prompt_audio)
+    }
+    const picture = learners.find((l) => l.id === turn.child_id)?.picture
+    return <TurnSwitchScreen name={turn.child_name} picture={picture} onStart={start} />
+  }
+
+  // Teach first: a new skill, or the same skill another way when the learner is stuck.
+  if (needsLesson) {
+    const practise = () => {
+      setLessonSeen(turn.turn_number)
+      itemStart.current = Date.now()
+      speaker.play(turn.item.prompt_audio)
+    }
+    return <LessonScreen key={turn.turn_number} lesson={turn.lesson} childName={turn.child_name} onDone={practise} />
+  }
+
   const keepCase = turn.task_type === 'sentence_builder'
-  const locked = result?.next_action === 'next' || busy
+  const locked = result?.next_action === 'next' || busy || shake || Boolean(overlay)
   const usedTiles = new Set([
     ...board.consumed,
     ...slots.filter((s) => s && !s.fixed).map((s) => s.tileIndex),
@@ -134,6 +160,7 @@ export default function TileBoardScreen() {
     if (locked || empty === -1) return
     const placed = { text: turn.item.tiles[tileIndex], fixed: false, tileIndex }
     edit((prev) => prev.map((s, i) => (i === empty ? placed : s)))
+    playPop()
   }
 
   const removeTile = (index) => {
@@ -146,7 +173,7 @@ export default function TileBoardScreen() {
   const checkAnswer = async () => {
     setBusy(true)
     try {
-      const response = await submitAnswer(SESSION_ID, {
+      const response = await submitAnswer(sessionId, {
         child_id: turn.child_id,
         item_id: turn.item.id,
         given: slots.map((s) => s.text),
@@ -154,18 +181,34 @@ export default function TileBoardScreen() {
         attempt,
         time_ms: Date.now() - itemStart.current,
       })
-      setResult(response)
-      if (response.next_action === 'next') return
+      if (response.correct) {
+        setResult(response)
+        setStars((s) => ({
+          ...s,
+          [turn.child_id]: typeof response.stars === 'number' ? response.stars : (s[turn.child_id] ?? 0) + 1,
+        }))
+        setBurst((b) => b + 1)
+        playChime()
+        if (response.mastered_skill) setMastered(response.mastered_skill)
+        return
+      }
+      if (response.next_action === 'next') {
+        // Wrong, but the item ends (a diagnostic item has one try; a wrong rebuild ends the item).
+        setResult(response)
+        return
+      }
       setAttempt((a) => a + 1)
       if (response.hint) {
         setHintsUsed((n) => n + 1)
         setHighlight(response.hint.highlight_slot)
-        playAudio(response.hint.audio)
+        speaker.play(response.hint.audio)
       }
-      if (response.next_action === 'show_answer') {
-        setModel(response.answer)
-        setSlots(board.base)
-      }
+      setShake(true)
+      clearTimeout(shakeTimer.current)
+      shakeTimer.current = setTimeout(() => {
+        setShake(false)
+        setOverlay(response)
+      }, SHAKE_MS)
     } catch {
       setResult({ error: true })
     } finally {
@@ -173,8 +216,16 @@ export default function TileBoardScreen() {
     }
   }
 
-  const feedback = result && (
-    result.error ? (
+  const showAnswer = () => {
+    setModel(overlay.answer)
+    setSlots(board.base)
+    setHighlight(null)
+    setOverlay(null)
+  }
+
+  const feedback =
+    result &&
+    (result.error ? (
       <FeedbackBanner tone="incorrect" message={t.loadError} />
     ) : (
       <FeedbackBanner
@@ -182,22 +233,33 @@ export default function TileBoardScreen() {
         message={result.feedback.message_fil ?? t.tryAgain(turn.child_name)}
         hint={result.feedback.hint_fil}
       />
-    )
-  )
+    ))
 
   return (
-    <main className="board">
+    <main className="board slide-in">
       <header className="board__header">
         <span className="board__progress">{t.turnLabel(turn.turn_number)}</span>
-        <span className="board__learner">{t.learnerTurn(turn.child_name)}</span>
+        <div className="board__header-right">
+          <span className="board__learner">{t.learnerTurn(turn.child_name)}</span>
+          {turn.streak >= 2 && (
+            <span key={turn.streak} className="board__streak pop-in" aria-label={t.streak(turn.streak)}>
+              🔥 {turn.streak}
+            </span>
+          )}
+          <StarBadge filled={stars[turn.child_id] ?? 0} text={t.progress.stars(stars[turn.child_id] ?? 0)} />
+        </div>
       </header>
+
+      {t.tutorNotes[turn.mode] && (
+        <p className="board__tutor-note">{t.tutorNotes[turn.mode](turn.method_note)}</p>
+      )}
 
       <p className="board__instruction">{t.instructions[turn.task_type]}</p>
 
       <button
         type="button"
-        className="action board__listen"
-        onClick={() => playAudio(turn.item.prompt_audio)}
+        className={`action board__listen${speaker.speaking ? ' action--speaking' : ''}`}
+        onClick={() => speaker.play(turn.item.prompt_audio)}
       >
         <SpeakerIcon />
         {t.listen}
@@ -216,7 +278,10 @@ export default function TileBoardScreen() {
         </section>
       )}
 
-      <section className="board__slots" aria-label={t.slotsLabel}>
+      <section
+        className={`board__slots${shake ? ' board__slots--shake' : ''}`}
+        aria-label={t.slotsLabel}
+      >
         {slots.map((slot, i) => (
           <Slot
             key={i}
@@ -251,7 +316,11 @@ export default function TileBoardScreen() {
 
       <footer className="board__actions">
         {result?.next_action === 'next' ? (
-          <button type="button" className="action action--primary" onClick={loadTurn}>
+          <button
+            type="button"
+            className="action action--primary action--glow"
+            onClick={() => (isPhaseOver() ? onDone() : loadTurn())}
+          >
             {t.next}
           </button>
         ) : (
@@ -260,7 +329,7 @@ export default function TileBoardScreen() {
               type="button"
               className="action"
               onClick={clearSlots}
-              disabled={!hasPlaced || busy}
+              disabled={!hasPlaced || locked}
             >
               {t.clear}
             </button>
@@ -268,13 +337,38 @@ export default function TileBoardScreen() {
               type="button"
               className="action action--primary"
               onClick={checkAnswer}
-              disabled={!allFilled || busy}
+              disabled={!allFilled || locked}
             >
               {t.check}
             </button>
           </>
         )}
       </footer>
+
+      {overlay && (
+        <FeedbackOverlay
+          response={overlay}
+          name={turn.child_name}
+          onRetry={() => setOverlay(null)}
+          onShowAnswer={showAnswer}
+          onListen={speaker.play}
+          speaking={speaker.speaking}
+        />
+      )}
+      {burst > 0 && <Confetti key={burst} />}
+      {mastered && (
+        <div className="board__mastered" role="dialog" aria-live="polite">
+          <div className="board__mastered-card pop-in">
+            <span className="board__mastered-badge" aria-hidden="true">🏆</span>
+            <p className="board__mastered-name">{mastered}</p>
+            <p>{result?.feedback?.message_fil}</p>
+            <button type="button" className="action action--primary action--glow" onClick={() => setMastered(null)}>
+              {t.next}
+            </button>
+          </div>
+          <Confetti count={80} />
+        </div>
+      )}
     </main>
   )
 }

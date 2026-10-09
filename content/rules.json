@@ -84,7 +84,9 @@
   },
   "timing": {
     "slow_seconds": 30,
-    "item_seconds": 60
+    "item_seconds": 60,
+    "fast_seconds": 8,
+    "pace_window": 10
   },
   "selection": {
     "skill_order": [
@@ -582,5 +584,123 @@
       "library_story"
     ],
     "one_story_per_learner_per_session": true
+  },
+  "story_quiz": {
+    "note": "After a learner answers all questions of a story (first answers count): this many right moves the next story's level. The next story is written right after the quiz.",
+    "harder_at_correct": 3,
+    "easier_at_most_correct": 1,
+    "skill_by_type": {
+      "who": "sk_comp_literal",
+      "what": "sk_comp_literal",
+      "where": "sk_comp_literal",
+      "sequence": "sk_comp_sequence",
+      "feeling": "sk_comp_feeling",
+      "main_idea": "sk_comp_feeling"
+    },
+    "mistake_by_type": {
+      "who": "C_LITERAL",
+      "what": "C_LITERAL",
+      "where": "C_LITERAL",
+      "sequence": "C_SEQUENCE",
+      "feeling": "C_INFER",
+      "main_idea": "C_INFER"
+    }
+  },
+  "reteach": {
+    "note": "Re-teach: when the same mistake comes back, the next items use a method (rules.md 6.7). If a method did not work for this learner before, the next method in the list is used. 'Worked' = this share of first tries right during the method's items.",
+    "after_same_mistake": 2,
+    "within_last_items": 5,
+    "worked_at": 0.67,
+    "support": "guide",
+    "method_order": {
+      "P_SUB_VOWEL": [
+        "minimal_pair_vowels",
+        "syllable_color_clap"
+      ],
+      "P_SUB_CONS": [
+        "minimal_pair_consonants",
+        "syllable_tiles_then_letters"
+      ],
+      "P_OMIT_FINAL": [
+        "syllable_color_clap",
+        "count_slots"
+      ],
+      "P_OMIT_MID": [
+        "syllable_tiles_then_letters",
+        "clap_count_syllables"
+      ],
+      "P_ADD": [
+        "count_slots",
+        "syllable_tiles_then_letters"
+      ],
+      "O_ORDER": [
+        "left_to_right_highlight",
+        "syllable_tiles_then_letters"
+      ],
+      "O_NG": [
+        "ng_sound_pairs",
+        "syllable_tiles_then_letters"
+      ],
+      "S_SYLL_MISS": [
+        "clap_count_syllables",
+        "syllable_color_clap"
+      ],
+      "SN_ORDER": [
+        "first_word_model_sentence"
+      ],
+      "SN_PUNCT": [
+        "capital_period_rule"
+      ]
+    },
+    "effects": {
+      "syllable_color_clap": {
+        "task_type": "dictation_syllables",
+        "difficulty": "easy"
+      },
+      "clap_count_syllables": {
+        "task_type": "dictation_syllables",
+        "difficulty": "easy"
+      },
+      "syllable_tiles_then_letters": {
+        "task_type": "dictation_syllables",
+        "difficulty": "easy"
+      },
+      "minimal_pair_vowels": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "minimal_pair_consonants": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "ng_sound_pairs": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "count_slots": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "left_to_right_highlight": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "first_word_model_sentence": {
+        "difficulty": "easy"
+      },
+      "capital_period_rule": {
+        "difficulty": "easy"
+      }
+    }
+  },
+  "lessons": {
+    "note": "Lesson player: a lesson before a learner's first item of a skill, and another one (a different style) when a re-teach method starts. A lesson worked when this share of the next check_items first tries is right; the next lesson prefers a style that worked for the learner.",
+    "styles": [
+      "visual",
+      "steps",
+      "story"
+    ],
+    "check_items": 3,
+    "worked_at": 0.67
   }
 }
