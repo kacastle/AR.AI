@@ -35,30 +35,6 @@ class FakeSpeaker:
 
 # ---------- model input ----------
 
-def test_mms_ids_puts_a_blank_between_every_letter():
-    # In mms-tts-tgl the letter "a" has id 0, the same id as the blank. That must not change anything.
-    vocab = {"a": 0, "b": 1, "h": 2, "y": 3, " ": 4}
-    ids, chars = audio.mms_ids("Bahay!", vocab)
-    assert chars == list("bahay")
-    assert ids == [0, 1, 0, 0, 0, 2, 0, 0, 0, 3, 0]
-    ids, chars = audio.mms_ids("Aba ba", vocab)
-    assert chars == list("aba ba") and len(ids) == 2 * 6 + 1
-
-
-def test_word_spans_from_durations():
-    chars = list("si a")                     # tokens: _ s _ i _ ' ' _ a _
-    frames = [1] * 9
-    spans = audio.word_spans(chars, frames, samples_per_frame=160, rate=16000)   # 10 ms per frame
-    assert spans == [(10, 40), (70, 80)]
-
-
-def test_word_spans_keep_one_entry_per_word_even_without_letters():
-    # "a — b": the dash is not in the vocab, so two spaces in a row; it still counts as a word.
-    spans = audio.word_spans(list("a  b"), [1] * 9, samples_per_frame=160, rate=16000)
-    assert len(spans) == 3
-    assert spans[1][0] == spans[1][1]
-
-
 def test_join_clips_puts_silence_between_and_returns_ms():
     rate = 16000
     clips = [np.ones(1600, dtype=np.float32), np.ones(800, dtype=np.float32)]
@@ -85,10 +61,10 @@ def test_plan_covers_every_word_syllable_sentence_story_and_fixed_line():
     for w in CONTENT.data.words:
         assert jobs[w.id].parts == [w.tts_text]
         slow = jobs[audio.slow_key(w.id)]
-        assert slow.parts == [audio.syllable_voice_text(s) for s in w.syllables] and slow.gap_ms == audio.SLOW_GAP_MS
+        assert slow.parts == w.syllables and slow.gap_ms == audio.SLOW_GAP_MS
         assert slow.part_keys == [audio.syllable_key(s) for s in w.syllables]
         for syl in w.syllables:
-            assert jobs[audio.syllable_key(syl)].parts == [audio.syllable_voice_text(syl)]
+            assert jobs[audio.syllable_key(syl)].parts == [syl]
     for s in CONTENT.sentences:
         assert jobs[s.id].parts == [s.text]
     for story in CONTENT.data.stories:
@@ -102,16 +78,47 @@ def test_plan_covers_every_word_syllable_sentence_story_and_fixed_line():
     assert jobs["fb_SHOW_ANSWER_0"].parts == CONTENT.rules.feedback_templates["SHOW_ANSWER"].message_fil
 
 
-def test_lone_vowels_the_voice_cannot_say_are_spelled_three_times():
-    # facebook/mms-tts-tgl is silent on a lone a, e, o or u, but says "aaa"; a lone i works as it is.
-    assert [audio.syllable_voice_text(s) for s in ["a", "e", "o", "u", "i", "A"]] == \
-        ["aaa", "eee", "ooo", "uuu", "i", "AAA"]
-    assert [audio.syllable_voice_text(s) for s in ["ba", "so", "ng", "aw"]] == ["ba", "so", "ng", "aw"]
+def test_syllables_are_said_as_written():
+    # OmniVoice says a lone vowel as it is, so syllables need no special spelling.
     jobs = {j.key: j for j in audio.plan(CONTENT)}
-    assert jobs["syl_a"].parts == ["aaa"]                      # the key stays syl_a
+    assert jobs["syl_a"].parts == ["a"]
     aso = jobs[audio.slow_key("w_aso")]
-    assert aso.parts == ["aaa", "so"] and aso.part_keys == ["syl_a", "syl_so"]
-    assert jobs["w_aso"].parts == ["aso"]                      # whole words are not changed
+    assert aso.parts == ["a", "so"] and aso.part_keys == ["syl_a", "syl_so"]
+
+
+# ---------- voice output ----------
+
+def test_estimate_word_spans_shares_the_time_by_letters():
+    spans = audio.estimate_word_spans(["Si", "Ana", "ay", "masaya."], 1300)
+    assert spans == [(0, 200), (200, 500), (500, 700), (700, 1300)]   # 2, 3, 2, 6 letters of 13
+    assert audio.estimate_word_spans(["a", "—", "b"], 200) == [(0, 100), (100, 100), (100, 200)]
+    assert audio.estimate_word_spans(["—"], 300) == [(0, 0)]
+
+
+def test_first_audible_retries_errors_and_silence():
+    loud = np.full(10, 0.5, dtype=np.float32)
+    quiet = np.full(10, 0.01, dtype=np.float32)
+    outputs = [ValueError("empty"), quiet, loud]
+    tried = []
+
+    def make(attempt):
+        tried.append(attempt)
+        out = outputs[attempt]
+        if isinstance(out, Exception):
+            raise out
+        return out
+
+    assert audio.first_audible(make, tries=5) is loud
+    assert tried == [0, 1, 2]                                   # stops at the first clip with sound
+
+
+def test_first_audible_keeps_the_loudest_when_every_try_is_quiet():
+    outs = [np.full(4, p, dtype=np.float32) for p in (0.01, 0.03, 0.02)]
+    assert audio.first_audible(lambda a: outs[a], tries=3) is outs[1]
+
+    def broken(attempt):
+        raise ValueError("empty")
+    assert len(audio.first_audible(broken, tries=2)) == 0       # silence; pregen_audio --check reports it
 
 
 # ---------- build ----------

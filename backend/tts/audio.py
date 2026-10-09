@@ -1,6 +1,6 @@
-"""Audio file names, the list of clips to pregenerate, model input, and story word timings.
+"""Audio file names, the list of clips to pregenerate, clip building and story word timings.
 
-No TTS model here (see mms.py), so the server and the tests can import this without loading torch.
+No TTS model here (see omni.py), so the server and the tests can import this without loading torch.
 Files live in audio_cache/ (gitignored) and are served by GET /api/audio/{key}.wav.
 
 Keys:
@@ -35,8 +35,7 @@ SENTENCE_GAP_MS = 300
 PARAGRAPH_GAP_MS = 500
 EDGE_KEEP_MS = 40    # silence kept at each end of a spoken piece before pieces are joined
 MAX_WORD_MS = 1500   # a story word longer than this is a voice glitch; the check reports it
-QUIET_PEAK = 0.05    # a clip quieter than this has no real speech (the model cannot say lone vowels)
-LONE_VOWELS_TRIPLED = {"a", "e", "o", "u"}
+QUIET_PEAK = 0.05    # a clip quieter than this has no real speech (the voice sometimes returns silence)
 
 
 @dataclass
@@ -60,12 +59,6 @@ def slow_key(item_id: str) -> str:
 
 def syllable_key(syllable: str) -> str:
     return f"syl_{syllable}"
-
-
-def syllable_voice_text(syllable: str) -> str:
-    """What the voice is asked to say for a syllable. It is silent on a lone a, e, o or u but says "aaa"
-    (a lone i works), so those are spelled three times. Only the model input changes, never the key."""
-    return syllable * 3 if syllable.lower() in LONE_VOWELS_TRIPLED else syllable
 
 
 def paragraph_key(story_id: str, n: int) -> str:
@@ -94,11 +87,11 @@ def plan(content) -> list[Job]:
 
     for w in content.data.words:
         add(Job(w.id, [w.tts_text]))
-        add(Job(slow_key(w.id), [syllable_voice_text(s) for s in w.syllables], gap_ms=SLOW_GAP_MS,
+        add(Job(slow_key(w.id), list(w.syllables), gap_ms=SLOW_GAP_MS,
                 part_keys=[syllable_key(s) for s in w.syllables]))
     for w in content.data.words:
         for syl in w.syllables:
-            add(Job(syllable_key(syl), [syllable_voice_text(syl)]))
+            add(Job(syllable_key(syl), [syl]))
     for s in content.sentences:
         add(Job(s.id, [s.text]))
         add(Job(slow_key(s.id), list(s.word_tiles), gap_ms=SLOW_GAP_MS))
@@ -115,48 +108,43 @@ def plan(content) -> list[Job]:
     return list(jobs.values())
 
 
-# ---------- model input and timings ----------
+# ---------- timings ----------
 
-def mms_ids(text: str, vocab: dict[str, int]) -> tuple[list[int], list[str]]:
-    """Model input the way MMS builds it: lowercase, keep only vocab characters, a blank (id 0) around each.
-
-    Not the Hugging Face tokenizer: in mms-tts-tgl the letter "a" has id 0 and is also the pad token, so
-    the tokenizer treats every "a" as a special token and drops spaces and blanks next to it.
-    """
-    chars = [ch for ch in text.lower() if ch in vocab]
-    ids = [0]
-    for ch in chars:
-        ids += [vocab[ch], 0]
-    return ids, chars
-
-
-def word_spans(chars: list[str], frames: list[int], samples_per_frame: float, rate: int) -> list[tuple[int, int]]:
-    """(start_ms, end_ms) of each space-separated word. frames[k] is the model's length for input token k
-    (blanks at even k, chars[i] at 2i+1). Two spaces in a row (a word with no letters) give an empty span.
-    The text must have single spaces and none at the ends (see mms.Speaker.say_timed)."""
-    starts = np.concatenate([[0], np.cumsum(frames)])
-
-    def ms(frame: float) -> int:
-        return round(frame * samples_per_frame * 1000 / rate)
-
-    spans, first, last = [], None, None
-    for i, ch in enumerate(chars + [" "]):
-        if ch != " ":
-            first = i if first is None else first
-            last = i
-            continue
-        if first is None:
-            at = ms(starts[2 * i + 1]) if i < len(chars) else ms(starts[-1])
-            spans.append((at, at))
-        else:
-            spans.append((ms(starts[2 * first + 1]), ms(starts[2 * last + 2])))
-        first = None
+def estimate_word_spans(words: list[str], total_ms: int) -> list[tuple[int, int]]:
+    """(start_ms, end_ms) per word for a voice that gives no timings: the time is shared by letter count.
+    A word with no letters (a dash) gets an empty span."""
+    letters = [sum(ch.isalpha() for ch in w) for w in words]
+    total = sum(letters)
+    if not total:
+        return [(0, 0)] * len(words)
+    spans, done = [], 0
+    for n in letters:
+        start = round(total_ms * done / total)
+        done += n
+        spans.append((start, round(total_ms * done / total)))
     return spans
+
+
+def first_audible(make, tries: int, quiet: float = QUIET_PEAK) -> np.ndarray:
+    """make(attempt) -> samples, or raises ValueError when the voice returned nothing. Tries up to `tries`
+    times and returns the first clip with real sound; if none has, the loudest (empty if all failed)."""
+    best = np.zeros(0, dtype=np.float32)
+    for attempt in range(tries):
+        try:
+            samples = make(attempt)
+        except ValueError:
+            continue
+        peak = float(np.abs(samples).max()) if len(samples) else 0.0
+        if peak >= quiet:
+            return samples
+        if peak > (float(np.abs(best).max()) if len(best) else -1.0):
+            best = samples
+    return best
 
 
 def split_sentences(text: str) -> list[str]:
     """Sentences of a text, every word kept. A sentence ends at . ! or ? (maybe followed by a closing quote)
-    when the next word starts with a capital letter or a quote. MMS garbles long multi-sentence input."""
+    when the next word starts with a capital letter or a quote. The voice is steadier one sentence at a time."""
     sentences, current = [], []
     words = text.split()
     for i, word in enumerate(words):

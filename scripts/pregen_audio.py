@@ -1,9 +1,9 @@
-"""Pregenerate every audio clip into audio_cache/ with facebook/mms-tts-tgl, fully offline.
+"""Pregenerate every audio clip into audio_cache/ with k2-fsa/OmniVoice (Filipino), fully offline.
 
 Words, syllables, sentences, story paragraphs, fixed feedback lines, a slow syllable-by-syllable
 version of each word, and each whole story read naturally with its word timings.
 Files that already exist are skipped, unless their text in content/ or the voice settings in
-backend/tts/mms.py changed.
+backend/tts/omni.py changed. The first full run takes about an hour on the CPU.
 A recording in content/recordings/{key}.wav (or RECORDINGS_DIR) is used instead of the model.
 See backend/tts/audio.py for the file names.
 
@@ -50,8 +50,8 @@ def recorded(job: audio.Job) -> bool:
 
 
 def generate(jobs: list[audio.Job], force: bool) -> None:
-    from backend.tts import mms   # loads torch; only when generating
-    settings = mms.settings()
+    from backend.tts import omni   # loads torch; only when generating
+    settings = omni.settings()
     old, made = read_stamp()
     if old != settings and any(audio.wav_path(j.key).is_file() for j in jobs):
         print(f"Voice settings changed ({old} -> {settings}); remaking every clip.")
@@ -64,7 +64,7 @@ def generate(jobs: list[audio.Job], force: bool) -> None:
     todo = [j for j in jobs if force or not done(j) or recorded(j) or j in changed]
     print(f"{len(jobs)} clips, {len(jobs) - len(todo)} up to date in {audio.AUDIO_DIR}, {len(todo)} to make")
     if todo:
-        speaker = mms.Speaker()
+        speaker = omni.Speaker()
         start = time.perf_counter()
         for n, job in enumerate(todo, 1):
             if job.words is None and (audio.RECORDINGS_DIR / f"{job.key}.wav").is_file():

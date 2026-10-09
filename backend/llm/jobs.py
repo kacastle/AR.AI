@@ -65,10 +65,10 @@ def get_content() -> Content:
 
 
 def get_speaker():
-    """MMS-TTS, loaded once in the worker thread on first use. Replaced by a fake in tests."""
+    """OmniVoice (backend/tts/omni.py), loaded once in the worker thread on first use. Replaced by a fake in tests."""
     global _speaker
     if _speaker is None:
-        from backend.tts.mms import Speaker   # torch; only when a story needs audio
+        from backend.tts.omni import Speaker   # torch; only when a story needs audio
         _speaker = Speaker()
     return _speaker
 
@@ -231,9 +231,9 @@ def run_warmup(job: Job, content: Content) -> None:
     start = time.perf_counter()
     try:
         get_speaker()
-        timed("warm-up voice", "warm-up voice facebook/mms-tts-tgl", "ok", start)
+        timed("warm-up voice", "warm-up voice k2-fsa/OmniVoice", "ok", start)
     except Exception as e:
-        timed("warm-up voice", "warm-up voice facebook/mms-tts-tgl", f"failed ({e!r})", start)
+        timed("warm-up voice", "warm-up voice k2-fsa/OmniVoice", f"failed ({e!r})", start)
 
 
 RUNNERS = {"story": run_story, "words": run_words, "summary": run_summary, "story_audio": run_story_audio,

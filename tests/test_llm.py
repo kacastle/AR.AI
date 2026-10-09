@@ -37,7 +37,7 @@ class FakeModel:
 
 
 class FakeSpeaker:
-    """Stands in for MMS-TTS: 100 ms per word."""
+    """Stands in for the voice (OmniVoice): 100 ms per word."""
     rate = 1000
 
     def __init__(self, broken=False):

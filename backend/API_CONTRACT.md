@@ -63,7 +63,7 @@ Response
 ## GET /api/stories/{id}
 `words` lists every word in reading order, with punctuation attached, for highlighting.
 `id` can be a `content.json` story id (`st_…`), a filled template story (`ts_…`) or a model story the tutor approved (`gs_…`); the session's `story_ids` lists them. A model story that is waiting or rejected returns `404`: learners never see it before the tutor approves it. Model stories have their audio before they reach the tutor; a template story's audio is made in the background right after the session starts (`audio_url` is `404` for the first few seconds, and the timings are estimates until then).
-`words` is every word in reading order. Once `scripts/pregen_audio.py` has run, `start_ms`/`end_ms` are the real positions of each word in `audio_url` (the story is read naturally, paragraph by paragraph with a short pause between; the timings come from the voice model), so tapping a word can play just that part. Before that they are estimates and `audio_url` returns 404.
+`words` is every word in reading order. Once `scripts/pregen_audio.py` has run, `start_ms`/`end_ms` are positions in `audio_url` (the story is read naturally, sentence by sentence and paragraph by paragraph with a short pause between). Each sentence's start and end are exact; the words inside a sentence share its time by letter count, because the voice (OmniVoice) gives no word timings. Good enough for highlighting; tapping a word may clip its edges a little. Before that they are estimates and `audio_url` returns 404.
 
 ```json
 {"title": "Ang Bahay ni Ana",
