@@ -47,7 +47,7 @@ Response: the group (same shape as GET below).
 ## POST /api/sessions
 `present` = the learner ids at the session, in turn order. Turns rotate in this order.
 `read_along_story_id` is the group's read-along story. `story_ids` gives each present learner the story for his or her story turn (rules.md section 9), chosen without the model in this order: an approved model story for that learner not read yet (`gs_…`) → a filled template from `content.json` `story_templates` at the learner's level, not used in the last 2 sessions (`ts_…`) → a library story at the learner's level (`st_…`). Fetch each with `GET /api/stories/{id}`.
-Creating a session also asks the background model for the next personal story and practice words for each present learner. That never delays a request; results show up in `GET /api/approvals` a few minutes later.
+Creating a session also asks the background model for practice words for each present learner (they show up in `GET /api/approvals` within a minute or two). Personal stories for the next session are asked for at the end of the session, when the phase becomes `summary`, right after the summary. None of this ever delays a request.
 
 Request
 ```json
@@ -78,7 +78,8 @@ Response
 (`words` is shortened here.)
 
 ## POST /api/sessions/{id}/phase
-`phase` is one of `tiles`, `stories`, `summary`. `ends_at` is local time with offset. The phase lengths come from `rules.json` → `session` (35 / 15 / 10 min; 1 min each with `DEMO_FAST=1`).
+`phase` is one of `tiles`, `stories`, `summary`. `ends_at` is local time with offset. The phase lengths come from `rules.json` → `session` (35 / 15 / 10 min). With `DEMO_FAST=1` (rules.json `session.demo_fast`) every phase is 1 minute and `/next` gives `seconds: 20`, so a demo session takes about 3 minutes.
+Setting `summary` queues the model summary, then each learner's personal story for the next session.
 
 Request
 ```json

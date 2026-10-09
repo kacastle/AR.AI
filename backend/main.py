@@ -168,12 +168,12 @@ def create_session(body: SessionIn):
                      "VALUES (?, ?, ?, ?, ?, ?)", (session_id, body.group_id, json.dumps(body.present), "tiles",
                                                    story.id, json.dumps(story_ids)))
         out = session_out(get_row(conn, "sessions", session_id))
-    # Background work: audio for filled templates now, and the model's next stories and words for the tutor.
+    # Background work: audio for filled templates now, practice words for the sheet. Personal stories for
+    # the next session are written at the end of this one (prompts.md section 0), after the summary.
     for story_id in story_ids.values():
         if story_id.startswith("ts_"):
             worker.submit(Job("story_audio", story_id=story_id))
     for child_id in body.present:
-        worker.submit(Job("story", child_id=child_id))
         worker.submit(Job("words", child_id=child_id))
     return out
 
@@ -205,11 +205,14 @@ def set_phase(session_id: str, body: PhaseIn):
     }[body.phase]
     ends_at = (datetime.now().astimezone() + timedelta(minutes=minutes)).isoformat(timespec="seconds")
     with db.connect() as conn:
-        get_row(conn, "sessions", session_id)
+        present = json.loads(get_row(conn, "sessions", session_id)["present"])
         conn.execute("UPDATE sessions SET phase = ?, phase_ends_at = ? WHERE id = ?",
                      (body.phase, ends_at, session_id))
     if body.phase == "summary":
+        # The summary first; then each learner's personal story for the next session (end of session).
         worker.submit(Job("summary", session_id=session_id))
+        for child_id in present:
+            worker.submit(Job("story", child_id=child_id))
     return PhaseOut(phase=body.phase, ends_at=ends_at)
 
 

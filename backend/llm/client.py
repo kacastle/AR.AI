@@ -50,6 +50,24 @@ def chat(model: str, system: str, user: str, temperature: float, num_predict: in
     return tp.clean_output(text), data.get("done_reason", "stop")
 
 
+def warm(model: str) -> None:
+    """Load the model into memory now (Ollama's load call: /api/generate without a prompt), so the
+    first real call does not pay for loading. keep_alive keeps it loaded."""
+    global _down_until
+    request = urllib.request.Request(f"{BASE_URL}/api/generate",
+                                     data=json.dumps({"model": model, "keep_alive": KEEP_ALIVE}).encode("utf-8"),
+                                     headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+            response.read()
+    except urllib.error.URLError as e:
+        if isinstance(e.reason, ConnectionRefusedError):
+            _down_until = time.monotonic() + PAUSE_SECONDS
+        raise ModelError(f"Ollama at {BASE_URL}: {e.reason}") from e
+    except OSError as e:
+        raise ModelError(f"Ollama at {BASE_URL}: {e}") from e
+
+
 def available() -> bool:
     """True when Ollama answers on localhost (quick check, 2 s)."""
     try:

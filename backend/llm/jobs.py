@@ -5,14 +5,18 @@
 - words:       practice words for one learner (section 2) -> approvals; approved ones go on the sheet
 - summary:     the tutor summary for one session (section 4) -> GET /summary while it is current
 - story_audio: audio for a filled template story (no model call)
+- warmup:      load the model and the voice when the app starts, so the first real call is not slow
 
+Every model and voice call is timed: one console line each ("... 12.3 s, ok") and an entry in CALL_TIMES.
 A failed check is retried once; then nothing is saved and the fallback stays (backend/llm/fallbacks.py,
 the sheet's content words, summary.template()). When Ollama is off, every job just falls back.
 """
 import json
 import os
 import random
+import time
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
 from backend import db, summary
@@ -26,7 +30,7 @@ DEFAULT_MODEL = "gemma4:e4b"
 
 @dataclass(frozen=True)
 class Job:
-    kind: str                         # story, words, summary or story_audio
+    kind: str                         # warmup, story_audio, summary, words or story
     child_id: Optional[str] = None
     session_id: Optional[str] = None
     story_id: Optional[str] = None
@@ -37,7 +41,16 @@ def model_name() -> str:
 
 
 def log(message: str) -> None:
-    print(f"[llm] {message}", flush=True)
+    print(f"[llm] {datetime.now():%H:%M:%S} {message}", flush=True)
+
+
+CALL_TIMES: list[dict] = []     # every timed call since startup: {"what", "label", "seconds", "result"}
+
+
+def timed(what: str, label: str, result: str, start: float) -> None:
+    seconds = time.perf_counter() - start
+    CALL_TIMES.append({"what": what, "label": label, "seconds": round(seconds, 1), "result": result})
+    log(f"{label}: {seconds:.1f} s, {result}")
 
 
 _content: Optional[Content] = None
@@ -77,16 +90,17 @@ def generate(kind: str, v: dict, learner: Optional[dict], label: str) -> Optiona
         log(f"{label}: prompt has unfilled placeholders {unfilled}; skipped")
         return None
     for attempt in (1, 2):
+        start = time.perf_counter()
         try:
             out = ask_model(kind, user, v, learner)
         except client.ModelError as e:              # the retry is for failed checks, not a missing model
-            log(f"{label}: {e}; using the fallback")
+            timed(kind, f"{label}, attempt {attempt}", f"no model ({e}); using the fallback", start)
             return None
         fails, parsed = checks.check(kind, out, v, learner)
         if not fails:
-            log(f"{label}: ok (attempt {attempt})")
+            timed(kind, f"{label}, attempt {attempt}", "ok", start)
             return parsed
-        log(f"{label}: failed checks {fails} (attempt {attempt})")
+        timed(kind, f"{label}, attempt {attempt}", f"failed checks {fails}", start)
     log(f"{label}: using the fallback")
     return None
 
@@ -114,7 +128,13 @@ def make_story_audio(story_id: str, paragraphs: list[str]) -> None:
     """audio_cache/{story_id}.wav read naturally, and {story_id}.json with each word's timing."""
     job = audio.Job(story_id, list(paragraphs), gap_ms=audio.PARAGRAPH_GAP_MS,
                     words=" ".join(paragraphs).split())
-    samples, rate, words = audio.build(job, get_speaker())
+    start = time.perf_counter()
+    try:
+        samples, rate, words = audio.build(job, get_speaker())
+    except Exception as e:
+        timed("story audio", f"story audio {story_id}", f"failed ({e!r})", start)
+        raise
+    timed("story audio", f"story audio {story_id}", "ok", start)
     audio.AUDIO_DIR.mkdir(parents=True, exist_ok=True)
     audio.timings_path(story_id).write_text(json.dumps({"words": words}, ensure_ascii=False), encoding="utf-8")
     audio.write_wav(audio.wav_path(story_id), samples, rate)
@@ -198,10 +218,29 @@ def run_story_audio(job: Job, content: Content) -> None:
         row = conn.execute("SELECT payload FROM generated_items WHERE id = ?", (job.story_id,)).fetchone()
     if row:
         make_story_audio(job.story_id, json.loads(row["payload"])["paragraphs"])
-        log(f"audio for {job.story_id}: ok")
 
 
-RUNNERS = {"story": run_story, "words": run_words, "summary": run_summary, "story_audio": run_story_audio}
+def run_warmup(job: Job, content: Content) -> None:
+    """Load the model (Ollama keeps it for keep_alive) and the voice before the first session needs them."""
+    start = time.perf_counter()
+    try:
+        client.warm(model_name())
+        timed("warm-up model", f"warm-up model {model_name()}", "ok", start)
+    except client.ModelError as e:
+        timed("warm-up model", f"warm-up model {model_name()}", f"failed ({e}); stories and summaries fall back", start)
+    start = time.perf_counter()
+    try:
+        get_speaker()
+        timed("warm-up voice", "warm-up voice facebook/mms-tts-tgl", "ok", start)
+    except Exception as e:
+        timed("warm-up voice", "warm-up voice facebook/mms-tts-tgl", f"failed ({e!r})", start)
+
+
+RUNNERS = {"story": run_story, "words": run_words, "summary": run_summary, "story_audio": run_story_audio,
+           "warmup": run_warmup}
+
+# The worker runs lower numbers first: the summary must never wait behind next session's stories.
+PRIORITY = {"warmup": 0, "story_audio": 1, "summary": 2, "words": 3, "story": 4}
 
 
 def run(job: Job, content: Optional[Content] = None) -> None:

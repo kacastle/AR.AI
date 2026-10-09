@@ -131,10 +131,14 @@ class LlmTest(unittest.TestCase):
 
     # ---------- queueing, never inside a turn ----------
 
-    def test_session_queues_story_and_words_per_learner_and_turns_queue_nothing(self):
+    def end_session(self, session):
+        """The summary phase: the summary, then each learner's story for the next session, get queued."""
+        self.client.post(f"/api/sessions/{session['id']}/phase", json={"phase": "summary"})
+
+    def test_session_queues_words_stories_come_at_the_end_and_turns_queue_nothing(self):
         _, session = self.make_session()
         kinds = sorted(j.kind for j in worker.pending() if j.kind != "story_audio")
-        self.assertEqual(kinds, ["story", "story", "words", "words"])
+        self.assertEqual(kinds, ["words", "words"])
         # Filled template stories get their audio in the background too.
         self.assertEqual({j.story_id for j in worker.pending() if j.kind == "story_audio"},
                          {i for i in session["story_ids"].values() if i.startswith("ts_")})
@@ -142,11 +146,14 @@ class LlmTest(unittest.TestCase):
         self.play(session["id"], 2)
         self.assertEqual(len(worker.pending()), before)
         self.assertEqual(self.fake.calls, [])   # no model call during /next or /answer
+        self.end_session(session)
+        self.assertEqual([j.kind for j in worker.pending()][-2:], ["story", "story"])
 
     # ---------- stories ----------
 
     def test_story_goes_to_approvals_and_is_served_once_approved(self):
         group, session = self.make_session()
+        self.end_session(session)
         worker.run_pending()
         approvals = self.client.get("/api/approvals").json()
         ana = group["learners"][0]["id"]
@@ -297,6 +304,7 @@ class LlmTest(unittest.TestCase):
         self.assertIn("Ana", " ".join(tpl["paragraphs"]))
         self.assertNotIn("{", tpl["title"] + " ".join(tpl["paragraphs"]))
 
+        self.end_session(first)
         worker.run_pending()
         item = next(a for a in self.client.get("/api/approvals").json()
                     if a["kind"] == "story" and a["child_id"] == ana)

@@ -34,7 +34,8 @@ Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv 
 - Simulation: `python scripts/simulate.py`
 - Scripts: `python scripts/pregen_audio.py` (`--force` remakes all, `--check` only checks)
 - Testbench: `python scripts/testbench.py` then http://localhost:5173 (first time: `cd frontend; npm ci`)
-- Model worker: on by default in the server; `$env:LLM_WORKER="0"` turns it off. Needs Ollama running with OLLAMA_MODEL pulled.
+- Model worker: on by default in the server; warms up the model and the voice at startup; logs the seconds of every model and voice call ("[llm] HH:MM:SS ... 12.3 s, ok"). `$env:LLM_WORKER="0"` turns it off. Needs Ollama running with OLLAMA_MODEL pulled.
+- Demo run: `python scripts/demo_session.py` (DEMO_FAST session with 3 fake learners, real model; prints every model call time).
 - Database: data/tutor.db (gitignored). `DB_PATH` overrides it. New columns are added automatically on startup.
 - Demo timing: `$env:DEMO_FAST="1"` uses rules.json session.demo_fast (1-minute phases, 20-second items).
 - Offline mode (PowerShell): `$env:HF_HUB_OFFLINE="1"; $env:TRANSFORMERS_OFFLINE="1"`
@@ -96,6 +97,7 @@ The code uses rules.json feedback_templates for every code (confirmed): CORRECT 
 - P2-5 done: classifier and template feedback in /answer, correction steps (attempt 5 ends the item), events.turn_number; gap_slot in /next.
 - P2-2 done: pregen_audio.py with MMS-TTS (model input built the MMS way, sentence by sentence, natural stories with word timings, recording overrides in content/recordings/, remakes clips whose text changed). Open: pick the voice settings (audio_cache/try_*.wav), and record syl_a/e/o/u (the model cannot say lone vowels).
 - P2-6 done: backend/llm/ client.py (Ollama, localhost only, pauses 30 s after a refused connection), prompts.py and checks.py (thin layers over content/test_prompts.py: no second copy), fallbacks.py (story order from rules.md 9), jobs.py, worker.py (background thread). Stories get audio before they reach /api/approvals and stay hidden until approved. Retry once on a failed check, never on a missing model. Target words stay optional (Kiefer's v0.3 rules), although the P2-6 spec asked for all of them.
+- P2-8 done: warm-up at startup, timed model calls, job priorities (warm-up, template audio, summary, words, stories), stories queued at the end of the session (prompts.md 0), DEMO_FAST tested, scripts/demo_session.py.
 - P2-7 done: backend/summary.py (numbers incl. alert, prompt values, template with skill names, current model summary); /summary and /sheet work with Ollama off.
 - Testbench: scripts/testbench.py runs the real frontend against the real backend.
 - Not wired yet: placement endpoint and session flow, end_with_easy_item, SLOW rule, alerts, seed_demo.py, model feedback wording, audio for model stories.
