@@ -4,8 +4,8 @@ Project: ReadingTutor PH. Offline tutor's assistant for DepEd ARAL-Reading, Key 
 I am Person 2. I own backend/, scripts/, tests/. Do not edit frontend/ (Person 1) or content/ (Person 3, Kiefer). content/ files are read-only inputs and may be replaced by newer versions at any time (content v0.2 is in content/ now).
 
 ## Stack
-Python FastAPI + Pydantic, SQLite, Ollama with JSON output, MMS-TTS facebook/mms-tts-tgl. Windows with PowerShell, venv in .venv.
-Installed in .venv: fastapi, uvicorn, transformers, torch (CPU build), pytest. Ask before adding anything else.
+Python FastAPI + Pydantic, SQLite, Ollama with JSON output, OmniVoice k2-fsa/OmniVoice (language fil, default voice) for text to speech. Windows with PowerShell, venv in .venv.
+Installed in .venv: fastapi, uvicorn, transformers, torch (CPU build), torchaudio (CPU build), omnivoice, pytest. Ask before adding anything else.
 Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL (default gemma4:e4b, the model content/test_prompts.py v0.3 is tuned for). Never write "3B" in code, docs or comments; use the real model name.
 
 ## Principles
@@ -23,16 +23,16 @@ Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL 
 
 ## Layout and how to run
 Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv active.
-- backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), records.py (skill states and learner info from the database), summary.py (tutor summary), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state, feedback), llm/ (harness loads content/test_prompts.py; client, prompts, checks, fallbacks, jobs; worker = background thread), tts/ (audio plan, clip building, MMS speaker). Each folder has an __init__.py.
+- backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), records.py (skill states and learner info from the database), summary.py (tutor summary), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state, feedback), llm/ (harness loads content/test_prompts.py; client, prompts, checks, fallbacks, jobs; worker = background thread), tts/ (audio plan, clip building; omni.py = OmniVoice speaker). Each folder has an __init__.py.
 - tests/ (repo root): API, content, audio, model-job and testbench tests (test_api.py, test_content.py, test_audio.py, test_llm.py, test_testbench.py); tests/conftest.py sets LLM_WORKER=0. The prompt test harness is content/test_prompts.py. backend/tests/: engine unit tests (classifier, scoring, selector, rotation, review) with a shared conftest.py. `python -m pytest` runs both.
-- scripts/: test_ollama.py, test_tts.py, simulate.py (3-learner session through the real API), pregen_audio.py, testbench.py + testbench/ (real frontend against the real backend), pull_models.sh. Still to come: seed_demo.py.
+- scripts/: test_ollama.py, simulate.py (3-learner session through the real API), pregen_audio.py, testbench.py + testbench/ (real frontend against the real backend), pull_models.sh. Still to come: seed_demo.py.
 - content/ (Person 3), frontend/ (Person 1).
 - Imports: package style only, for example `from backend.db import ...`. Never `from db import ...`.
 - Server: `uvicorn backend.main:app --reload --reload-dir backend --port 8000`
 - Tests: `python -m pytest`
 - Content check (for Person 3): `python -m backend.content` prints OK or a numbered list of problems.
 - Simulation: `python scripts/simulate.py`
-- Scripts: `python scripts/pregen_audio.py` (`--force` remakes all, `--check` only checks)
+- Scripts: `python scripts/pregen_audio.py` (`--force` remakes all, `--check` only checks). A full run takes about an hour on the CPU (about 8 s per clip, about 65 s per story).
 - Testbench: `python scripts/testbench.py` then http://localhost:5173 (first time: `cd frontend; npm ci`)
 - Model worker: on by default in the server; warms up the model and the voice at startup; logs the seconds of every model and voice call ("[llm] HH:MM:SS ... 12.3 s, ok"). `$env:LLM_WORKER="0"` turns it off. Needs Ollama running with OLLAMA_MODEL pulled.
 - Demo run: `python scripts/demo_session.py` (DEMO_FAST session with 3 fake learners, real model; prints every model call time).
@@ -61,7 +61,7 @@ Other shapes (keep flat and simple, reuse content.json field names):
 - login: body {pin}, returns {ok} (demo stub: any PIN works)
 - groups: group with learners (name, picture, profile, interests); profile must be in rules.json placement.profiles; interests optional, up to 3 content.json interest ids
 - sessions: body {group_id, present[]}, returns session with read_along_story_id and story_ids {child_id: story id} (approved model story -> filled template -> library story)
-- stories: {title, paragraphs, words[{text, start_ms, end_ms}], audio_url} (real word timings after pregen_audio.py); approved model stories (gs_ ids) too
+- stories: {title, paragraphs, words[{text, start_ms, end_ms}], audio_url} (word timings after pregen_audio.py: exact per sentence, estimated by letter count inside a sentence); approved model stories (gs_ ids) too
 - phase: body {phase}, returns {phase, ends_at}
 - summary: learners[{child_id, summary, next_focus_skill, next_method}] and group_note (the model's summary once it is ready and current, else the English fallback template from prompts.md section 4)
 - sheet: name, date, 5 words with syllables, 1 sentence, home_line_fil
@@ -90,12 +90,13 @@ The code uses rules.json feedback_templates for every code (confirmed): CORRECT 
 - Generic fallback for any other code (Kiefer must confirm): Subukan natin ulit, {name}!
 
 ## Progress
-- P2-0 done: FastAPI skeleton, test_ollama.py, test_tts.py.
+- P2-0 done: FastAPI skeleton, test_ollama.py, test_tts.py (removed with the MMS voice on 2026-10-10).
 - P2-1 done: Pydantic shapes, SQLite tables, content loader and checks, every endpoint returns its shape with real content, API_CONTRACT.md.
 - P2-3 done: classifier with tests (backend/engine/classifier.py).
 - P2-4 done: scoring, selector, rotation, review and placement with tests, wired into /next and /answer; simulate.py shows 3 learners changing skill and support level.
 - P2-5 done: classifier and template feedback in /answer, correction steps (attempt 5 ends the item), events.turn_number; gap_slot in /next.
-- P2-2 done: pregen_audio.py with MMS-TTS (model input built the MMS way, sentence by sentence, natural stories with word timings, recording overrides in content/recordings/, remakes clips whose text changed). Open: pick the voice settings (audio_cache/try_*.wav), and record syl_a/e/o/u (the model cannot say lone vowels).
+- P2-2 done: pregen_audio.py (sentence by sentence, natural stories with word timings, recording overrides in content/recordings/, remakes clips whose text changed or when backend/tts/omni.py settings change).
+- Voice: OmniVoice since 2026-10-10 (backend/tts/omni.py): default voice, language fil, SPEED 0.65 (about 2.6 words per second, a normal talking pace), clips saved at 16 kHz, up to 4 tries when a clip comes back silent. facebook/mms-tts-tgl was dropped: its letter "a" has the same id as the blank between letters, so short words and syllables lost their "a" ("bahay" sounded like "Dai"). Lone vowels need no recordings any more.
 - P2-6 done: backend/llm/ client.py (Ollama, localhost only, pauses 30 s after a refused connection), prompts.py and checks.py (thin layers over content/test_prompts.py: no second copy), fallbacks.py (story order from rules.md 9), jobs.py, worker.py (background thread). Stories get audio before they reach /api/approvals and stay hidden until approved. Retry once on a failed check, never on a missing model. Target words stay optional (Kiefer's v0.3 rules), although the P2-6 spec asked for all of them.
 - P2-8 done: warm-up at startup, timed model calls, job priorities (warm-up, template audio, summary, words, stories), stories queued at the end of the session (prompts.md 0), DEMO_FAST tested, scripts/demo_session.py.
 - P2-7 done: backend/summary.py (numbers incl. alert, prompt values, template with skill names, current model summary); /summary and /sheet work with Ollama off.
