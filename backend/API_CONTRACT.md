@@ -35,6 +35,22 @@ Request
 ```
 Response: the group (same shape as GET below).
 
+`existing_child_ids` (optional, default `[]`): returning learners from `GET /api/learners`. They move into the new
+group with everything saved (skills, diagnostic, story level, history), so a finished diagnostic is not repeated.
+`learners` may then be empty. Unknown ids → `422`; no learners and no ids → `422`. Every learner in the new group
+gets a personal story job queued right away (from their interests).
+```json
+{"tutor_name": "Teacher Liza", "learners": [], "existing_child_ids": ["c_1a2b3c4d", "c_5e6f7a8b"]}
+```
+
+## GET /api/learners
+Every learner on this laptop, latest activity first (the tutor's "Returning learners" picker).
+```json
+[{"id": "c_1a2b3c4d", "name": "Ana", "picture": "cat", "interests": ["int_animals", "int_food"],
+  "placement": "done", "story_level": 2, "current_skill_fil": "Salitang may dalawang pantig",
+  "mastered_count": 3, "last_session": "2026-10-09"}]
+```
+
 ## GET /api/groups/{id}
 ```json
 {"id": "g_e2c4a7a8", "tutor_name": "Teacher Liza", "learners": [
@@ -135,6 +151,18 @@ For the tutor and parents.
  "sessions": [{"session_id": "s_97aadbd0", "date": "2026-10-10", "correct": 7, "total": 9}]}
 ```
 
+### Round 2 additions to the profile and lessons
+- Profile `history`: one point per session, oldest first: `{"session_id", "date", "mastered_count", "avg_score",
+  "accuracy"}` (saved in `progress_snapshots` after every item that ends). `ladder`: every skill in content order:
+  `{"skill_id", "name_fil", "level", "score", "mastered"}`.
+- Lesson style `letters` (letter_sound skills): `letters: [{"letter": "a", "audio": "/api/audio/syl_a.wav",
+  "word": "aso", "word_audio": "/api/audio/w_aso.wav", "syllables": ["a", "so"]}]`. The first lesson of a letter
+  skill uses it, and every learner gets the vowel lesson (`rules.json` → `lessons.intro_skill`) once, before their
+  first practice item, even when the diagnostic passed the vowels.
+- Diagnostic items: a different easy item per learner, and the task type rotates within a skill.
+- Session `read_along_story_id`: a library story at the group's lowest level that fits the most interests.
+- Model story payloads (`/api/approvals`) carry `"provider": "local" | "cloud"`.
+
 ## POST /api/sessions/{id}/phase
 `phase` is one of `tiles`, `stories`, `summary`. `ends_at` is local time with offset. The phase lengths come from `rules.json` → `session` (35 / 15 / 10 min). With `DEMO_FAST=1` (rules.json `session.demo_fast`) every phase is 1 minute and `/next` gives `seconds: 20`, so a demo session takes about 3 minutes.
 Setting `summary` queues the model summary, then each learner's personal story for the next session.
@@ -234,7 +262,10 @@ In the template, a learner with an alert (`rules.json` → `alert`: a skill belo
 ```
 
 ## GET /api/children/{id}/sheet
-Printable practice sheet. No scores.
+Printable practice sheet. No scores. Words: the current skill's words, interest words first, rotated. Sentence: from
+`content.json` sentences and library story sentences at the learner's story level (content text only), the best fit
+for the sheet's words and mastered words; never the same sentence as the learner's last sheet. `parent_note`: the
+learner's level for the footnote (`level_label_fil` from `rules.json` → `practice_sheet.level_labels_fil`).
 
 ```json
 {"name": "Ana", "date": "2026-10-09",
@@ -242,7 +273,9 @@ Printable practice sheet. No scores.
            {"text": "elepante", "syllables": ["e", "le", "pan", "te"]},
            {"text": "eroplano", "syllables": ["e", "ro", "pla", "no"]}, {"text": "ibon", "syllables": ["i", "bon"]}],
  "sentence": "Si Ana ay nasa bahay.",
- "home_line_fil": "Basahin nang malakas ang mga salitang ito kasama ang isang kasama sa bahay."}
+ "home_line_fil": "Basahin nang malakas ang mga salitang ito kasama ang isang kasama sa bahay.",
+ "parent_note": {"story_level": 1, "level_label_fil": "Antas 1", "current_skill_fil": "Mga patinig: a, e, i, o, u",
+                 "mastered_count": 0, "total_skills": 16}}
 ```
 
 ## GET /api/approvals

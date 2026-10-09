@@ -69,6 +69,19 @@ export const t = {
     needOne: 'Pumili ng kahit isang bata.',
     start: 'Simulan ang sesyon',
   },
+  // Tutor-facing (English for now, like signup): pick learners who already used AR.AI on this laptop.
+  returning: {
+    open: 'Returning learners',
+    title: 'Returning learners',
+    subtitle: 'Their progress is saved: no diagnostic again. Pick who is here today.',
+    level: (n) => `Story level ${n}`,
+    mastered: (n) => `${n} skills mastered`,
+    last: (d) => (d ? `Last session ${d}` : 'No session yet'),
+    use: (n) => `Start with ${n} learner${n === 1 ? '' : 's'}`,
+    signUp: 'Sign up new learners',
+    back: 'Back',
+    none: 'No saved learners yet.',
+  },
   readAlong: {
     heading: 'Sabay tayong magbasa',
     instruction: 'Pakinggan ang kuwento.',
@@ -106,7 +119,11 @@ export const t = {
   },
   landing: {
     title: 'AR.Ai: Ang Matalinong Kaakabay sa Pagbasa',
-    subtitle: 'Katuwang sa Pagbasa para sa DepEd ARAL Program',
+    subtitle:
+      'Ang adaptive at masayang AI reading tutor para sa mga batang Pilipino. Matutong magbasa sa sariling bilis at paraan!',
+    infoLabel: 'About AR.AI',
+    close: 'Close',
+    modalTitle: 'Mga Tampok sa AR.AI',
     badges: ['100% Offline & Private', 'Powered by Local AI (Ollama, Gemma 4)', 'Key Stage 1 (Grades 1-3) Ready'],
     features: [
       {
@@ -114,11 +131,11 @@ export const t = {
         text: 'Mga kuwentong Filipino na ginagawa mismo sa device, ayon sa hilig ng bawat bata.',
       },
       {
-        title: 'Tile Board Practice',
+        title: 'Tile Board Practice (Interactive Practice)',
         text: 'Pagbuo ng salita gamit ang mga tile ng titik at pantig, ayon sa Marungko method.',
       },
       {
-        title: 'Buod at Printable Worksheets',
+        title: 'Buod at Printable Worksheets (Teacher Reports)',
         text: 'Awtomatikong buod para sa tutor at worksheet na maiuuwi para sa pagsasanay sa bahay.',
       },
     ],
@@ -146,7 +163,7 @@ export const t = {
   // For the tutor and parents. English for now: a Filipino speaker translates these (CLAUDE.md: no invented Tagalog).
   tutorNotes: {
     lesson: (style, skill, reason) =>
-      `Tutor: ${reason === 'reteach' ? 're-teaching' : 'teaching'} "${skill}" (${{ visual: 'visual', steps: 'step by step', story: 'story' }[style]}) before practice.`,
+      `Tutor: ${reason === 'reteach' ? 're-teaching' : 'teaching'} "${skill}" (${{ visual: 'visual', steps: 'step by step', story: 'story', letters: 'letter sounds' }[style]}) before practice.`,
     placement: () => 'Tutor: diagnostic item (one try, no hints) to find where this learner starts.',
     reteach: (note) => `Tutor: re-teaching with a new approach. ${note ?? ''}`.trim(),
     easy: () => 'Tutor: an easier item after a hard or slow answer.',
@@ -169,6 +186,21 @@ export const t = {
     newGroup: 'New group',
   },
   streak: (n) => `${n} in a row`,
+  // The practice dashboard (TileBoardScreen). Learner-facing Filipino from the design spec; the tutor badge is English.
+  dashboard: {
+    role: 'Mag-aaral',
+    stars: (n) => `${n} Bituin`,
+    nav: { practice: 'Pagsasanay', stories: 'Mga Kwento', progress: 'Aking Progress' },
+    navLabel: 'Learner menu',
+    tip: 'Tip: Pakinggan muna ang tunog bago piliin ang tamang titik!',
+    mode: {
+      placement: 'Tutor: Diagnostic Item',
+      practice: 'Tutor: Practice',
+      reteach: 'Tutor: Re-teach',
+      easy: 'Tutor: Easier item',
+    },
+    noStory: 'No story for this learner yet.',
+  },
   quizResult: {
     title: 'Quiz result',
     levelUp: (level) => `Next story: level ${level} (harder)`,
@@ -199,5 +231,11 @@ export const t = {
     sessions: 'Sessions (right on the first try)',
     stars: (n, streak) => `${n} stars, ${streak} in a row`,
     none: 'None yet',
+    chartTitle: 'Skills mastered after each session',
+    chartLabel: (n, total, sessions) => `${n} of ${total} skills mastered after ${sessions} session(s)`,
+    chartPoint: (date, n, total, acc) =>
+      `${date}: ${n} of ${total} skills mastered${acc == null ? '' : `, ${Math.round(acc * 100)}% right on the first try`}`,
+    ladder: 'Reading ladder (vowels first)',
+    backToPractice: 'Back to practice',
   },
 }

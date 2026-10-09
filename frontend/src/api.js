@@ -114,6 +114,9 @@ export const createGroup = (body) =>
     () => mock.createGroup(body),
   )
 
+// Every saved learner on this laptop (returning learners keep their progress): GET /api/learners.
+export const getLearners = () => call(() => request('GET', '/api/learners'), () => Promise.resolve([]))
+
 export const forgetGroup = () => localStorage.removeItem(groupKey())
 
 // The interest catalog for the sign-up: [{ id, label_fil, label_en, icon }].

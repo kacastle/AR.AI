@@ -2,6 +2,7 @@ Project: ReadingTutor PH. Offline tutor's assistant for DepEd ARAL-Reading, Key 
 
 ## Who owns what
 I am Person 2. I own backend/, scripts/, tests/. Do not edit frontend/ (Person 1) or content/ (Person 3, Kiefer). content/ files are read-only inputs and may be replaced by newer versions at any time (content v0.2 is in content/ now).
+Exception (2026-10-10, feedback round 2): Kiefer approved one round of edits across all folders (branch feedback-round-2).
 
 ## Stack
 Python FastAPI + Pydantic, SQLite, Ollama with JSON output, OmniVoice k2-fsa/OmniVoice (language fil, default voice) for text to speech. Windows with PowerShell, venv in .venv.
@@ -15,7 +16,7 @@ Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL 
 - Model work runs in the background (thread or queue), never inside /next or /answer.
 
 ## Hard rules
-- No network calls except localhost. No new dependencies without asking.
+- No network calls except localhost, unless LLM_PROVIDER is auto or cloud (Gemini, story jobs only for auto; the learner's name is replaced by a placeholder before the call). No new dependencies without asking.
 - Do not rename JSON fields or ids from content/content.json and content/rules.json.
 - ng is one tile.
 - Learner data stays in the local SQLite file. Never commit *.db or real child data. Use fake names in seed data. audio_cache/ IS committed (generated clips take about 2 hours to remake): after pregen_audio.py remakes clips, commit audio_cache/ too, including _settings.json; audio_cache/try_* (the OmniVoice listening-test clips) is committed too, for the team to compare.
@@ -41,6 +42,9 @@ Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv 
 - Demo timing: `$env:DEMO_FAST="1"` uses rules.json session.demo_fast (1-minute phases, 20-second items).
 - Offline mode (PowerShell): `$env:HF_HUB_OFFLINE="1"; $env:TRANSFORMERS_OFFLINE="1"`
 - Docs page: http://localhost:8000/docs
+- Demo data: `python scripts/seed_demo.py --fresh` (3 fake returning learners, 3 past sessions each, for the progress graph and the "Returning learners" picker).
+- Cloud model (optional, local first): `$env:LLM_PROVIDER="auto"; $env:GEMINI_API_KEY="..."` (optional `GEMINI_MODEL`, default gemini-2.5-flash). Story jobs go to Gemini when online; any error or no internet falls back to the local model. Default `local`.
+- Frontend: VITE_USE_MOCK=false is the default now (frontend/.env); the mock fallback shows a red banner.
 
 ## Model prompts and checks
 content/test_prompts.py (v0.3; runs on Ollama gemma4:e4b by default) holds the prompt text and the check functions I use to compare models. It reads the content files next to it and writes its results*.csv and stories_for_review*.md files next to itself. Reuse them; do not write a second copy of any prompt or check. If code must move, move it into backend/llm/ and make test_prompts.py import from there.
@@ -105,7 +109,7 @@ The code uses rules.json feedback_templates for every code (confirmed): CORRECT 
 - Sign-up and lessons (demo branch): the tutor signs up each learner (name, picture, interests, diagnostic) in the frontend. backend/lessons.py: a lesson (visual, steps or story) before a learner's first item of a skill and, in another style, when a re-teach starts; whether it worked is remembered (rules.json lessons). Story lessons come from the model (prompts.md section 7, job "lesson", queued at session start and when a re-teach starts). LLM_BACKEND=lmstudio runs the model jobs on LM Studio.
 - Learner loop (demo branch): backend/adapt.py: diagnostic (learner "diagnostic": true), pace and the SLOW rule, re-teach methods remembered per learner (rules.json reteach), stars and streak, interest words first, GET /api/children/{id}/profile. Story phase: each learner's own story, then its quiz; the quiz moves the next story's level (rules.json story_quiz).
 - Not wired yet: placement endpoint and session flow, end_with_easy_item, SLOW rule, alerts, seed_demo.py, model feedback wording, audio for model stories.
-- Content issue for Person 3: sk_letters_2 has no words, so sk_cv_2 (which needs it mastered) can never unlock.
+- Round 2 (2026-10-10): interest-ranked library/read-along stories and a personal story job at sign-up and session start; new English plots (animals, food, nature/farm, school/family) with word banks from existing content words; "letters" lesson style and the vowel intro; varied diagnostic items; progress_snapshots + GET /api/learners + existing_child_ids; level-matched sheet with parent_note; Gemini provider; sk_letters_2 tagged on 5 existing words (dahon, lapis, gatas, papel, pinto). Kiefer must confirm the parent footnote labels in rules.json practice_sheet.level_labels_fil ("Antas 1", "Antas 2").
 
 ## Working rules for the agent
 - One task per prompt. Give a 5-bullet plan first for big tasks.

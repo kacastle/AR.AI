@@ -52,7 +52,7 @@ export default function App() {
     group: <GroupSetupScreen onStart={startSession} />,
     readAlong: session && <ReadAlongScreen storyId={session.read_along_story_id} onDone={advance} />,
     tiles: session && (
-      <TileBoardScreen sessionId={session.id} learners={learners} isPhaseOver={isPhaseOver} onDone={advance} />
+      <TileBoardScreen sessionId={session.id} session={session} learners={learners} isPhaseOver={isPhaseOver} onDone={advance} />
     ),
     stories: session && <StoryQuestionScreen sessionId={session.id} learners={learners} onDone={advance} />,
     summary: session && (

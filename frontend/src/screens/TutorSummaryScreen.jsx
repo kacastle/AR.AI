@@ -49,6 +49,12 @@ function PracticeSheet({ sheet }) {
       <footer className="sheet__note">
         <strong>{t.sheet.parentNote}</strong> {sheet.home_line_fil}
       </footer>
+      {sheet.parent_note && (
+        <p className="sheet__note" style={{ marginTop: 8, fontSize: '0.85em', borderTop: '1px dashed #999', paddingTop: 6 }}>
+          <strong>{t.sheet.parentNote}</strong> {sheet.parent_note.level_label_fil} · {sheet.parent_note.current_skill_fil} ·{' '}
+          {sheet.parent_note.mastered_count}/{sheet.parent_note.total_skills}
+        </p>
+      )}
     </article>
   )
 }

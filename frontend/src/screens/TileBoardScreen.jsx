@@ -1,21 +1,232 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Tile from '../components/Tile.jsx'
-import Slot from '../components/Slot.jsx'
 import FeedbackBanner from '../components/FeedbackBanner.jsx'
 import FeedbackOverlay from '../components/FeedbackOverlay.jsx'
 import TurnSwitchScreen from './TurnSwitchScreen.jsx'
 import LessonScreen from './LessonScreen.jsx'
+import ProgressScreen from './ProgressScreen.jsx'
+import ReadAlongScreen from './ReadAlongScreen.jsx'
 import Confetti from '../components/Confetti.jsx'
 import LoadingOverlay from '../components/LoadingOverlay.jsx'
+import LearnerPicture from '../components/LearnerPicture.jsx'
 import { playChime, playPop } from '../sfx.js'
-import StarBadge from '../components/StarBadge.jsx'
 import { useAudio } from '../hooks/useAudio.js'
 import SpeakerIcon from '../components/SpeakerIcon.jsx'
 import { getNextTurn, submitAnswer } from '../api.js'
 import { t } from '../strings.js'
-import './TileBoardScreen.css'
 
 const SHAKE_MS = 450
+
+const SLATE = '#1E3A5F'
+const GREEN = '#2FA84F'
+const ORANGE = '#F28C28'
+
+// Built-in icons instead of emoji: emoji show as empty boxes on devices without an emoji font.
+const icon = (d) => (
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" style={{ flexShrink: 0 }}>
+    <path d={d} fill="currentColor" />
+  </svg>
+)
+const NAV = [
+  { id: 'practice', icon: icon('M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z') },
+  { id: 'stories', icon: icon('M4 5c3-1.5 5.5-1.5 8 .5V20c-2.5-2-5-2-8-.5zM20 5c-3-1.5-5.5-1.5-8 .5V20c2.5-2 5-2 8-.5z') },
+  { id: 'progress', icon: icon('M4 20V10h3v10zM10.5 20V4h3v16zM17 20v-7h3v7z') },
+]
+
+const S = {
+  layout: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(220px, 260px) 1fr',
+    gap: 20,
+    maxWidth: 1180,
+    margin: '0 auto',
+    padding: '20px 16px 32px',
+    boxSizing: 'border-box',
+    alignItems: 'start',
+  },
+  sidebar: {
+    background: '#fff',
+    border: '1px solid #E5E7EB',
+    borderRadius: 20,
+    padding: 18,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 18,
+    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.04)',
+  },
+  profile: { display: 'flex', gap: 12, alignItems: 'center' },
+  name: { margin: 0, fontSize: 22, fontWeight: 800, color: SLATE },
+  role: { margin: '2px 0 6px', fontSize: 15, color: '#6B7280' },
+  starBadge: {
+    display: 'inline-block',
+    whiteSpace: 'nowrap',
+    padding: '3px 10px',
+    borderRadius: 999,
+    background: '#FFE27A',
+    color: '#5C4400',
+    fontWeight: 800,
+    fontSize: 14,
+  },
+  streak: {
+    whiteSpace: 'nowrap',
+    padding: '3px 8px',
+    borderRadius: 999,
+    background: '#FFE9C7',
+    fontWeight: 700,
+    fontSize: 14,
+  },
+  nav: { display: 'flex', flexDirection: 'column', gap: 6 },
+  navButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    width: '100%',
+    padding: '12px 14px',
+    border: 'none',
+    borderRadius: 12,
+    background: 'transparent',
+    color: '#374151',
+    fontFamily: 'inherit',
+    fontSize: 17,
+    fontWeight: 700,
+    textAlign: 'left',
+    cursor: 'pointer',
+  },
+  navActive: { background: '#E7F6EC', color: '#1F7A37' },
+  tip: {
+    margin: 0,
+    padding: 14,
+    borderRadius: 14,
+    background: '#E8F1FB',
+    border: '1px solid #C9DDF3',
+    color: '#1E4E7A',
+    fontSize: 15,
+    lineHeight: 1.45,
+  },
+  board: {
+    background: '#fff',
+    border: '1px solid #E5E7EB',
+    borderRadius: 24,
+    padding: '20px 24px 28px',
+    minHeight: 520,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 20,
+    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.04)',
+    minWidth: 0,
+  },
+  boardHeader: { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  question: { fontSize: 22, fontWeight: 800, color: SLATE },
+  modeBadge: {
+    padding: '4px 12px',
+    borderRadius: 999,
+    background: '#F1F5F9',
+    color: '#475569',
+    fontSize: 14,
+    fontWeight: 700,
+  },
+  tutorNote: { margin: 0, fontSize: 14, color: '#6B7280', textAlign: 'center' },
+  instruction: {
+    margin: '8px 0 0',
+    fontSize: 'clamp(22px, 3vw, 30px)',
+    fontWeight: 800,
+    color: SLATE,
+    textAlign: 'center',
+  },
+  listen: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '12px 28px',
+    border: 'none',
+    borderRadius: 999,
+    background: '#FFD84D',
+    color: '#4A3800',
+    fontFamily: 'inherit',
+    fontSize: 20,
+    fontWeight: 800,
+    cursor: 'pointer',
+    boxShadow: '0 4px 0 #E0B400',
+  },
+  row: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 12 },
+  modelLabel: { fontSize: 16, color: '#6B7280', fontWeight: 700 },
+  square: {
+    minWidth: 72,
+    height: 72,
+    padding: '0 12px',
+    boxSizing: 'border-box',
+    borderRadius: 14,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: 'inherit',
+    fontSize: 32,
+    fontWeight: 800,
+  },
+  gap: { border: `3px dashed ${ORANGE}`, background: '#FFF7EC' },
+  filled: { border: 'none', background: '#E5E7EB', color: '#1F2937' },
+  placed: { border: 'none', background: '#D1D5DB', color: '#111827', cursor: 'pointer' },
+  modelTile: { minWidth: 56, height: 56, fontSize: 26, background: '#F3F4F6', color: '#374151' },
+  highlight: { outline: '4px solid #3A9BD9', outlineOffset: 3 },
+  choice: {
+    border: 'none',
+    borderBottom: '6px solid #D9822B',
+    background: 'linear-gradient(180deg, #FFD36B, #FFB23F)',
+    color: '#4A2C00',
+    cursor: 'pointer',
+  },
+  feedback: { minHeight: 48, width: '100%', display: 'flex', justifyContent: 'center' },
+  actions: { display: 'flex', gap: 16, justifyContent: 'center', marginTop: 'auto', flexWrap: 'wrap' },
+  btn: {
+    minWidth: 150,
+    padding: '14px 28px',
+    border: 'none',
+    borderRadius: 999,
+    fontFamily: 'inherit',
+    fontSize: 20,
+    fontWeight: 800,
+    cursor: 'pointer',
+  },
+  secondary: { background: '#E5E7EB', color: '#374151', boxShadow: '0 4px 0 #C4C8CE' },
+  primary: { background: GREEN, color: '#fff', boxShadow: '0 4px 0 #1F7A37' },
+  center: {
+    minHeight: 300,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  masteredBackdrop: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(15, 23, 42, 0.45)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 50,
+  },
+  masteredCard: { background: '#fff', borderRadius: 24, padding: 32, textAlign: 'center', maxWidth: 420, margin: 16 },
+  masteredName: { fontSize: 26, fontWeight: 800, color: SLATE, margin: '8px 0' },
+}
+
+const CSS = `
+.tb-avatar { width: 64px; height: 64px; flex-shrink: 0; }
+.tb-choice { transition: transform 160ms ease, box-shadow 160ms ease; }
+.tb-choice:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 8px 14px rgba(217, 130, 43, 0.35); }
+.tb-choice:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 2px !important; }
+.tb-choice:disabled, .tb-btn:disabled { opacity: 0.45; cursor: default; }
+.tb-btn, .tb-listen, .tb-nav { transition: transform 160ms ease, background 160ms ease; }
+.tb-btn:hover:not(:disabled), .tb-listen:hover { transform: translateY(-2px); }
+.tb-nav:hover:not([aria-current]) { background: #F3F4F6 !important; }
+.tb-layout button:focus-visible { outline: 4px solid #3A9BD9; outline-offset: 3px; }
+.tb-listen--speaking { animation: tb-pulse 1s ease-in-out infinite; }
+@keyframes tb-pulse { 50% { transform: scale(1.06); } }
+.tb-shake > * { animation: tb-shake 420ms ease-in-out; }
+@keyframes tb-shake { 20%, 60% { transform: translateX(-8px) } 40%, 80% { transform: translateX(8px) } }
+@media (max-width: 760px) { .tb-layout { grid-template-columns: 1fr !important; } }
+@media (prefers-reduced-motion: reduce) { .tb-shake > *, .tb-listen--speaking { animation: none; } }
+`
 
 // Turns the API's prefill into the starting board.
 // "show" displays the answer as a model and the learner rebuilds it; other prefill
@@ -44,7 +255,9 @@ function buildBoard(turn) {
   return { model: null, base, consumed }
 }
 
-export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDone }) {
+// The practice dashboard: the learner's card and menu on the left, the tile board on the right.
+// The menu opens the learner's story and progress inside the board; the turn stays as it was.
+export default function TileBoardScreen({ sessionId, session, learners, isPhaseOver, onDone }) {
   const [turn, setTurn] = useState(null)
   const [board, setBoard] = useState(null)
   const [slots, setSlots] = useState([])
@@ -58,6 +271,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
   const [activeChild, setActiveChild] = useState(null)
   const [status, setStatus] = useState('loading')
   const [busy, setBusy] = useState(false)
+  const [view, setView] = useState('practice') // practice, stories, progress
   const itemStart = useRef(0)
   const shakeTimer = useRef(null)
   const speaker = useAudio()
@@ -81,6 +295,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
     setAttempt(1)
     setHintsUsed(0)
     setHighlight(null)
+    setView('practice')
     setStatus('ready')
     itemStart.current = Date.now()
   }, [])
@@ -109,9 +324,9 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
 
   if (status === 'error') {
     return (
-      <main className="board board--center">
-        <p>{t.loadError}</p>
-        <button type="button" className="action action--primary" onClick={loadTurn}>
+      <main style={S.center}>
+        <p style={{ fontSize: 24 }}>{t.loadError}</p>
+        <button type="button" style={{ ...S.btn, ...S.primary }} onClick={loadTurn}>
           {t.retry}
         </button>
       </main>
@@ -119,6 +334,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
   }
 
   const needsLesson = Boolean(turn.lesson) && lessonSeen !== turn.turn_number
+  const picture = learners.find((l) => l.id === turn.child_id)?.picture ?? 'cat'
 
   if (turn.child_id !== activeChild) {
     const start = () => {
@@ -126,7 +342,6 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
       itemStart.current = Date.now()
       if (!needsLesson) speaker.play(turn.item.prompt_audio)
     }
-    const picture = learners.find((l) => l.id === turn.child_id)?.picture
     return <TurnSwitchScreen name={turn.child_name} picture={picture} onStart={start} />
   }
 
@@ -141,6 +356,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
   }
 
   const keepCase = turn.task_type === 'sentence_builder'
+  const show = (text) => (keepCase ? text : text.toLowerCase())
   const locked = result?.next_action === 'next' || busy || shake || Boolean(overlay)
   const usedTiles = new Set([
     ...board.consumed,
@@ -148,6 +364,8 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
   ])
   const allFilled = slots.every(Boolean)
   const hasPlaced = slots.some((s) => s && !s.fixed)
+  const starCount = stars[turn.child_id] ?? 0
+  const storyId = session?.story_ids?.[turn.child_id] ?? session?.read_along_story_id
 
   const edit = (update) => {
     setResult(null)
@@ -235,30 +453,23 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
       />
     ))
 
-  return (
-    <main className="board slide-in">
-      <header className="board__header">
-        <span className="board__progress">{t.turnLabel(turn.turn_number)}</span>
-        <div className="board__header-right">
-          <span className="board__learner">{t.learnerTurn(turn.child_name)}</span>
-          {turn.streak >= 2 && (
-            <span key={turn.streak} className="board__streak pop-in" aria-label={t.streak(turn.streak)}>
-              🔥 {turn.streak}
-            </span>
-          )}
-          <StarBadge filled={stars[turn.child_id] ?? 0} text={t.progress.stars(stars[turn.child_id] ?? 0)} />
-        </div>
+  const practice = (
+    <>
+      <header style={S.boardHeader}>
+        <span style={S.question}>{t.turnLabel(turn.turn_number)}</span>
+        <span style={S.modeBadge}>{t.dashboard.mode[turn.mode] ?? t.dashboard.mode.practice}</span>
       </header>
 
-      {t.tutorNotes[turn.mode] && (
-        <p className="board__tutor-note">{t.tutorNotes[turn.mode](turn.method_note)}</p>
+      {turn.mode === 'reteach' && turn.method_note && (
+        <p style={S.tutorNote}>{t.tutorNotes.reteach(turn.method_note)}</p>
       )}
 
-      <p className="board__instruction">{t.instructions[turn.task_type]}</p>
+      <p style={S.instruction}>{t.instructions[turn.task_type]}</p>
 
       <button
         type="button"
-        className={`action board__listen${speaker.speaking ? ' action--speaking' : ''}`}
+        className={`tb-listen${speaker.speaking ? ' tb-listen--speaking' : ''}`}
+        style={S.listen}
         onClick={() => speaker.play(turn.item.prompt_audio)}
       >
         <SpeakerIcon />
@@ -266,59 +477,67 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
       </button>
 
       {model && (
-        <section className="board__model" aria-label={t.modelLabel}>
-          <span className="board__model-label">{t.modelLabel}</span>
-          <div className="board__model-tiles">
-            {model.map((text, i) => (
-              <span key={i} className={`tile tile--model${keepCase ? ' tile--keep-case' : ''}`}>
-                {keepCase ? text : text.toLowerCase()}
-              </span>
-            ))}
-          </div>
+        <section style={S.row} aria-label={t.modelLabel}>
+          <span style={S.modelLabel}>{t.modelLabel}</span>
+          {model.map((text, i) => (
+            <span key={i} style={{ ...S.square, ...S.modelTile }}>
+              {show(text)}
+            </span>
+          ))}
         </section>
       )}
 
-      <section
-        className={`board__slots${shake ? ' board__slots--shake' : ''}`}
-        aria-label={t.slotsLabel}
-      >
-        {slots.map((slot, i) => (
-          <Slot
-            key={i}
-            index={i}
-            slot={slot}
-            onRemove={removeTile}
-            locked={locked}
-            highlighted={highlight === i}
-            keepCase={keepCase}
-          />
-        ))}
+      <section className={shake ? 'tb-shake' : undefined} style={S.row} aria-label={t.slotsLabel}>
+        {slots.map((slot, i) => {
+          const ring = highlight === i ? S.highlight : null
+          if (!slot) {
+            return (
+              <div key={i} role="img" aria-label={t.emptySlot(i + 1)} style={{ ...S.square, ...S.gap, ...ring }} />
+            )
+          }
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => removeTile(i)}
+              disabled={locked || slot.fixed}
+              aria-label={slot.fixed ? t.fixedTile(slot.text, i + 1) : t.placedTile(slot.text, i + 1)}
+              style={{ ...S.square, ...(slot.fixed ? S.filled : S.placed), ...ring }}
+            >
+              {show(slot.text)}
+            </button>
+          )
+        })}
       </section>
 
-      <div className="board__feedback">{feedback}</div>
+      <div style={S.feedback}>{feedback}</div>
 
-      <section className="board__tray" aria-label={t.trayLabel}>
+      <section style={S.row} aria-label={t.trayLabel}>
         {turn.item.tiles.map((text, i) =>
           usedTiles.has(i) ? (
-            <div key={i} className="board__tray-gap" aria-hidden="true" />
+            <div key={i} style={{ ...S.square, visibility: 'hidden' }} aria-hidden="true" />
           ) : (
-            <Tile
+            <button
               key={i}
-              text={text}
+              type="button"
+              className="tb-choice"
               onClick={() => placeTile(i)}
-              ariaLabel={t.availableTile(text)}
+              aria-label={t.availableTile(text)}
               disabled={locked || allFilled}
-              keepCase={keepCase}
-            />
+              style={{ ...S.square, ...S.choice }}
+            >
+              {show(text)}
+            </button>
           ),
         )}
       </section>
 
-      <footer className="board__actions">
+      <footer style={S.actions}>
         {result?.next_action === 'next' ? (
           <button
             type="button"
-            className="action action--primary action--glow"
+            className="tb-btn"
+            style={{ ...S.btn, ...S.primary }}
             onClick={() => (isPhaseOver() ? onDone() : loadTurn())}
           >
             {t.next}
@@ -327,7 +546,8 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
           <>
             <button
               type="button"
-              className="action"
+              className="tb-btn"
+              style={{ ...S.btn, ...S.secondary }}
               onClick={clearSlots}
               disabled={!hasPlaced || locked}
             >
@@ -335,15 +555,79 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
             </button>
             <button
               type="button"
-              className="action action--primary"
+              className="tb-btn"
+              style={{ ...S.btn, ...S.primary }}
               onClick={checkAnswer}
               disabled={!allFilled || locked}
             >
-              {t.check}
+              {t.check} ✓
             </button>
           </>
         )}
       </footer>
+    </>
+  )
+
+  return (
+    <main className="tb-layout slide-in" style={S.layout}>
+      <style>{CSS}</style>
+
+      <aside style={S.sidebar}>
+        <div style={S.profile}>
+          <LearnerPicture picture={picture} label={t.turnSwitch.avatar(turn.child_name)} className="tb-avatar" />
+          <div>
+            <p style={S.name}>{turn.child_name}</p>
+            <p style={S.role}>{t.dashboard.role}</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <span style={S.starBadge}>★ {t.dashboard.stars(starCount)}</span>
+              {turn.streak >= 2 && (
+                <span style={S.streak} aria-label={t.streak(turn.streak)}>
+                  🔥 {turn.streak}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <nav aria-label={t.dashboard.navLabel} style={S.nav}>
+          {NAV.map((item) => {
+            const active = view === item.id
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className="tb-nav"
+                aria-current={active ? 'page' : undefined}
+                onClick={() => setView(item.id)}
+                style={{ ...S.navButton, ...(active ? S.navActive : null) }}
+              >
+                {item.icon}
+                {t.dashboard.nav[item.id]}
+              </button>
+            )
+          })}
+        </nav>
+
+        <p style={S.tip}>💡 {t.dashboard.tip}</p>
+      </aside>
+
+      <section style={S.board}>
+        {view === 'practice' && practice}
+        {view === 'progress' && (
+          <ProgressScreen
+            childId={turn.child_id}
+            picture={picture}
+            onBack={() => setView('practice')}
+            backLabel={t.profile.backToPractice}
+          />
+        )}
+        {view === 'stories' &&
+          (storyId ? (
+            <ReadAlongScreen storyId={storyId} onDone={() => setView('practice')} />
+          ) : (
+            <p>{t.dashboard.noStory}</p>
+          ))}
+      </section>
 
       {overlay && (
         <FeedbackOverlay
@@ -357,12 +641,19 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
       )}
       {burst > 0 && <Confetti key={burst} />}
       {mastered && (
-        <div className="board__mastered" role="dialog" aria-live="polite">
-          <div className="board__mastered-card pop-in">
-            <span className="board__mastered-badge" aria-hidden="true">🏆</span>
-            <p className="board__mastered-name">{mastered}</p>
+        <div style={S.masteredBackdrop} role="dialog" aria-live="polite">
+          <div className="pop-in" style={S.masteredCard}>
+            <span style={{ fontSize: 64 }} aria-hidden="true">
+              🏆
+            </span>
+            <p style={S.masteredName}>{mastered}</p>
             <p>{result?.feedback?.message_fil}</p>
-            <button type="button" className="action action--primary action--glow" onClick={() => setMastered(null)}>
+            <button
+              type="button"
+              className="tb-btn"
+              style={{ ...S.btn, ...S.primary }}
+              onClick={() => setMastered(null)}
+            >
               {t.next}
             </button>
           </div>
