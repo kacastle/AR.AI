@@ -18,9 +18,10 @@ SEED = 0  # MMS adds random noise; a fixed seed makes the same text sound the sa
 
 # Voice settings. The model's own defaults are 0.667, 0.8 and 1.0.
 # Changing any of these makes scripts/pregen_audio.py remake every clip.
-NOISE_SCALE = 0.667          # variation in the voice; lower = cleaner, flatter
-NOISE_SCALE_DURATION = 0.8   # variation in sound lengths; lower = steadier timing
-SPEAKING_RATE = 1.0          # below 1 = slower
+# Variant D from the listening test (audio_cache/try_*_D_clean_slower.wav), picked by Person 2 on 2026-10-10.
+NOISE_SCALE = 0.333          # variation in the voice; lower = cleaner, flatter
+NOISE_SCALE_DURATION = 0.333 # variation in sound lengths; lower = steadier timing
+SPEAKING_RATE = 0.7          # below 1 = slower
 
 INPUT_VERSION = 4            # 2: model input built by audio.mms_ids, not the Hugging Face tokenizer
                              # 3: one sentence at a time (audio.speak)

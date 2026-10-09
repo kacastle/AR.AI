@@ -85,10 +85,10 @@ def test_plan_covers_every_word_syllable_sentence_story_and_fixed_line():
     for w in CONTENT.data.words:
         assert jobs[w.id].parts == [w.tts_text]
         slow = jobs[audio.slow_key(w.id)]
-        assert slow.parts == w.syllables and slow.gap_ms == audio.SLOW_GAP_MS
+        assert slow.parts == [audio.syllable_voice_text(s) for s in w.syllables] and slow.gap_ms == audio.SLOW_GAP_MS
         assert slow.part_keys == [audio.syllable_key(s) for s in w.syllables]
         for syl in w.syllables:
-            assert audio.syllable_key(syl) in jobs
+            assert jobs[audio.syllable_key(syl)].parts == [audio.syllable_voice_text(syl)]
     for s in CONTENT.sentences:
         assert jobs[s.id].parts == [s.text]
     for story in CONTENT.data.stories:
@@ -100,6 +100,18 @@ def test_plan_covers_every_word_syllable_sentence_story_and_fixed_line():
     fixed = [j for k, j in jobs.items() if k.startswith("fb_")]
     assert fixed and all("{" not in j.parts[0] for j in fixed)
     assert jobs["fb_SHOW_ANSWER_0"].parts == CONTENT.rules.feedback_templates["SHOW_ANSWER"].message_fil
+
+
+def test_lone_vowels_the_voice_cannot_say_are_spelled_three_times():
+    # facebook/mms-tts-tgl is silent on a lone a, e, o or u, but says "aaa"; a lone i works as it is.
+    assert [audio.syllable_voice_text(s) for s in ["a", "e", "o", "u", "i", "A"]] == \
+        ["aaa", "eee", "ooo", "uuu", "i", "AAA"]
+    assert [audio.syllable_voice_text(s) for s in ["ba", "so", "ng", "aw"]] == ["ba", "so", "ng", "aw"]
+    jobs = {j.key: j for j in audio.plan(CONTENT)}
+    assert jobs["syl_a"].parts == ["aaa"]                      # the key stays syl_a
+    aso = jobs[audio.slow_key("w_aso")]
+    assert aso.parts == ["aaa", "so"] and aso.part_keys == ["syl_a", "syl_so"]
+    assert jobs["w_aso"].parts == ["aso"]                      # whole words are not changed
 
 
 # ---------- build ----------

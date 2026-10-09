@@ -36,6 +36,7 @@ PARAGRAPH_GAP_MS = 500
 EDGE_KEEP_MS = 40    # silence kept at each end of a spoken piece before pieces are joined
 MAX_WORD_MS = 1500   # a story word longer than this is a voice glitch; the check reports it
 QUIET_PEAK = 0.05    # a clip quieter than this has no real speech (the model cannot say lone vowels)
+LONE_VOWELS_TRIPLED = {"a", "e", "o", "u"}
 
 
 @dataclass
@@ -59,6 +60,12 @@ def slow_key(item_id: str) -> str:
 
 def syllable_key(syllable: str) -> str:
     return f"syl_{syllable}"
+
+
+def syllable_voice_text(syllable: str) -> str:
+    """What the voice is asked to say for a syllable. It is silent on a lone a, e, o or u but says "aaa"
+    (a lone i works), so those are spelled three times. Only the model input changes, never the key."""
+    return syllable * 3 if syllable.lower() in LONE_VOWELS_TRIPLED else syllable
 
 
 def paragraph_key(story_id: str, n: int) -> str:
@@ -87,11 +94,11 @@ def plan(content) -> list[Job]:
 
     for w in content.data.words:
         add(Job(w.id, [w.tts_text]))
-        add(Job(slow_key(w.id), list(w.syllables), gap_ms=SLOW_GAP_MS,
+        add(Job(slow_key(w.id), [syllable_voice_text(s) for s in w.syllables], gap_ms=SLOW_GAP_MS,
                 part_keys=[syllable_key(s) for s in w.syllables]))
     for w in content.data.words:
         for syl in w.syllables:
-            add(Job(syllable_key(syl), [syl]))
+            add(Job(syllable_key(syl), [syllable_voice_text(syl)]))
     for s in content.sentences:
         add(Job(s.id, [s.text]))
         add(Job(slow_key(s.id), list(s.word_tiles), gap_ms=SLOW_GAP_MS))
