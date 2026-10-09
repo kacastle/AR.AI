@@ -11,30 +11,30 @@ Failed checks: object_not_in_last
 
 Tumulong si Ana kay Tatay. Naglinis sila ng bahay. Nawala ang lapis niya.
 
-Pagkatapos, tiningnan niya mesa. Sa kahon niya hindi ito. Wala ang lapis.
+Pagkatapos, tiningnan niya ang mesa. Sa kahon niya, wala ito. Pero hindi niya mahanap.
 
-Doon, sa ilalim ng kama, nakita niya. Nagpasalamat si Tatay sa Ana. Ngumiti si Ana.
+Sa wakas, nakita niya sa ilalim ng kama. Nagpasalamat si Tatay. Ngumiti si Ana.
 
-- (who) Sino ang tumulong kay Tatay? - Tatay / Ana / Lolo - answer: Ana
+- (who) Sino ang tumulong kay Tatay? - Tatay / Ana / Lola - answer: Ana
 - (what) Ano ang nawawala? - mesa / lapis / kahon - answer: lapis
-- (where) Saan niya nakita ang lapis? - sa mesa / sa kahon / sa ilalim ng kama - answer: sa ilalim ng kama
+- (where) Saan niya natagpuan ang lapis? - sa mesa / sa ilalim ng kama / sa kahon - answer: sa ilalim ng kama
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
 ## Run 1: Ana (Level 1) - checks: FAIL
 Plot: Ana helps Tatay clean the house. The lapis has been lost for days. Ana looks on the table and in the box, but the lapis is not there. Under the bed, Ana finds the lapis! Tatay thanks Ana, and Ana smiles.
 
-Failed checks: answer_not_in_story
+Failed checks: object_not_in_last
 
 **Ang Nawawalang Lapis ni Ana**
 
 Tumulong si Ana kay Tatay. Naglinis sila ng bahay. Nawala ang lapis niya.
 
-Doon tiningnan niya mesa. Sa kahon niya, wala ito. Hindi niya nakita.
+Pagkatapos, tiningnan niya mesa. Sa kahon niya hindi ito. Wala ang lapis.
 
-Sa wakas, nakita niya lapis. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana.
+Doon sa ilalim ng kama, nakita niya. Nagpasalamat si Tatay. Ngumiti si Ana.
 
-- (who) Sino ang tumulong kay Tatay? - Tatay / Ana / Lolo - answer: Ana
+- (who) Sino ang tumulong kay Tatay? - Lola / Ana / Nanay - answer: Ana
 - (what) Ano ang nawala? - mesa / lapis / kahon - answer: lapis
 - (where) Saan niya nakita ang lapis? - sa mesa / sa kahon / sa ilalim ng kama - answer: sa ilalim ng kama
 
@@ -47,15 +47,15 @@ Failed checks: object_not_in_first
 
 **Ang Laruang Tren ni Ben**
 
-Umuulan nang malakas sa labas. Si Ben ay nalungkot. Kaya hindi siya naglaro sa labas.
+Umuulan nang malakas sa labas. Nalungkot si Ben nang ganoon. Kaya hindi siya naglaro sa labas.
 
-Pero may laruang tren siya. Siya ay naglaro sa loob ng bahay. Doon siya naglaro nang tahimik.
+Pero may laruang tren si Ben. Doon siya naglaro sa loob ng bahay. Siya ay naglaro nang tahimik.
 
-Nang makita siya ni Nanay. Si Nanay ay ngumiti. Si Ben ay masaya sa laruang tren.
+Nang makita ni Nanay siya, ngumiti siya. Si Ben ay masaya sa laruang tren. Ang laruang tren niya ay maganda.
 
-- (what) Ano ang hindi nagawa ni Ben? - maglaro / kumain / matulog - answer: maglaro
-- (where) Saan naglaro si Ben? - sa labas / sa loob ng bahay / sa ilog - answer: sa loob ng bahay
-- (who) Sino ang nakita si Ben? - Nanay / Lolo / Ate - answer: Nanay
+- (what) Ano ang hindi nagawa ni Ben? - naglaro sa loob / naglaro sa labas / kumain ng tinapay - answer: naglaro sa labas
+- (where) Saan siya naglaro? - sa labas / sa ilog / sa loob ng bahay - answer: sa loob ng bahay
+- (who) Sino ang nakita si Ben? - Lolo / Nanay / Ate - answer: Nanay
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
@@ -64,69 +64,90 @@ Plot: It rains hard, so Ben cannot play outside. Ben is sad. But Ben has the lar
 
 Failed checks: object_not_in_first
 
-**Si Ben at ang Tren**
+**Ang Laruang Tren ni Ben**
 
-Umuulan nang malakas sa labas. Nalungkot si Ben nang hindi makalabas. Kaya siya ay naiwan sa loob.
+Umuulan nang malakas sa labas. Si Ben ay nalungkot. Kaya hindi siya naglaro.
 
-Pero mayroon siyang laruang tren. Sa loob ng bahay siya naglaro. Doon siya ay masayang naglaro.
+Pero may laruang tren si Ben. Siya ay naglaro sa loob ng bahay. Doon siya naglaro.
 
-Nang makita siya ni Nanay. Ngumiti si Nanay nang makita si Ben. Masaya si Ben sa laruang tren.
+Nang makita siya ni Nanay. Si Nanay ay ngumiti. Si Ben ay masaya sa laruang tren.
 
-- (what) Ano ang mayroon si Ben? - bola / laruang tren / aklat - answer: laruang tren
+- (what) Ano ang hindi nagawa ni Ben? - maglaro sa loob / maglaro sa labas / umakyat sa puno - answer: maglaro sa labas
 - (where) Saan naglaro si Ben? - sa labas / sa ilog / sa loob ng bahay - answer: sa loob ng bahay
-- (who) Sino ang ngumiti? - Ben / Nanay / Lolo - answer: Nanay
+- (who) Sino ang nakita si Ben? - Lolo / Nanay / Ate - answer: Nanay
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
-## Run 3: Mila (Level 2) - checks: PASS
+## Run 3b: Mila (Level 2) - checks: PASS
 Plot: Mila brings the laruang roket and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket becomes heavy. So Mila puts the laruang roket in a bag and helps Nanay carry the basket. At home, Nanay cooks lunch and thanks Mila. While waiting, Mila plays with the laruang roket.
 
-**Si Mila at ang Roket**
+**Ang Laruang Roket ni Mila**
 
-Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papuntang palengke. Bumili sila ng isda, kamatis, at tinapay.
+Dalhin ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papunta sa palengke. Bumili sila ng isda, kamatis, at tinapay.
 
-Pagkatapos, naging mabigat ang kanilang basket. Kaya ipinasok niya ang laruang roket sa bag. Siya ay tumulong kay Nanay magbuhat.
+Pagkatapos, naging mabigat ang kanilang basket. Kaya inilagay niya ang laruang roket sa bag. Siya ay tumulong kay Nanay na magbuhat.
 
-Sa wakas, nagluto si Nanay ng tanghalian sa bahay. Habang naghihintay, naglaro si Mila ng laruang roket. Siya ay masaya sa laruang roket.
+Doon, nagluto si Nanay ng tanghalian para sa kanila. Habang naghihintay, naglaro si Mila ng laruang roket. Masaya si Mila sa laruang roket.
 
-- (sequence) Ano ang unang ginawa ni Mila? - Bumili sila ng isda. / Dinala niya ang laruang roket sa palengke. / Naglaro siya ng laruang roket. - answer: Dinala niya ang laruang roket sa palengke.
+- (sequence) Ano ang unang ginawa ni Mila? - Naglaro siya ng laruang roket. / Dinala niya ang laruang roket sa palengke. / Tumulong siya kay Nanay magbuhat. - answer: Dinala niya ang laruang roket sa palengke.
 - (feeling) Ano ang naramdaman ni Mila habang naghihintay? - nagalit / nalungkot / masaya - answer: masaya
-- (where) Saan sila bumili ng mga bilihin? - sa bahay / sa palengke / sa bag - answer: sa palengke
+- (where) Saan sila bumili ng isda at kamatis? - sa bahay / sa palengke / sa bag - answer: sa palengke
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
-## Run 4b: Ana (Level 1) - checks: PASS
+## Run 3: Mila (Level 2) - checks: FAIL
+Plot: Mila brings the laruang roket and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket becomes heavy. So Mila puts the laruang roket in a bag and helps Nanay carry the basket. At home, Nanay cooks lunch and thanks Mila. While waiting, Mila plays with the laruang roket.
+
+Failed checks: answer_not_in_story
+
+**Ang Laruang Roket ni Mila**
+
+Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papuntang pamilihan. Bumili sila ng isda, kamatis, at tinapay.
+
+Pagkatapos, naging mabigat ang dala nilang basket. Kaya ipinasok niya ang laruang roket sa bag. Siya ay tumulong kay Nanay magbuhat.
+
+Sa wakas, nagluto si Nanay ng tanghalian sa bahay. Nagpasalamat siya kay Mila habang naghihintay. Si Mila ay naglaro muli ng laruang roket.
+
+- (sequence) Ano ang unang ginawa ni Mila? - Naglaro siya ng roket sa bahay. / Dinala niya ang roket sa palengke. / Tumulong siya kay Nanay magbuhat. - answer: Dinala niya ang roket sa palengke.
+- (feeling) Ano ang naramdaman ni Mila habang naghihintay? - nagalit / nalungkot / masaya - answer: masaya
+- (where) Saan sila bumili ng isda at kamatis? - sa bahay / sa palengke / sa bag - answer: sa palengke
+
+Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
+
+## Run 4b: Ana (Level 1) - checks: FAIL
 Plot: Ana helps Tatay clean the house. The lapis has been lost for days. Ana looks on the table and in the box, but the lapis is not there. Under the bed, Ana finds the lapis! Tatay thanks Ana, and Ana smiles.
+
+Failed checks: object_not_in_last
 
 **Ang Nawawalang Lapis ni Ana**
 
-Tumulong si Ana kay Tatay. Naglinis sila ng bahay. Nawala ang lapis niya.
+Tumulong si Ana kay Tatay maglinis. Nawala ang lapis niya. Kaya naglinis sila ng bahay.
 
-Pagkatapos, tiningnan niya mesa. Sa kahon niya hindi ito. Wala ang lapis.
+Doon siya tiningnan sa mesa. Sa kahon niya hindi ito. Pero wala pa rin ang lapis.
 
-Doon, ilalim ng kama niya. Nakita ni Ana ang lapis. Salamat, sabi ni Tatay. Ngumiti si Ana.
+Sa wakas, nakita niya sa ilalim ng kama. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana nang malaki.
 
 - (what) Ano ang nawala? - bola / lapis / kahon - answer: lapis
-- (who) Sino ang tumulong kay Tatay? - Lola / Ana / Tatay - answer: Ana
-- (where) Saan niya nakita ang lapis? - sa mesa / sa ilalim ng kama / sa kahon - answer: sa ilalim ng kama
+- (who) Sino ang tumulong maglinis? - Tatay / Lola / Ana - answer: Ana
+- (where) Nasaan niya nakita ang lapis? - sa mesa / sa kahon / sa ilalim ng kama - answer: sa ilalim ng kama
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
 ## Run 4: Ana (Level 1) - checks: FAIL
 Plot: Ana helps Tatay clean the house. The lapis has been lost for days. Ana looks on the table and in the box, but the lapis is not there. Under the bed, Ana finds the lapis! Tatay thanks Ana, and Ana smiles.
 
-Failed checks: answer_not_in_story
+Failed checks: object_not_in_last
 
-**Ang Nawawalang Lapis ni Ana**
+**Ang Lapis ni Ana**
 
-Tumulong si Ana kay Tatay. Naglinis sila ng bahay. Nawala ang lapis niya.
+Tumulong si Ana maglinis bahay. Ang lapis niya ay nawala. Kaya naglinis sila ni Tatay.
 
-Pagkatapos, tiningnan niya mesa. Sa kahon niya hindi ito. Wala niya nakita.
+Pagkatapos, tiningnan niya mesa. Sa kahon niya ay wala. Pero hindi niya mahanap.
 
-Sa wakas, nakita niya lapis. Nagpasalamat si Tatay. Ngumiti si Ana.
+Doon sa ilalim ng kama, nakita niya. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana.
 
-- (what) Ano ang nawala? - mesa / lapis / kahon - answer: lapis
-- (who) Sino ang tumulong? - Tatay / Lola / Ana - answer: Ana
+- (what) Ano ang nawala ni Ana? - mesa / lapis / kahon - answer: lapis
+- (who) Sino ang tumulong kay Ana? - Tatay / Lola / Ate - answer: Tatay
 - (where) Saan niya nakita ang lapis? - sa mesa / sa kahon / sa ilalim ng kama - answer: sa ilalim ng kama
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
@@ -138,47 +159,87 @@ Plot: In the morning, Ben brings the bola to the park. There, Ben sees Kuya. Kuy
 
 Dinala ni Ben ang bola. Sa parke siya nagtungo. Doon niya nakita si Kuya.
 
-Pero walang laruan si Kuya. Kaya ibinahagi niya ang bola. Sila ay naglaro.
+Pero wala si Kuya. Kaya ibinahagi ni Ben. Naglaro sila ng bola.
 
-Naglaro sila buong umaga. Pagkatapos sila umuwi. Masaya si Ben dala ang bola.
+Sabay silang naglaro. Pagkatapos ay umuwi sila. Masaya si Ben sa bola.
 
 - (what) Ano ang dinala ni Ben? - bola / aklat / gatas - answer: bola
 - (where) Saan sila naglaro? - sa parke / sa bahay / sa ilog - answer: sa parke
-- (who) Sino ang nakita ni Ben? - Kuya / Lolo / Ate - answer: Kuya
+- (who) Sino ang nakita ni Ben? - Kuya / Lola / Tatay - answer: Kuya
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
-## Run 6: Mila (Level 2) - checks: PASS
+## Run 6b: Mila (Level 2) - checks: FAIL
 Plot: Mila brings the laruang roket and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket becomes heavy. So Mila puts the laruang roket in a bag and helps Nanay carry the basket. At home, Nanay cooks lunch and thanks Mila. While waiting, Mila plays with the laruang roket.
 
-**Ang Laruang Roket ni Mila**
+Failed checks: answer_not_in_story
 
-Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papuntang palengke. Bumili sila ng isda, kamatis, at tinapay.
+**Si Mila at ang Roket**
 
-Pagkatapos, naging mabigat ang kanilang basket. Kaya inilagay niya ang laruang roket sa bag. Siya ay tumulong kay Nanay magbuhat.
+Dinala ni Mila ang laruang roket sa palengke. Sumama siya kay Nanay sa palengke. Bumili sila ng isda, kamatis, at tinapay.
 
-Sa wakas, nagluto si Nanay ng tanghalian sa bahay. Habang naghihintay, naglaro si Mila ng laruang roket. Siya ay masaya sa laruang roket.
+Nang mabigat ang basket, inilagay niya ang laruang roket. Kaya tinulungan niya si Nanay magbuhat. Isinabit niya ito sa isang bag.
 
-- (sequence) Ano ang unang ginawa ni Mila? - Naglaro siya ng laruang roket. / Dinala niya ang laruang roket sa palengke. / Tumulong siya kay Nanay magbuhat. - answer: Dinala niya ang laruang roket sa palengke.
-- (feeling) Ano ang naramdaman ni Mila habang naghihintay? - nalungkot / nagalit / masaya - answer: masaya
+Sa bahay, nagluto si Nanay ng tanghalian. Habang naghihintay, naglaro si Mila ng laruang roket. Si Mila ay nagpasalamat kay Nanay.
+
+- (sequence) Ano ang unang ginawa ni Mila? - Naglaro siya ng laruang roket. / Dinala niya ang laruang roket sa palengke. / Naghihintay siya ng tanghalian. - answer: Dinala niya ang laruang roket sa palengke.
+- (feeling) Ano ang naramdaman ni Mila nang tulungan niya si Nanay? - nalungkot / natuwa / nagalit - answer: natuwa
 - (where) Saan sila bumili ng isda at kamatis? - sa bahay / sa palengke / sa bag - answer: sa palengke
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
-## Run 7: Ana (Level 1) - checks: PASS
+## Run 6: Mila (Level 2) - checks: FAIL
+Plot: Mila brings the laruang roket and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket becomes heavy. So Mila puts the laruang roket in a bag and helps Nanay carry the basket. At home, Nanay cooks lunch and thanks Mila. While waiting, Mila plays with the laruang roket.
+
+Failed checks: answer_not_in_story
+
+**Si Mila at ang Roket**
+
+Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay sa pagbili. Bumili sila ng isda, kamatis, at tinapay.
+
+Naging mabigat ang basket ng mga bilihin. Kaya inilagay niya ang laruang roket sa bag. Tinulungan niya si Nanay na magbuhat.
+
+Doon sa bahay, nagluto si Nanay ng tanghalian. Habang naghihintay, naglaro si Mila ng laruang roket. Si Mila ay nagpasalamat sa pagkaing iyon.
+
+- (sequence) Ano ang ginawa ni Mila pagkatapos bumili? - Naglaro siya ng laruang roket. / Tinulungan niya si Nanay magbuhat. / Naghanda si Nanay ng tanghalian. - answer: Tinulungan niya si Nanay magbuhat.
+- (feeling) Ano ang naramdaman ni Mila habang naghihintay? - nagalit / nalungkot / masaya - answer: masaya
+- (where) Saan sila bumili ng mga bilihin? - sa bahay / sa palengke / sa bag - answer: sa palengke
+
+Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
+
+## Run 7b: Ana (Level 1) - checks: PASS
 Plot: Ana helps Tatay clean the house. The lapis has been lost for days. Ana looks on the table and in the box, but the lapis is not there. Under the bed, Ana finds the lapis! Tatay thanks Ana, and Ana smiles.
+
+**Ang Lapis ni Ana**
+
+Tumulong si Ana kay Tatay. Naglinis sila ng bahay. Nawala ang lapis niya.
+
+Pagkatapos, tiningnan niya mesa. Sa kahon niya hindi ito. Wala ang lapis.
+
+Doon sa ilalim ng kama, nakita. Salamat kay Ana, ngumiti si Tatay. Hawak ni Ana ang lapis.
+
+- (where) Saan niya hinanap ang lapis? - sa mesa / sa ilalim ng kama / sa kahon - answer: sa ilalim ng kama
+- (who) Sino ang tumulong kay Ana? - Tatay / Lolo / Ate - answer: Tatay
+- (what) Ano ang nakita ni Ana? - bola / lapis / bunga - answer: lapis
+
+Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
+
+## Run 7: Ana (Level 1) - checks: FAIL
+Plot: Ana helps Tatay clean the house. The lapis has been lost for days. Ana looks on the table and in the box, but the lapis is not there. Under the bed, Ana finds the lapis! Tatay thanks Ana, and Ana smiles.
+
+Failed checks: object_not_in_last
 
 **Ang Nawawalang Lapis ni Ana**
 
-Tumulong si Ana sa bahay. Si Tatay ay naglinis ng bahay. Nawala ang lapis niya araw-araw.
+Tumulong si Ana maglinis bahay. Nawala ang lapis niya. Kaya naglinis sila ng bahay.
 
-Doon siya tiningnan sa mesa. Sa kahon din niya naghanap. Wala pa rin ang lapis.
+Pero sa mesa siya tumingin. Sa kahon niya rin humukay. Wala pa rin ang lapis.
 
-Sa wakas, ilalim ng kama niya nakita. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana sa lapis.
+Sa wakas, ilalim ng kama niya nakita. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana nang todo.
 
-- (where) Saan naghanap si Ana? - sa mesa / sa kahon / sa langit - answer: sa mesa
-- (who) Sino ang tumulong kay Ana? - Tatay / Lolo / Ate - answer: Tatay
-- (what) Ano ang nakita ni Ana? - bunga / lapis / mesa - answer: lapis
+- (where) Saan niya nakita ang lapis? - sa mesa / sa kahon / sa ilalim ng kama - answer: sa ilalim ng kama
+- (who) Sino ang tumulong kay Ana? - Tatay / Lola / Ate - answer: Tatay
+- (what) Ano ang nawawala? - bola / lapis / kahon - answer: lapis
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
@@ -189,15 +250,15 @@ Failed checks: object_not_in_first
 
 **Ang Laruang Trak ni Ben**
 
-Umuulan nang malakas sa labas. Si Ben ay nalungkot. Kaya hindi siya makalabas.
+Umuulan nang malakas sa labas. Si Ben ay nalungkot. Kaya hindi siya naglaro.
 
-Pero may laruang trak si Ben. Siya ay naglaro sa loob ng bahay. Doon siya naglaro nang todo.
+Pero may laruang trak siya. Siya ay naglaro sa loob ng bahay. Doon siya nag-drive.
 
-Nang makita si Nanay, siya ay ngumiti. Si Ben ay masaya sa laruang trak.
+Nang makita si Nanay siya. Siya ay ngumiti. Kaya si Ben ay masaya sa laruang trak.
 
-- (where) Saan hindi makalabas si Ben? - sa ilog / sa labas / sa parke - answer: sa labas
-- (who) Sino ang nakita si Ben? - Nanay / Lolo / Ate - answer: Nanay
-- (what) Ano ang laruan ni Ben? - bola / laruang trak / libro - answer: laruang trak
+- (where) Nasaan si Ben naglaro? - sa labas / sa ilog / sa loob ng bahay - answer: sa loob ng bahay
+- (who) Sino ang nakita si Ben? - Lolo / Nanay / Ate - answer: Nanay
+- (what) Ano ang laruan niya? - bola / laruang trak / aklat - answer: laruang trak
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
@@ -208,32 +269,51 @@ Failed checks: object_not_in_first
 
 **Ang Laruang Trak ni Ben**
 
-Umuulan nang malakas sa labas. Nalungkot si Ben nang ganoon. Kaya hindi siya naglaro.
+Umuulan nang malakas sa labas. Si Ben ay nalungkot. Kaya hindi siya naglaro.
 
-Pero may laruang trak siya. Naglaro siya sa loob ng bahay. Doon siya nag-drive.
+Pero may laruang trak si Ben. Siya ay naglaro sa loob ng bahay. Doon siya naglaro.
 
-Nang makita siya ni Nanay. Ngumiti si Nanay sa kanya. Masaya si Ben sa laruang trak.
+Nang makita si Nanay, siya ay ngumiti. Si Ben ay masaya sa laruang trak.
 
-- (where) Saan hindi naglaro si Ben? - sa loob ng bahay / sa labas / sa kahon - answer: sa labas
-- (who) Sino ang nakita si Ben? - Nanay / Ben / Lola - answer: Nanay
+- (where) Saan naglaro si Ben? - sa labas / sa loob ng bahay / sa parke - answer: sa loob ng bahay
+- (who) Sino ang nakita si Ben? - Nanay / Lolo / Ate - answer: Nanay
 - (what) Ano ang laruan ni Ben? - bola / laruang trak / aklat - answer: laruang trak
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
-## Run 9: Mila (Level 2) - checks: PASS
+## Run 9b: Mila (Level 2) - checks: PASS
 Plot: Mila brings the laruang roket and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket becomes heavy. So Mila puts the laruang roket in a bag and helps Nanay carry the basket. At home, Nanay cooks lunch and thanks Mila. While waiting, Mila plays with the laruang roket.
 
 **Ang Laruang Roket ni Mila**
 
-Dinala ni Mila ang laruang roket sa palengke. Sumama siya kay Nanay sa palengke. Bumili sila ng isda, kamatis, at tinapay.
+Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papuntang palengke. Bumili sila ng isda, kamatis, at tinapay.
 
 Pagkatapos, naging mabigat ang kanilang basket. Kaya inilagay niya ang laruang roket sa bag. Siya ay tumulong kay Nanay magbuhat.
 
-Sa wakas, nagluto si Nanay ng tanghalian sa bahay. Habang naghihintay, naglaro si Mila ng laruang roket. Masaya si Mila sa laruang roket niya.
+Sa wakas, nagluto si Nanay ng tanghalian sa bahay. Habang naghihintay, naglaro si Mila ng laruang roket. Si Mila ay masaya sa kanyang laruang roket.
 
-- (sequence) Ano ang unang ginawa ni Mila? - Naglaro siya ng laruang roket. / Dinala niya ang laruang roket sa palengke. / Tumulong siya kay Nanay magbuhat. - answer: Dinala niya ang laruang roket sa palengke.
+- (sequence) Ano ang ginawa ni Mila pagkatapos bumili ng mga bilihin? - Naglaro siya ng laruang roket. / Inilagay niya ang roket sa bag. / Naghanda si Nanay ng tanghalian. - answer: Inilagay niya ang roket sa bag.
 - (feeling) Ano ang naramdaman ni Mila habang naghihintay? - nalungkot / nagalit / masaya - answer: masaya
-- (main_idea) Ano ang pangunahing nangyari sa kuwento? - Naglaro siya sa palengke. / Tumulong siya kay Nanay sa pagbili. / Naghanda sila ng tanghalian sa bahay. - answer: Tumulong siya kay Nanay sa pagbili.
+- (main_idea) Sino ang tumulong kay Nanay magbuhat? - si Lola / si Mila / si Tatay - answer: si Mila
+
+Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
+
+## Run 9: Mila (Level 2) - checks: FAIL
+Plot: Mila brings the laruang roket and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket becomes heavy. So Mila puts the laruang roket in a bag and helps Nanay carry the basket. At home, Nanay cooks lunch and thanks Mila. While waiting, Mila plays with the laruang roket.
+
+Failed checks: answer_not_in_story
+
+**Ang Laruang Roket ni Mila**
+
+Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papuntang palengke. Bumili sila ng isda, kamatis, at tinapay.
+
+Naging mabigat ang basket dahil sa kanilang dala. Kaya inilagay niya ang laruang roket sa bag. Tinulungan niya si Nanay na magbuhat.
+
+Sa bahay, si Nanay ay nagluto ng tanghalian. Habang naghihintay, naglaro si Mila ng laruang roket. Nagpasalamat siya kay Nanay sa masarap na pagkain.
+
+- (sequence) Ano ang unang ginawa ni Mila? - Naglaro siya ng laruang roket. / Dinala niya ang laruang roket sa palengke. / Tinulungan niya si Nanay na magbuhat. - answer: Dinala niya ang laruang roket sa palengke.
+- (feeling) Ano ang naramdaman ni Mila habang naghihintay? - nagalit / nalungkot / masaya - answer: masaya
+- (main_idea) Ano ang pangunahing nangyari sa kwento? - Naglaro sila sa palengke. / Tumulong si Mila kay Nanay sa pamimili. / Naghanda si Nanay ng tanghalian. - answer: Tumulong si Mila kay Nanay sa pamimili.
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
 
@@ -244,14 +324,14 @@ Failed checks: object_not_in_last
 
 **Ang Nawawalang Krayola**
 
-Tumulong si Ana maglinis bahay. Nawala ang krayola niya. Kaya siya ay naghanap.
+Tumulong si Ana sa tatay. Siya ay naglinis ng bahay. Ang krayola ay nawala nang ilang araw.
 
-Pagkatapos, tiningnan niya mesa. Sa kahon niya, wala ito. Pero hindi niya mahanap.
+Pagkatapos, tiningnan niya ang mesa. Sa kahon niya ay wala. Pero hindi niya mahanap ang krayola.
 
-Sa wakas, nakita niya sa ilalim ng kama. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana.
+Sa wakas, nakita niya sa ilalim ng kama. Nagpasalamat si Tatay kay Ana. Si Ana ay ngumiti nang malaki.
 
-- (who) Sino ang tumulong maglinis? - Tatay / Ana / Lolo - answer: Ana
-- (what) Ano ang nawawala? - bola / krayola / kahon - answer: krayola
+- (who) Sino ang tumulong sa tatay? - Tatay / Ana / Lolo - answer: Ana
+- (what) Ano ang nawala? - kahon / krayola / mesa - answer: krayola
 - (where) Saan niya nakita ang krayola? - sa mesa / sa kahon / sa ilalim ng kama - answer: sa ilalim ng kama
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________
@@ -259,18 +339,18 @@ Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ___
 ## Run 10: Ana (Level 1) - checks: FAIL
 Plot: Ana helps Tatay clean the house. The krayola has been lost for days. Ana looks on the table and in the box, but the krayola is not there. Under the bed, Ana finds the krayola! Tatay thanks Ana, and Ana smiles.
 
-Failed checks: object_not_in_last
+Failed checks: object_not_in_last, answer_not_in_story
 
-**Ang Nawawalang Krayola**
+**Ang Nawawalang Krayola ni Ana**
 
-Si Ana ay tumulong kay Tatay. Naglinis sila ng bahay. Nawala ang krayola nang ilang araw.
+Tumulong si Ana kay Tatay. Naglinis sila ng bahay. Nawala ang krayola niya.
 
-Pagkatapos, tiningnan niya ang mesa. Sa kahon niya ay wala. Hindi niya mahanap ang krayola.
+Pagkatapos, tiningnan niya mesa. Sa kahon niya hindi ito. Kaya naghanap siya.
 
-Doon sa ilalim ng kama niya, nakita niya. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana nang malaki.
+Sa wakas, nakita niya ito. Salamat kay Ana ni Tatay. Ngumiti si Ana.
 
-- (who) Sino ang tumulong kay Tatay? - Tatay / Ana / Lolo - answer: Ana
-- (what) Ano ang nawawala? - mesa / krayola / kahon - answer: krayola
+- (who) Sino ang tumulong kay Tatay? - Tatay / Ana / Lola - answer: Ana
+- (what) Ano ang nawala? - kahon / krayola / mesa - answer: krayola
 - (where) Saan niya nakita ang krayola? - sa mesa / sa kahon / sa ilalim ng kama - answer: sa ilalim ng kama
 
 Makes sense (1-5): ____   Natural Filipino (1-5): ____   Child safety (1-5): ____   Notes: ____________

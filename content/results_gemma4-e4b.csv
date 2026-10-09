@@ -1,19 +1,19 @@
 prompt,model,run,learner,result,failed_checks,seconds,output,result_after_retry,retry_failed_checks
-story,gemma4:e4b,1,Ana,FAIL,answer_not_in_story,30.0,"{
+story,gemma4:e4b,1,Ana,FAIL,object_not_in_last,31.8,"{
   ""title"": ""Ang Nawawalang Lapis ni Ana"",
   ""paragraphs"": [
     ""Tumulong si Ana kay Tatay. Naglinis sila ng bahay. Nawala ang lapis niya."",
-    ""Doon tiningnan niya mesa. Sa kahon niya, wala ito. Hindi niya nakita."",
-    ""Sa wakas, nakita niya lapis. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana.""
+    ""Pagkatapos, tiningnan niya mesa. Sa kahon niya hindi ito. Wala ang lapis."",
+    ""Doon sa ilalim ng kama, nakita niya. Nagpasalamat si Tatay. Ngumiti si Ana.""
   ],
   ""questions"": [
     {
       ""type"": ""who"",
       ""prompt"": ""Sino ang tumulong kay Tatay?"",
       ""choices"": [
-        ""Tatay"",
+        ""Lola"",
         ""Ana"",
-        ""Lolo""
+        ""Nanay""
       ],
       ""answer"": ""Ana""
     },
@@ -39,23 +39,23 @@ story,gemma4:e4b,1,Ana,FAIL,answer_not_in_story,30.0,"{
     }
   ]
 }",FAIL,object_not_in_last
-story,gemma4:e4b,2,Ben,FAIL,object_not_in_first,31.4,"{
-  ""title"": ""Si Ben at ang Tren"",
+story,gemma4:e4b,2,Ben,FAIL,object_not_in_first,22.8,"{
+  ""title"": ""Ang Laruang Tren ni Ben"",
   ""paragraphs"": [
-    ""Umuulan nang malakas sa labas. Nalungkot si Ben nang hindi makalabas. Kaya siya ay naiwan sa loob."",
-    ""Pero mayroon siyang laruang tren. Sa loob ng bahay siya naglaro. Doon siya ay masayang naglaro."",
-    ""Nang makita siya ni Nanay. Ngumiti si Nanay nang makita si Ben. Masaya si Ben sa laruang tren.""
+    ""Umuulan nang malakas sa labas. Si Ben ay nalungkot. Kaya hindi siya naglaro."",
+    ""Pero may laruang tren si Ben. Siya ay naglaro sa loob ng bahay. Doon siya naglaro."",
+    ""Nang makita siya ni Nanay. Si Nanay ay ngumiti. Si Ben ay masaya sa laruang tren.""
   ],
   ""questions"": [
     {
       ""type"": ""what"",
-      ""prompt"": ""Ano ang mayroon si Ben?"",
+      ""prompt"": ""Ano ang hindi nagawa ni Ben?"",
       ""choices"": [
-        ""bola"",
-        ""laruang tren"",
-        ""aklat""
+        ""maglaro sa loob"",
+        ""maglaro sa labas"",
+        ""umakyat sa puno""
       ],
-      ""answer"": ""laruang tren""
+      ""answer"": ""maglaro sa labas""
     },
     {
       ""type"": ""where"",
@@ -69,33 +69,33 @@ story,gemma4:e4b,2,Ben,FAIL,object_not_in_first,31.4,"{
     },
     {
       ""type"": ""who"",
-      ""prompt"": ""Sino ang ngumiti?"",
+      ""prompt"": ""Sino ang nakita si Ben?"",
       ""choices"": [
-        ""Ben"",
+        ""Lolo"",
         ""Nanay"",
-        ""Lolo""
+        ""Ate""
       ],
       ""answer"": ""Nanay""
     }
   ]
 }",FAIL,object_not_in_first
-story,gemma4:e4b,3,Mila,PASS,,37.4,"{
-  ""title"": ""Si Mila at ang Roket"",
+story,gemma4:e4b,3,Mila,FAIL,answer_not_in_story,42.1,"{
+  ""title"": ""Ang Laruang Roket ni Mila"",
   ""paragraphs"": [
-    ""Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papuntang palengke. Bumili sila ng isda, kamatis, at tinapay."",
-    ""Pagkatapos, naging mabigat ang kanilang basket. Kaya ipinasok niya ang laruang roket sa bag. Siya ay tumulong kay Nanay magbuhat."",
-    ""Sa wakas, nagluto si Nanay ng tanghalian sa bahay. Habang naghihintay, naglaro si Mila ng laruang roket. Siya ay masaya sa laruang roket.""
+    ""Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papuntang pamilihan. Bumili sila ng isda, kamatis, at tinapay."",
+    ""Pagkatapos, naging mabigat ang dala nilang basket. Kaya ipinasok niya ang laruang roket sa bag. Siya ay tumulong kay Nanay magbuhat."",
+    ""Sa wakas, nagluto si Nanay ng tanghalian sa bahay. Nagpasalamat siya kay Mila habang naghihintay. Si Mila ay naglaro muli ng laruang roket.""
   ],
   ""questions"": [
     {
       ""type"": ""sequence"",
       ""prompt"": ""Ano ang unang ginawa ni Mila?"",
       ""choices"": [
-        ""Bumili sila ng isda."",
-        ""Dinala niya ang laruang roket sa palengke."",
-        ""Naglaro siya ng laruang roket.""
+        ""Naglaro siya ng roket sa bahay."",
+        ""Dinala niya ang roket sa palengke."",
+        ""Tumulong siya kay Nanay magbuhat.""
       ],
-      ""answer"": ""Dinala niya ang laruang roket sa palengke.""
+      ""answer"": ""Dinala niya ang roket sa palengke.""
     },
     {
       ""type"": ""feeling"",
@@ -109,7 +109,7 @@ story,gemma4:e4b,3,Mila,PASS,,37.4,"{
     },
     {
       ""type"": ""where"",
-      ""prompt"": ""Saan sila bumili ng mga bilihin?"",
+      ""prompt"": ""Saan sila bumili ng isda at kamatis?"",
       ""choices"": [
         ""sa bahay"",
         ""sa palengke"",
@@ -119,17 +119,17 @@ story,gemma4:e4b,3,Mila,PASS,,37.4,"{
     }
   ]
 }",PASS,
-story,gemma4:e4b,4,Ana,FAIL,answer_not_in_story,29.3,"{
-  ""title"": ""Ang Nawawalang Lapis ni Ana"",
+story,gemma4:e4b,4,Ana,FAIL,object_not_in_last,35.0,"{
+  ""title"": ""Ang Lapis ni Ana"",
   ""paragraphs"": [
-    ""Tumulong si Ana kay Tatay. Naglinis sila ng bahay. Nawala ang lapis niya."",
-    ""Pagkatapos, tiningnan niya mesa. Sa kahon niya hindi ito. Wala niya nakita."",
-    ""Sa wakas, nakita niya lapis. Nagpasalamat si Tatay. Ngumiti si Ana.""
+    ""Tumulong si Ana maglinis bahay. Ang lapis niya ay nawala. Kaya naglinis sila ni Tatay."",
+    ""Pagkatapos, tiningnan niya mesa. Sa kahon niya ay wala. Pero hindi niya mahanap."",
+    ""Doon sa ilalim ng kama, nakita niya. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana.""
   ],
   ""questions"": [
     {
       ""type"": ""what"",
-      ""prompt"": ""Ano ang nawala?"",
+      ""prompt"": ""Ano ang nawala ni Ana?"",
       ""choices"": [
         ""mesa"",
         ""lapis"",
@@ -139,13 +139,13 @@ story,gemma4:e4b,4,Ana,FAIL,answer_not_in_story,29.3,"{
     },
     {
       ""type"": ""who"",
-      ""prompt"": ""Sino ang tumulong?"",
+      ""prompt"": ""Sino ang tumulong kay Ana?"",
       ""choices"": [
         ""Tatay"",
         ""Lola"",
-        ""Ana""
+        ""Ate""
       ],
-      ""answer"": ""Ana""
+      ""answer"": ""Tatay""
     },
     {
       ""type"": ""where"",
@@ -158,13 +158,13 @@ story,gemma4:e4b,4,Ana,FAIL,answer_not_in_story,29.3,"{
       ""answer"": ""sa ilalim ng kama""
     }
   ]
-}",PASS,
-story,gemma4:e4b,5,Ben,PASS,,28.5,"{
+}",FAIL,object_not_in_last
+story,gemma4:e4b,5,Ben,PASS,,20.7,"{
   ""title"": ""Ang Bola ni Ben"",
   ""paragraphs"": [
     ""Dinala ni Ben ang bola. Sa parke siya nagtungo. Doon niya nakita si Kuya."",
-    ""Pero walang laruan si Kuya. Kaya ibinahagi niya ang bola. Sila ay naglaro."",
-    ""Naglaro sila buong umaga. Pagkatapos sila umuwi. Masaya si Ben dala ang bola.""
+    ""Pero wala si Kuya. Kaya ibinahagi ni Ben. Naglaro sila ng bola."",
+    ""Sabay silang naglaro. Pagkatapos ay umuwi sila. Masaya si Ben sa bola.""
   ],
   ""questions"": [
     {
@@ -192,44 +192,44 @@ story,gemma4:e4b,5,Ben,PASS,,28.5,"{
       ""prompt"": ""Sino ang nakita ni Ben?"",
       ""choices"": [
         ""Kuya"",
-        ""Lolo"",
-        ""Ate""
+        ""Lola"",
+        ""Tatay""
       ],
       ""answer"": ""Kuya""
     }
   ]
 }",PASS,
-story,gemma4:e4b,6,Mila,PASS,,36.6,"{
-  ""title"": ""Ang Laruang Roket ni Mila"",
+story,gemma4:e4b,6,Mila,FAIL,answer_not_in_story,40.3,"{
+  ""title"": ""Si Mila at ang Roket"",
   ""paragraphs"": [
-    ""Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papuntang palengke. Bumili sila ng isda, kamatis, at tinapay."",
-    ""Pagkatapos, naging mabigat ang kanilang basket. Kaya inilagay niya ang laruang roket sa bag. Siya ay tumulong kay Nanay magbuhat."",
-    ""Sa wakas, nagluto si Nanay ng tanghalian sa bahay. Habang naghihintay, naglaro si Mila ng laruang roket. Siya ay masaya sa laruang roket.""
+    ""Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay sa pagbili. Bumili sila ng isda, kamatis, at tinapay."",
+    ""Naging mabigat ang basket ng mga bilihin. Kaya inilagay niya ang laruang roket sa bag. Tinulungan niya si Nanay na magbuhat."",
+    ""Doon sa bahay, nagluto si Nanay ng tanghalian. Habang naghihintay, naglaro si Mila ng laruang roket. Si Mila ay nagpasalamat sa pagkaing iyon.""
   ],
   ""questions"": [
     {
       ""type"": ""sequence"",
-      ""prompt"": ""Ano ang unang ginawa ni Mila?"",
+      ""prompt"": ""Ano ang ginawa ni Mila pagkatapos bumili?"",
       ""choices"": [
         ""Naglaro siya ng laruang roket."",
-        ""Dinala niya ang laruang roket sa palengke."",
-        ""Tumulong siya kay Nanay magbuhat.""
+        ""Tinulungan niya si Nanay magbuhat."",
+        ""Naghanda si Nanay ng tanghalian.""
       ],
-      ""answer"": ""Dinala niya ang laruang roket sa palengke.""
+      ""answer"": ""Tinulungan niya si Nanay magbuhat.""
     },
     {
       ""type"": ""feeling"",
       ""prompt"": ""Ano ang naramdaman ni Mila habang naghihintay?"",
       ""choices"": [
-        ""nalungkot"",
         ""nagalit"",
+        ""nalungkot"",
         ""masaya""
       ],
       ""answer"": ""masaya""
     },
     {
       ""type"": ""where"",
-      ""prompt"": ""Saan sila bumili ng isda at kamatis?"",
+      ""prompt"": ""Saan sila bumili ng mga bilihin?"",
       ""choices"": [
         ""sa bahay"",
         ""sa palengke"",
@@ -238,72 +238,72 @@ story,gemma4:e4b,6,Mila,PASS,,36.6,"{
       ""answer"": ""sa palengke""
     }
   ]
-}",PASS,
-story,gemma4:e4b,7,Ana,PASS,,31.4,"{
+}",FAIL,answer_not_in_story
+story,gemma4:e4b,7,Ana,FAIL,object_not_in_last,32.7,"{
   ""title"": ""Ang Nawawalang Lapis ni Ana"",
   ""paragraphs"": [
-    ""Tumulong si Ana sa bahay. Si Tatay ay naglinis ng bahay. Nawala ang lapis niya araw-araw."",
-    ""Doon siya tiningnan sa mesa. Sa kahon din niya naghanap. Wala pa rin ang lapis."",
-    ""Sa wakas, ilalim ng kama niya nakita. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana sa lapis.""
+    ""Tumulong si Ana maglinis bahay. Nawala ang lapis niya. Kaya naglinis sila ng bahay."",
+    ""Pero sa mesa siya tumingin. Sa kahon niya rin humukay. Wala pa rin ang lapis."",
+    ""Sa wakas, ilalim ng kama niya nakita. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana nang todo.""
   ],
   ""questions"": [
     {
       ""type"": ""where"",
-      ""prompt"": ""Saan naghanap si Ana?"",
+      ""prompt"": ""Saan niya nakita ang lapis?"",
       ""choices"": [
         ""sa mesa"",
         ""sa kahon"",
-        ""sa langit""
+        ""sa ilalim ng kama""
       ],
-      ""answer"": ""sa mesa""
+      ""answer"": ""sa ilalim ng kama""
     },
     {
       ""type"": ""who"",
       ""prompt"": ""Sino ang tumulong kay Ana?"",
       ""choices"": [
         ""Tatay"",
-        ""Lolo"",
+        ""Lola"",
         ""Ate""
       ],
       ""answer"": ""Tatay""
     },
     {
       ""type"": ""what"",
-      ""prompt"": ""Ano ang nakita ni Ana?"",
+      ""prompt"": ""Ano ang nawawala?"",
       ""choices"": [
-        ""bunga"",
+        ""bola"",
         ""lapis"",
-        ""mesa""
+        ""kahon""
       ],
       ""answer"": ""lapis""
     }
   ]
 }",PASS,
-story,gemma4:e4b,8,Ben,FAIL,object_not_in_first,29.7,"{
+story,gemma4:e4b,8,Ben,FAIL,object_not_in_first,20.2,"{
   ""title"": ""Ang Laruang Trak ni Ben"",
   ""paragraphs"": [
-    ""Umuulan nang malakas sa labas. Nalungkot si Ben nang ganoon. Kaya hindi siya naglaro."",
-    ""Pero may laruang trak siya. Naglaro siya sa loob ng bahay. Doon siya nag-drive."",
-    ""Nang makita siya ni Nanay. Ngumiti si Nanay sa kanya. Masaya si Ben sa laruang trak.""
+    ""Umuulan nang malakas sa labas. Si Ben ay nalungkot. Kaya hindi siya naglaro."",
+    ""Pero may laruang trak si Ben. Siya ay naglaro sa loob ng bahay. Doon siya naglaro."",
+    ""Nang makita si Nanay, siya ay ngumiti. Si Ben ay masaya sa laruang trak.""
   ],
   ""questions"": [
     {
       ""type"": ""where"",
-      ""prompt"": ""Saan hindi naglaro si Ben?"",
+      ""prompt"": ""Saan naglaro si Ben?"",
       ""choices"": [
-        ""sa loob ng bahay"",
         ""sa labas"",
-        ""sa kahon""
+        ""sa loob ng bahay"",
+        ""sa parke""
       ],
-      ""answer"": ""sa labas""
+      ""answer"": ""sa loob ng bahay""
     },
     {
       ""type"": ""who"",
       ""prompt"": ""Sino ang nakita si Ben?"",
       ""choices"": [
         ""Nanay"",
-        ""Ben"",
-        ""Lola""
+        ""Lolo"",
+        ""Ate""
       ],
       ""answer"": ""Nanay""
     },
@@ -319,12 +319,12 @@ story,gemma4:e4b,8,Ben,FAIL,object_not_in_first,29.7,"{
     }
   ]
 }",FAIL,object_not_in_first
-story,gemma4:e4b,9,Mila,PASS,,44.5,"{
+story,gemma4:e4b,9,Mila,FAIL,answer_not_in_story,43.2,"{
   ""title"": ""Ang Laruang Roket ni Mila"",
   ""paragraphs"": [
-    ""Dinala ni Mila ang laruang roket sa palengke. Sumama siya kay Nanay sa palengke. Bumili sila ng isda, kamatis, at tinapay."",
-    ""Pagkatapos, naging mabigat ang kanilang basket. Kaya inilagay niya ang laruang roket sa bag. Siya ay tumulong kay Nanay magbuhat."",
-    ""Sa wakas, nagluto si Nanay ng tanghalian sa bahay. Habang naghihintay, naglaro si Mila ng laruang roket. Masaya si Mila sa laruang roket niya.""
+    ""Dinala ni Mila ang laruang roket sa palengke. Kasama niya si Nanay papuntang palengke. Bumili sila ng isda, kamatis, at tinapay."",
+    ""Naging mabigat ang basket dahil sa kanilang dala. Kaya inilagay niya ang laruang roket sa bag. Tinulungan niya si Nanay na magbuhat."",
+    ""Sa bahay, si Nanay ay nagluto ng tanghalian. Habang naghihintay, naglaro si Mila ng laruang roket. Nagpasalamat siya kay Nanay sa masarap na pagkain.""
   ],
   ""questions"": [
     {
@@ -333,7 +333,7 @@ story,gemma4:e4b,9,Mila,PASS,,44.5,"{
       ""choices"": [
         ""Naglaro siya ng laruang roket."",
         ""Dinala niya ang laruang roket sa palengke."",
-        ""Tumulong siya kay Nanay magbuhat.""
+        ""Tinulungan niya si Nanay na magbuhat.""
       ],
       ""answer"": ""Dinala niya ang laruang roket sa palengke.""
     },
@@ -341,30 +341,30 @@ story,gemma4:e4b,9,Mila,PASS,,44.5,"{
       ""type"": ""feeling"",
       ""prompt"": ""Ano ang naramdaman ni Mila habang naghihintay?"",
       ""choices"": [
-        ""nalungkot"",
         ""nagalit"",
+        ""nalungkot"",
         ""masaya""
       ],
       ""answer"": ""masaya""
     },
     {
       ""type"": ""main_idea"",
-      ""prompt"": ""Ano ang pangunahing nangyari sa kuwento?"",
+      ""prompt"": ""Ano ang pangunahing nangyari sa kwento?"",
       ""choices"": [
-        ""Naglaro siya sa palengke."",
-        ""Tumulong siya kay Nanay sa pagbili."",
-        ""Naghanda sila ng tanghalian sa bahay.""
+        ""Naglaro sila sa palengke."",
+        ""Tumulong si Mila kay Nanay sa pamimili."",
+        ""Naghanda si Nanay ng tanghalian.""
       ],
-      ""answer"": ""Tumulong siya kay Nanay sa pagbili.""
+      ""answer"": ""Tumulong si Mila kay Nanay sa pamimili.""
     }
   ]
 }",PASS,
-story,gemma4:e4b,10,Ana,FAIL,object_not_in_last,33.8,"{
-  ""title"": ""Ang Nawawalang Krayola"",
+story,gemma4:e4b,10,Ana,FAIL,object_not_in_last;answer_not_in_story,21.3,"{
+  ""title"": ""Ang Nawawalang Krayola ni Ana"",
   ""paragraphs"": [
-    ""Si Ana ay tumulong kay Tatay. Naglinis sila ng bahay. Nawala ang krayola nang ilang araw."",
-    ""Pagkatapos, tiningnan niya ang mesa. Sa kahon niya ay wala. Hindi niya mahanap ang krayola."",
-    ""Doon sa ilalim ng kama niya, nakita niya. Nagpasalamat si Tatay kay Ana. Ngumiti si Ana nang malaki.""
+    ""Tumulong si Ana kay Tatay. Naglinis sila ng bahay. Nawala ang krayola niya."",
+    ""Pagkatapos, tiningnan niya mesa. Sa kahon niya hindi ito. Kaya naghanap siya."",
+    ""Sa wakas, nakita niya ito. Salamat kay Ana ni Tatay. Ngumiti si Ana.""
   ],
   ""questions"": [
     {
@@ -373,17 +373,17 @@ story,gemma4:e4b,10,Ana,FAIL,object_not_in_last,33.8,"{
       ""choices"": [
         ""Tatay"",
         ""Ana"",
-        ""Lolo""
+        ""Lola""
       ],
       ""answer"": ""Ana""
     },
     {
       ""type"": ""what"",
-      ""prompt"": ""Ano ang nawawala?"",
+      ""prompt"": ""Ano ang nawala?"",
       ""choices"": [
-        ""mesa"",
+        ""kahon"",
         ""krayola"",
-        ""kahon""
+        ""mesa""
       ],
       ""answer"": ""krayola""
     },
@@ -399,100 +399,100 @@ story,gemma4:e4b,10,Ana,FAIL,object_not_in_last,33.8,"{
     }
   ]
 }",FAIL,object_not_in_last
-words,gemma4:e4b,1,Ana,PASS,,8.4,"{""words"": [{""text"": ""ngipin"", ""meaning_en"": ""tooth""}, {""text"": ""ngiti"", ""meaning_en"": ""smile""}, {""text"": ""langit"", ""meaning_en"": ""sky""}, {""text"": ""sanga"", ""meaning_en"": ""branch""}, {""text"": ""bunga"", ""meaning_en"": ""fruit""}]}",PASS,
-words,gemma4:e4b,2,Ben,PASS,,9.0,"{""words"": [{""text"": ""lapis"", ""meaning_en"": ""pencil""}, {""text"": ""kahon"", ""meaning_en"": ""box""}, {""text"": ""dahon"", ""meaning_en"": ""leaf""}, {""text"": ""bulak"", ""meaning_en"": ""flower""}, {""text"": ""aklat"", ""meaning_en"": ""book""}]}",PASS,
-words,gemma4:e4b,3,Mila,PASS,,11.5,"{
+words,gemma4:e4b,1,Ana,PASS,,8.4,"{
 ""words"": [
 {
-""text"": ""paaralan"",
-""meaning_en"": ""school""
+""text"": ""ngipin"",
+""meaning_en"": ""tooth""
 },
 {
-""text"": ""saranggola"",
-""meaning_en"": ""kite""
+""text"": ""ngiti"",
+""meaning_en"": ""smile""
 },
 {
-""text"": ""kalabaw"",
-""meaning_en"": ""carabao""
+""text"": ""langit"",
+""meaning_en"": ""sky""
 },
 {
-""text"": ""kalapati"",
-""meaning_en"": ""pigeon""
+""text"": ""sanga"",
+""meaning_en"": ""branch""
 },
 {
-""text"": ""tinapay"",
-""meaning_en"": ""bread""
+""text"": ""bunga"",
+""meaning_en"": ""fruit""
 }
 ]
 }",PASS,
-words,gemma4:e4b,4,Ana,PASS,,6.5,"{""words"": [{""text"": ""ngipin"", ""meaning_en"": ""tooth""}, {""text"": ""ngiti"", ""meaning_en"": ""smile""}, {""text"": ""langit"", ""meaning_en"": ""sky""}, {""text"": ""sanga"", ""meaning_en"": ""branch""}, {""text"": ""bunga"", ""meaning_en"": ""fruit""}]}",PASS,
-words,gemma4:e4b,5,Ben,PASS,,6.5,"{""words"": [{""text"": ""lapis"", ""meaning_en"": ""pencil""}, {""text"": ""kahon"", ""meaning_en"": ""box""}, {""text"": ""dahon"", ""meaning_en"": ""leaf""}, {""text"": ""bulak"", ""meaning_en"": ""flower""}, {""text"": ""aklat"", ""meaning_en"": ""book""}]}",PASS,
-words,gemma4:e4b,6,Mila,PASS,,6.5,"{""words"": [{""text"": ""paaralan"", ""meaning_en"": ""school""}, {""text"": ""saranggola"", ""meaning_en"": ""kite""}, {""text"": ""kalabaw"", ""meaning_en"": ""carabao""}, {""text"": ""palengke"", ""meaning_en"": ""market""}, {""text"": ""kamatis"", ""meaning_en"": ""tomato""}]}",PASS,
-words,gemma4:e4b,7,Ana,PASS,,6.0,"{""words"": [{""text"": ""ngiti"", ""meaning_en"": ""smile""}, {""text"": ""langit"", ""meaning_en"": ""sky""}, {""text"": ""sanga"", ""meaning_en"": ""branch""}, {""text"": ""bunga"", ""meaning_en"": ""fruit""}, {""text"": ""singsing"", ""meaning_en"": ""ring""}]}",PASS,
-words,gemma4:e4b,8,Ben,PASS,,6.9,"{""words"": [{""text"": ""lapis"", ""meaning_en"": ""pencil""}, {""text"": ""kahon"", ""meaning_en"": ""box""}, {""text"": ""dahon"", ""meaning_en"": ""leaf""}, {""text"": ""bulak"", ""meaning_en"": ""flower""}, {""text"": ""aklat"", ""meaning_en"": ""book""}]}",PASS,
-words,gemma4:e4b,9,Mila,PASS,,9.3,"{""words"": [{""text"": ""paaralan"", ""meaning_en"": ""school""}, {""text"": ""saranggola"", ""meaning_en"": ""kite""}, {""text"": ""kalabaw"", ""meaning_en"": ""water buffalo"" }, {""text"": ""kalapati"", ""meaning_en"": ""pigeon"" }, {""text"": ""tinapay"", ""meaning_en"": ""bread"" }]}",PASS,
-words,gemma4:e4b,10,Ana,PASS,,6.3,"{""words"": [{""text"": ""ngipin"", ""meaning_en"": ""tooth""}, {""text"": ""ngiti"", ""meaning_en"": ""smile""}, {""text"": ""langit"", ""meaning_en"": ""sky""}, {""text"": ""sanga"", ""meaning_en"": ""branch""}, {""text"": ""bunga"", ""meaning_en"": ""fruit""}]}",PASS,
-feedback,gemma4:e4b,1,Ana,PASS,,7.0,"{""message_fil"": ""Magaling ka, Ana!"", ""hint_fil"": ""May tunog pa sa dulo.""}",PASS,
-feedback,gemma4:e4b,2,Ben,PASS,,8.4,"{""message_fil"": ""Magaling ka, Ben!"", ""hint_fil"": ""Tingnan ang tunog ng unang patinig.""}",PASS,
-feedback,gemma4:e4b,3,Mila,PASS,,7.6,"{""message_fil"": ""Magaling ka, Mila!"", ""hint_fil"": ""Bilangin ang mga pantig ng salita.""}",PASS,
-feedback,gemma4:e4b,4,Ana,PASS,,7.4,"{""message_fil"": ""Magaling ka, Ana!"", ""hint_fil"": ""Tingnan ang tunog na 'ng'.""}",PASS,
-feedback,gemma4:e4b,5,Ben,PASS,,6.9,"{""message_fil"": ""Magaling ka, Ben!"", ""hint_fil"": ""Pakinggan ang tunog sa dulo.""}",PASS,
-feedback,gemma4:e4b,6,Mila,PASS,,7.7,"{""message_fil"": ""Magaling ka, Mila!"", ""hint_fil"": ""May tunog pa sa dulo.""}",PASS,
-feedback,gemma4:e4b,7,Ana,PASS,,7.3,"{""message_fil"": ""Magaling ka, Ana!"", ""hint_fil"": ""Bilangin ang mga pantig dito.""}",PASS,
-feedback,gemma4:e4b,8,Ben,PASS,,9.6,"{""message_fil"": ""Magaling ka, Ben! Halos tama na."", ""hint_fil"": ""Pumalakpak at bilangin ang pantig.""}",PASS,
-feedback,gemma4:e4b,9,Mila,PASS,,6.7,"{""message_fil"": ""Mahusay ang pagsisikap mo, Mila!"", ""hint_fil"": ""Bilangin ang mga pantig nang malakas.""}",PASS,
-feedback,gemma4:e4b,10,Ana,PASS,,5.8,"{""message_fil"": ""Magaling ka, Ana!"", ""hint_fil"": ""Tingnan mo ang tunog na 'ng'.""}",PASS,
-summary,gemma4:e4b,1,Ana,PASS,,32.3,"{
+words,gemma4:e4b,2,Ben,PASS,,6.5,"{""words"": [{""text"": ""lapis"", ""meaning_en"": ""pencil""}, {""text"": ""kahon"", ""meaning_en"": ""box""}, {""text"": ""dahon"", ""meaning_en"": ""leaf""}, {""text"": ""bulak"", ""meaning_en"": ""flower""}, {""text"": ""aklat"", ""meaning_en"": ""book""}]}",PASS,
+words,gemma4:e4b,3,Mila,PASS,,6.8,"{""words"": [{""text"": ""paaralan"", ""meaning_en"": ""school""}, {""text"": ""saranggola"", ""meaning_en"": ""kite""}, {""text"": ""kalabaw"", ""meaning_en"": ""carabao""}, {""text"": ""kalapati"", ""meaning_en"": ""pigeon""}, {""text"": ""tinapay"", ""meaning_en"": ""bread""}]}",PASS,
+words,gemma4:e4b,4,Ana,PASS,,5.8,"{""words"": [{""text"": ""ngipin"", ""meaning_en"": ""tooth""}, {""text"": ""ngiti"", ""meaning_en"": ""smile""}, {""text"": ""langit"", ""meaning_en"": ""sky""}, {""text"": ""sanga"", ""meaning_en"": ""branch""}, {""text"": ""bunga"", ""meaning_en"": ""fruit""}]}",PASS,
+words,gemma4:e4b,5,Ben,PASS,,6.1,"{""words"": [{""text"": ""lapis"", ""meaning_en"": ""pencil""}, {""text"": ""kahon"", ""meaning_en"": ""box""}, {""text"": ""dahon"", ""meaning_en"": ""leaf""}, {""text"": ""bulak"", ""meaning_en"": ""flower""}, {""text"": ""aklat"", ""meaning_en"": ""book""}]}",PASS,
+words,gemma4:e4b,6,Mila,PASS,,6.5,"{""words"": [{""text"": ""paaralan"", ""meaning_en"": ""school""}, {""text"": ""saranggola"", ""meaning_en"": ""kite""}, {""text"": ""kalabaw"", ""meaning_en"": ""carabao""}, {""text"": ""kalapati"", ""meaning_en"": ""pigeon""}, {""text"": ""tinapay"", ""meaning_en"": ""bread""}]}",PASS,
+words,gemma4:e4b,7,Ana,PASS,,5.9,"{""words"": [{""text"": ""ngiti"", ""meaning_en"": ""smile""}, {""text"": ""langit"", ""meaning_en"": ""sky""}, {""text"": ""sanga"", ""meaning_en"": ""branch""}, {""text"": ""bunga"", ""meaning_en"": ""fruit""}, {""text"": ""singsing"", ""meaning_en"": ""ring""}]}",PASS,
+words,gemma4:e4b,8,Ben,PASS,,6.6,"{""words"": [{""text"": ""lapis"", ""meaning_en"": ""pencil""}, {""text"": ""kahon"", ""meaning_en"": ""box""}, {""text"": ""bulak"", ""meaning_en"": ""flower""}, {""text"": ""dahon"", ""meaning_en"": ""leaf""}, {""text"": ""aklat"", ""meaning_en"": ""book""}]}",PASS,
+words,gemma4:e4b,9,Mila,PASS,,6.4,"{""words"": [{""text"": ""paaralan"", ""meaning_en"": ""school""}, {""text"": ""saranggola"", ""meaning_en"": ""kite""}, {""text"": ""kalabaw"", ""meaning_en"": ""carabao""}, {""text"": ""tinapay"", ""meaning_en"": ""bread""}, {""text"": ""kalapati"", ""meaning_en"": ""pigeon""}]}",PASS,
+words,gemma4:e4b,10,Ana,PASS,,6.1,"{""words"": [{""text"": ""ngipin"", ""meaning_en"": ""tooth""}, {""text"": ""ngiti"", ""meaning_en"": ""smile""}, {""text"": ""langit"", ""meaning_en"": ""sky""}, {""text"": ""sanga"", ""meaning_en"": ""branch""}, {""text"": ""bunga"", ""meaning_en"": ""fruit""}]}",PASS,
+feedback,gemma4:e4b,1,Ana,PASS,,5.8,"{""message_fil"": ""Magaling ka, Ana! Halos tama na."", ""hint_fil"": ""Pumalakpak sa bawat pantig. Ano ang huling tunog?""}",PASS,
+feedback,gemma4:e4b,2,Ben,PASS,,5.6,"{""message_fil"": ""Magaling ka, Ben! Halos tama na."", ""hint_fil"": ""Tingnan ang tunog ng patinig sa gitna.""}",PASS,
+feedback,gemma4:e4b,3,Mila,PASS,,4.6,"{""message_fil"": ""Magaling ka, Mila!"", ""hint_fil"": ""Bilangin ang pantig ng salita.""}",PASS,
+feedback,gemma4:e4b,4,Ana,PASS,,4.8,"{""message_fil"": ""Magaling ka, Ana!"", ""hint_fil"": ""Tingnan ang tunog na 'ng' sa card.""}",PASS,
+feedback,gemma4:e4b,5,Ben,PASS,,4.5,"{""message_fil"": ""Magaling ka, Ben!"", ""hint_fil"": ""Pakinggan ang tunog sa dulo.""}",PASS,
+feedback,gemma4:e4b,6,Mila,PASS,,7.2,"{""message_fil"": ""Magaling ka, Mila! Halos tama na iyan."", ""hint_fil"": ""Pumalakpak tayo sa bawat pantig. Anong tunog ang nawawala?""}",PASS,
+feedback,gemma4:e4b,7,Ana,PASS,,5.7,"{""message_fil"": ""Mahusay ang pagsisikap mo, Ana!"", ""hint_fil"": ""Pumalakpak ng pantig, isa, dalawa.""}",PASS,
+feedback,gemma4:e4b,8,Ben,PASS,,5.2,"{""message_fil"": ""Magaling ka, Ben! Halika ulit."", ""hint_fil"": ""Pumalakpak sa bawat pantig.""}",PASS,
+feedback,gemma4:e4b,9,Mila,PASS,,4.8,"{""message_fil"": ""Magaling ka, Mila!"", ""hint_fil"": ""Bilangin ang pantig nang dahan-dahan.""}",PASS,
+feedback,gemma4:e4b,10,Ana,PASS,,4.6,"{""message_fil"": ""Magaling ka, Ana!"", ""hint_fil"": ""Tingnan ang tunog na 'ng' sa tile.""}",PASS,
+summary,gemma4:e4b,1,Ana,PASS,,16.8,"{
   ""learners"": [
     {
       ""child_id"": ""c_01"",
-      ""summary"": ""Ana got 8 of 10 correct on the 'ng' sound. She sometimes wrote 'ng' incorrectly."",
+      ""summary"": ""Ana got 8 of 10 correct practicing the 'ng' sound. She made mistakes writing 'ng' incorrectly."",
       ""next_focus_skill"": ""sk_ng"",
       ""next_method"": ""ng_sound_pairs""
     },
     {
       ""child_id"": ""c_02"",
-      ""summary"": ""Ben got 7 of 10 correct on words ending in a consonant. He also made mistakes with the 'ng' sound."",
+      ""summary"": ""Ben achieved 7 of 10 correct on words ending in a consonant. He also made mistakes writing 'ng' incorrectly."",
       ""next_focus_skill"": ""sk_cvc_final"",
       ""next_method"": ""ng_sound_pairs""
     },
     {
       ""child_id"": ""c_03"",
-      ""summary"": ""Mila scored 9 of 10 correct on long words. She made multiple mistakes with the 'ng' sound."",
+      ""summary"": ""Mila scored 9 of 10 correct on long words. She made several mistakes writing 'ng' incorrectly."",
       ""next_focus_skill"": ""sk_long_words"",
       ""next_method"": ""ng_sound_pairs""
     }
   ],
-  ""group_note"": ""All learners showed a tendency to write the 'ng' sound incorrectly.""
+  ""group_note"": ""All three learners made mistakes with the 'ng' sound.""
 }",PASS,
-summary,gemma4:e4b,2,Ben,PASS,,29.6,"{
+summary,gemma4:e4b,2,Ben,PASS,,16.2,"{
   ""learners"": [
     {
       ""child_id"": ""c_01"",
-      ""summary"": ""Ana scored 9 of 10 on the letter ng skill. She made two mistakes with wrong vowels."",
-      ""next_focus_skill"": ""sk_ng"",
-      ""next_method"": ""ng_sound_pairs""
+      ""summary"": ""Ana got 9 of 10 correct on the letter ng skill. She made mistakes with wrong vowels."",
+      ""next_focus_skill"": ""sk_vowels"",
+      ""next_method"": ""minimal_pair_vowels""
     },
     {
       ""child_id"": ""c_02"",
-      ""summary"": ""Ben scored 6 of 10 on words ending in a consonant. He made three mistakes with wrong vowels."",
-      ""next_focus_skill"": ""sk_cvc_final"",
+      ""summary"": ""Ben got 6 of 10 correct on words ending in a consonant. He made mistakes with wrong vowels."",
+      ""next_focus_skill"": ""sk_cv_1"",
       ""next_method"": ""syllable_tiles_then_letters""
     },
     {
       ""child_id"": ""c_03"",
-      ""summary"": ""Mila scored 9 of 10 on long words. She made three mistakes with wrong vowels."",
-      ""next_focus_skill"": ""sk_long_words"",
+      ""summary"": ""Mila got 9 of 10 correct on words with three or more syllables. She made mistakes with wrong vowels."",
+      ""next_focus_skill"": ""sk_cvcv_1"",
       ""next_method"": ""clap_count_syllables""
     }
   ],
-  ""group_note"": ""Multiple learners made mistakes with wrong vowels.""
+  ""group_note"": ""All learners made mistakes related to wrong vowels.""
 }",PASS,
-summary,gemma4:e4b,3,Mila,PASS,,32.2,"{
+summary,gemma4:e4b,3,Mila,PASS,,17.4,"{
   ""learners"": [
     {
       ""child_id"": ""c_01"",
-      ""summary"": ""Ana got 6 of 10 correct practicing the 'ng' sound. She often left out the final consonant sound."",
+      ""summary"": ""Ana got 6 of 10 correct practicing the 'ng' sound. She often left out final consonants."",
       ""next_focus_skill"": ""sk_ng"",
       ""next_method"": ""ng_sound_pairs""
     },
@@ -504,14 +504,14 @@ summary,gemma4:e4b,3,Mila,PASS,,32.2,"{
     },
     {
       ""child_id"": ""c_03"",
-      ""summary"": ""Mila got 3 of 10 correct when reading longer words. She also often left out the final consonant sound."",
+      ""summary"": ""Mila got 3 of 10 correct on long words. She also often left out final consonants."",
       ""next_focus_skill"": ""sk_long_words"",
       ""next_method"": ""clap_count_syllables""
     }
   ],
-  ""group_note"": ""Ana and Mila both made mistakes by leaving out final consonant sounds.""
+  ""group_note"": ""Ana and Mila both frequently made mistakes by leaving out final consonants.""
 }",PASS,
-summary,gemma4:e4b,4,Ana,PASS,,34.1,"{
+summary,gemma4:e4b,4,Ana,PASS,,17.7,"{
   ""learners"": [
     {
       ""child_id"": ""c_01"",
@@ -521,43 +521,43 @@ summary,gemma4:e4b,4,Ana,PASS,,34.1,"{
     },
     {
       ""child_id"": ""c_02"",
-      ""summary"": ""Ben got 9 of 10 correct on words ending in a consonant. He sometimes used the wrong vowel."",
+      ""summary"": ""Ben scored 9 of 10 correct on words ending in a consonant. He sometimes used the wrong vowel."",
       ""next_focus_skill"": ""sk_cvc_final"",
       ""next_method"": ""syllable_tiles_then_letters""
     },
     {
       ""child_id"": ""c_03"",
-      ""summary"": ""Mila got 6 of 10 correct working on long words. She also made mistakes with the 'ng' sound."",
+      ""summary"": ""Mila achieved 6 of 10 correct on long words. She also struggled with writing the 'ng' sound."",
       ""next_focus_skill"": ""sk_long_words"",
       ""next_method"": ""clap_count_syllables""
     }
   ],
-  ""group_note"": ""Ana and Mila both struggled with writing the 'ng' sound correctly.""
+  ""group_note"": ""Ana and Mila both made mistakes with writing the 'ng' sound.""
 }",PASS,
-summary,gemma4:e4b,5,Ben,PASS,,33.0,"{
+summary,gemma4:e4b,5,Ben,PASS,,17.8,"{
   ""learners"": [
     {
       ""child_id"": ""c_01"",
-      ""summary"": ""Ana got 9 of 10 correct practicing the 'ng' sound. She often left out the final consonant."",
-      ""next_focus_skill"": ""sk_cvc_final"",
+      ""summary"": ""Ana got 9 of 10 correct practicing the 'ng' sound. She often left out final consonants."",
+      ""next_focus_skill"": ""sk_ng"",
       ""next_method"": ""ng_sound_pairs""
     },
     {
       ""child_id"": ""c_02"",
-      ""summary"": ""Ben scored 7 of 10 on words ending in a consonant. He sometimes wrote the 'ng' sound incorrectly."",
+      ""summary"": ""Ben scored 7 of 10 on words ending in a consonant. He mixed up how to write the 'ng' sound."",
       ""next_focus_skill"": ""sk_cvc_final"",
       ""next_method"": ""ng_sound_pairs""
     },
     {
       ""child_id"": ""c_03"",
-      ""summary"": ""Mila achieved 6 of 10 on long words. She also missed some final consonants."",
+      ""summary"": ""Mila achieved 6 of 10 correct working on longer words. She also missed some final consonants."",
       ""next_focus_skill"": ""sk_long_words"",
       ""next_method"": ""clap_count_syllables""
     }
   ],
-  ""group_note"": ""Two learners made the same mistake of leaving out a final consonant.""
+  ""group_note"": ""Ana and Mila both made mistakes by leaving out final consonants.""
 }",PASS,
-summary,gemma4:e4b,6,Mila,PASS,,30.9,"{
+summary,gemma4:e4b,6,Mila,PASS,,17.5,"{
   ""learners"": [
     {
       ""child_id"": ""c_01"",
@@ -569,106 +569,106 @@ summary,gemma4:e4b,6,Mila,PASS,,30.9,"{
       ""child_id"": ""c_02"",
       ""summary"": ""Ben scored 7 of 10 on words ending in a consonant. He sometimes used the wrong vowel sound."",
       ""next_focus_skill"": ""sk_cvc_final"",
-      ""next_method"": ""minimal_pair_vowels""
+      ""next_method"": ""syllable_tiles_then_letters""
     },
     {
       ""child_id"": ""c_03"",
-      ""summary"": ""Mila achieved 9 of 10 correct on long words. She occasionally substituted the wrong vowel sound."",
+      ""summary"": ""Mila achieved 9 of 10 correct with long words. She occasionally made errors with vowel sounds."",
       ""next_focus_skill"": ""sk_long_words"",
       ""next_method"": ""clap_count_syllables""
     }
   ],
   ""group_note"": ""Ben and Mila both made mistakes with using the wrong vowel sound.""
 }",PASS,
-summary,gemma4:e4b,7,Ana,PASS,,25.3,"{
+summary,gemma4:e4b,7,Ana,PASS,,18.4,"{
   ""learners"": [
     {
       ""child_id"": ""c_01"",
-      ""summary"": ""Ana got 6 of 10 correct practicing the 'ng' sound. She often made mistakes with wrong vowels."",
+      ""summary"": ""Ana got 6 of 10 correct on the 'ng' sound. She often made mistakes with wrong vowels."",
       ""next_focus_skill"": ""sk_vowels"",
       ""next_method"": ""minimal_pair_vowels""
     },
     {
       ""child_id"": ""c_02"",
-      ""summary"": ""Ben got 9 of 10 correct on words ending in a consonant. He sometimes wrote 'ng' incorrectly."",
-      ""next_focus_skill"": ""sk_cvc_final"",
+      ""summary"": ""Ben scored 9 of 10 correct on words ending in a consonant. He sometimes mixed up how 'ng' is written."",
+      ""next_focus_skill"": ""sk_cvcv_1"",
       ""next_method"": ""ng_sound_pairs""
     },
     {
       ""child_id"": ""c_03"",
-      ""summary"": ""Mila got 4 of 10 correct working on long words. She frequently made mistakes with wrong vowels."",
+      ""summary"": ""Mila got 4 of 10 correct on long words. She frequently made mistakes with wrong vowels."",
       ""next_focus_skill"": ""sk_vowels"",
-      ""next_method"": ""minimal_pair_vowels""
+      ""next_method"": ""syllable_color_clap""
     }
   ],
-  ""group_note"": ""Ana and Mila both struggled with making mistakes using the wrong vowel sound.""
+  ""group_note"": ""Ana and Mila both struggled with making mistakes using the wrong vowel sounds.""
 }",PASS,
-summary,gemma4:e4b,8,Ben,PASS,,24.9,"{
+summary,gemma4:e4b,8,Ben,PASS,,18.3,"{
   ""learners"": [
     {
       ""child_id"": ""c_01"",
-      ""summary"": ""Ana got 4 of 10 correct practicing the 'ng' sound. She often wrote 'ng' incorrectly."",
+      ""summary"": ""Ana got 4 of 10 correct on the 'ng' sound. She often wrote 'ng' incorrectly."",
       ""next_focus_skill"": ""sk_ng"",
       ""next_method"": ""ng_sound_pairs""
     },
     {
       ""child_id"": ""c_02"",
-      ""summary"": ""Ben scored 9 of 10 correct on words ending in a consonant. He sometimes left out the final consonant."",
+      ""summary"": ""Ben got 9 of 10 correct on words ending in a consonant. He sometimes left off the final consonant."",
       ""next_focus_skill"": ""sk_cvc_final"",
-      ""next_method"": ""clap_count_syllables""
+      ""next_method"": ""count_slots""
     },
     {
       ""child_id"": ""c_03"",
-      ""summary"": ""Mila achieved 9 of 10 correct with long words. She sometimes used the wrong vowel sound."",
+      ""summary"": ""Mila got 9 of 10 correct on long words. She sometimes used the wrong vowel sound in these words."",
       ""next_focus_skill"": ""sk_long_words"",
-      ""next_method"": ""syllable_tiles_then_letters""
+      ""next_method"": ""clap_count_syllables""
     }
   ],
   ""group_note"": ""No shared main mistake types were noted across the learners.""
 }",PASS,
-summary,gemma4:e4b,9,Mila,PASS,,24.5,"{
-  ""learners"": [
-    {
-      ""child_id"": ""c_01"",
-      ""summary"": ""Ana got 3 of 10 correct on the 'ng' sound. She often wrote 'ng' incorrectly."",
-      ""next_focus_skill"": ""sk_ng"",
-      ""next_method"": ""ng_sound_pairs""
-    },
-    {
-      ""child_id"": ""c_02"",
-      ""summary"": ""Ben got 3 of 10 correct on words ending in a consonant. He sometimes left out the final consonant."",
-      ""next_focus_skill"": ""sk_cvc_final"",
-      ""next_method"": ""syllable_tiles_then_letters""
-    },
-    {
-      ""child_id"": ""c_03"",
-      ""summary"": ""Mila got 5 of 10 correct on long words. She frequently wrote 'ng' incorrectly."",
-      ""next_focus_skill"": ""sk_ng"",
-      ""next_method"": ""ng_sound_pairs""
-    }
-  ],
-  ""group_note"": ""Ana and Mila both struggled with writing the 'ng' sound correctly.""
+summary,gemma4:e4b,9,Mila,PASS,,16.8,"{
+""learners"": [
+{
+""child_id"": ""c_01"",
+""summary"": ""Ana got 3 of 10 correct on the 'ng' sound. She often wrote 'ng' incorrectly."",
+""next_focus_skill"": ""sk_ng"",
+""next_method"": ""ng_sound_pairs""
+},
+{
+""child_id"": ""c_02"",
+""summary"": ""Ben scored 3 of 10 on words ending in a consonant. He sometimes left out the final consonant."",
+""next_focus_skill"": ""sk_cvc_final"",
+""next_method"": ""syllable_tiles_then_letters""
+},
+{
+""child_id"": ""c_03"",
+""summary"": ""Mila achieved 5 of 10 correct on long words. She frequently made errors with the 'ng' sound."",
+""next_focus_skill"": ""sk_ng"",
+""next_method"": ""ng_sound_pairs""
+}
+],
+""group_note"": ""Ana and Mila both struggled with writing the 'ng' sound correctly.""
 }",PASS,
-summary,gemma4:e4b,10,Ana,PASS,,24.5,"{
+summary,gemma4:e4b,10,Ana,PASS,,20.9,"{
   ""learners"": [
     {
       ""child_id"": ""c_01"",
-      ""summary"": ""Ana got 4 of 10 correct practicing the letter ng. She often left out the final consonant."",
+      ""summary"": ""Ana got 4 of 10 correct practicing the 'ng' sound. She often left out the final consonant."",
       ""next_focus_skill"": ""sk_ng"",
       ""next_method"": ""ng_sound_pairs""
     },
     {
       ""child_id"": ""c_02"",
-      ""summary"": ""Ben scored 3 of 10 correct on words ending in a consonant. He sometimes wrote 'ng' incorrectly."",
+      ""summary"": ""Ben scored 3 of 10 correct on words ending in a consonant. He sometimes mixed up the 'ng' sound."",
       ""next_focus_skill"": ""sk_cvc_final"",
       ""next_method"": ""ng_sound_pairs""
     },
     {
       ""child_id"": ""c_03"",
-      ""summary"": ""Mila achieved 5 of 10 correct with long words. Her main error involved using the wrong vowel."",
+      ""summary"": ""Mila achieved 5 of 10 correct with long words. Her main error involved using the wrong vowel sound."",
       ""next_focus_skill"": ""sk_long_words"",
       ""next_method"": ""clap_count_syllables""
     }
   ],
-  ""group_note"": ""Ana and Ben both struggled with errors related to the 'ng' sound.""
+  ""group_note"": ""Ana and Ben both made mistakes related to the 'ng' sound.""
 }",PASS,
