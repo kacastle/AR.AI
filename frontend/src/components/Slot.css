@@ -12,3 +12,16 @@
   border-radius: 16px;
   background: var(--slot-bg);
 }
+
+.slot--highlight {
+  border-radius: 18px;
+  outline: 4px solid var(--highlight);
+  outline-offset: 4px;
+  animation: slot-pulse 900ms ease-in-out 3;
+}
+
+@keyframes slot-pulse {
+  50% {
+    outline-offset: 8px;
+  }
+}

@@ -2,21 +2,23 @@ import Tile from './Tile.jsx'
 import { t } from '../strings.js'
 import './Slot.css'
 
-export default function Slot({ index, tile, onRemove, locked }) {
+export default function Slot({ index, slot, onRemove, locked, highlighted, keepCase }) {
   const n = index + 1
-  if (!tile) {
+  const className = `slot${highlighted ? ' slot--highlight' : ''}`
+  if (!slot) {
     return (
-      <div className="slot slot--empty" role="img" aria-label={t.emptySlot(n)} />
+      <div className={`${className} slot--empty`} role="img" aria-label={t.emptySlot(n)} />
     )
   }
   return (
-    <div className="slot">
+    <div className={className}>
       <Tile
-        text={tile.text}
-        variant="placed"
+        text={slot.text}
+        variant={slot.fixed ? 'fixed' : 'placed'}
         onClick={() => onRemove(index)}
-        ariaLabel={t.placedTile(tile.text, n)}
-        disabled={locked}
+        ariaLabel={slot.fixed ? t.fixedTile(slot.text, n) : t.placedTile(slot.text, n)}
+        disabled={locked || slot.fixed}
+        keepCase={keepCase}
       />
     </div>
   )

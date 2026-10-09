@@ -7,6 +7,13 @@
   text-align: center;
 }
 
+.feedback__hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 400;
+}
+
 .feedback--correct {
   background: var(--good-bg);
   color: var(--good-ink);

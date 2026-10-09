@@ -34,6 +34,26 @@
   box-shadow: 0 6px 0 var(--placed-border);
 }
 
+.tile--fixed {
+  background: var(--fixed-bg);
+  border-color: var(--fixed-border);
+  box-shadow: 0 6px 0 var(--fixed-border);
+}
+
+.tile--model {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  border-style: dashed;
+  box-shadow: none;
+  cursor: default;
+}
+
+.tile--keep-case {
+  text-transform: none;
+}
+
 .tile:disabled {
   cursor: default;
 }

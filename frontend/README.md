@@ -17,8 +17,9 @@ npm run preview  # serve the build
 src/
   screens/      Full-page screens (TileBoardScreen)
   components/   Reusable UI (Tile, Slot, FeedbackBanner)
-  mocks/api.js  Offline mock API: getNextTurn(), submitAnswer(), sample "Next turn" / "Answer" payloads
-  strings.js    All UI text (Filipino)
+  mocks/api.js  Offline mock of GET /api/sessions/{id}/next and POST /api/sessions/{id}/answer,
+                following backend/API_CONTRACT.md (hint ladder, prefill, feedback lines from content/rules.json)
+  strings.js    All UI text (Filipino). Feedback lines come from the API.
   assets/fonts/ Andika font (SIL OFL 1.1), bundled locally
 ```
 
@@ -26,5 +27,10 @@ src/
 
 - Tiles are at least 64px (`--tile-size: 72px` in `src/index.css`).
 - Word text is at least 32px (`--word-size: 40px`).
-- Tile text is always lowercase (`toLowerCase()` + `text-transform: lowercase`).
+- Tile text is lowercase (`toLowerCase()` + `text-transform: lowercase`), except `sentence_builder`
+  word tiles, which keep their capital letters and punctuation because the answer checks them.
 - Tap a tile in the tray to put it in the first empty slot. Tap a placed tile to send it back.
+- `prefill` entries are fixed tiles. `support_level: "show"` (and `next_action: "show_answer"`) shows the
+  answer as a model and the learner rebuilds it.
+- Hints: `highlight_slot` / `first_tile` outline a box; `replay_by_syllable` plays `hint.audio`.
+- `ng` is one tile.

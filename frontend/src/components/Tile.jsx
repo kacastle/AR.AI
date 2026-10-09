@@ -1,15 +1,22 @@
 import './Tile.css'
 
-export default function Tile({ text, onClick, ariaLabel, variant = 'tray', disabled = false }) {
+export default function Tile({
+  text,
+  onClick,
+  ariaLabel,
+  variant = 'tray',
+  disabled = false,
+  keepCase = false,
+}) {
   return (
     <button
       type="button"
-      className={`tile tile--${variant}`}
+      className={`tile tile--${variant}${keepCase ? ' tile--keep-case' : ''}`}
       onClick={onClick}
       aria-label={ariaLabel}
       disabled={disabled}
     >
-      {text.toLowerCase()}
+      {keepCase ? text : text.toLowerCase()}
     </button>
   )
 }
