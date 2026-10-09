@@ -77,23 +77,49 @@ Response
 ```
 (`words` is shortened here.)
 
-## Story quiz
-`GET /api/stories/{id}` also returns `questions`: `[{"type", "prompt", "choices"}]` (3 questions, 3 choices each; the answer is not sent).
+## Story phase: each learner's own story, then its quiz
+`GET /api/stories/{id}` also returns `questions`: `[{"type", "prompt", "choices"}]` (the answer is not sent).
+
+### GET /api/sessions/{id}/story_turn
+Learner by learner (session `present` order): each learner reads **their own** story (`story_id`, from the session's `story_ids`), then answers its questions one at a time. `null` when every learner is done.
+```json
+{"child_id": "c_78552429", "child_name": "Ana", "story_id": "ts_1a2b3c4d", "turn_number": 1, "questions_total": 3,
+ "question": {"id": "ts_1a2b3c4d:0", "type": "who", "prompt": "Sino ang may krayola?",
+              "choices": ["Ana", "Lola", "Tatay"], "prompt_audio": null}}
+```
 
 ### POST /api/sessions/{id}/story_answer
-One answer to one question of the learner's story in this session (`story_id` must be the learner's entry in the session's `story_ids`, else `422`). The **first** answer to each question counts: it scores the question's comprehension skill (`rules.json` → `story_quiz.skill_by_type`). When every question has a first answer, `quiz` is set, the learner's next story level moves (`story_quiz`: 3 of 3 right = one level harder, 0-1 = one level easier, else the same), and the next personal story is written right away in the background.
-
-Request
+Request: `{"child_id", "question_id", "choice", "attempt"}` (`attempt` 1, then 2 after a wrong answer). `422` when the question is not the learner's; `409` when it is already done.
+- Right: `next_action` `"next"`. Wrong at attempt 1: `"retry"`. Wrong at attempt 2: `"next"` and `answer` = the right choice.
+- `mistake_type` when wrong: `C_LITERAL` (who/what/where), `C_SEQUENCE`, `C_INFER` (feeling/main_idea); `feedback` from rules.json feedback_templates.
+- The **first** answer to each question counts: it scores the question's comprehension skill (`rules.json` → `story_quiz.skill_by_type`). After the learner's last first answer, `quiz` is set: 3 of 3 right = next story one level harder, 0-1 = one level easier, else the same (`story_quiz`), and the next personal story is written right away in the background.
 ```json
-{"child_id": "c_78552429", "story_id": "ts_1a2b3c4d", "question_index": 2, "choice": "sa parke"}
-```
-Response (last question)
-```json
-{"correct": true, "mistake_type": null,
- "feedback": {"message_fil": "Tama! Magaling, Ana!", "hint_fil": null},
+{"correct": true, "mistake_type": null, "feedback": {"message_fil": "Tama! Magaling, Ana!", "hint_fil": null},
+ "next_action": "next", "answer": null,
  "quiz": {"correct": 3, "total": 3, "story_level_before": 1, "story_level": 2}}
 ```
-Wrong: `correct` false, `mistake_type` `C_LITERAL` (who/what/where), `C_SEQUENCE` or `C_INFER` (feeling/main_idea), `feedback` from `rules.json` feedback_templates. `quiz` is `null` until the last first answer.
+
+## Learner loop (backend/adapt.py)
+- **Diagnostic.** `POST /api/groups` learners take `"diagnostic": true` (default false). Their first tile turns are placement items (`mode: "placement"`): support `alone`, one try, encouragement, no hints. When it ends (rules.json `placement`), passed skills count as mastered and `profile` is set (`low_emergent` / `high_emergent`).
+- **Next turn** (`GET /api/sessions/{id}/next`) also returns `mode` (`placement`, `reteach`, `easy`, `practice`), `method` and `method_note` (the running re-teach method and its `description_en`, for the tutor), `stars`, `streak`. Items whose word is in the learner's interest `words` come first.
+- **Answer** (`POST /api/sessions/{id}/answer`) also returns `stars`, `streak` and `method_started`. A first try slower than `timing.slow_seconds` makes the learner's next item easy.
+- **Re-teach.** When the same first-try mistake comes back (`rules.json` → `reteach`), the next `items_after` items use a method (task type, difficulty, some support). Whether it worked is remembered per learner: a method that worked comes first next time, one that did not is skipped.
+
+### GET /api/children/{id}/profile
+For the tutor and parents.
+```json
+{"child_id": "c_78552429", "name": "Ana", "profile": "high_emergent",
+ "interests": [{"id": "int_drawing", "label": "Drawing", "icon": "✏️"}],
+ "diagnostic": "done", "story_level": 2, "pace": "fast",
+ "current_skill": {"id": "sk_cvc_final", "name": "Final consonants", "score": 0.42},
+ "mastered": [{"id": "sk_vowels", "name": "Vowel sounds", "score": 0.7}],
+ "strengths": [], "needs_work": [{"id": "sk_cvc_final", "name": "Final consonants", "score": 0.42}],
+ "methods": [{"mistake_type": "P_OMIT_FINAL", "mistake": "Final consonant left out", "method": "syllable_color_clap",
+              "method_description": "Split the word into colored syllables and clap each one. Focus on the last sound.",
+              "correct": 2, "total": 3, "worked": true}],
+ "stars": 14, "streak": 3,
+ "sessions": [{"session_id": "s_97aadbd0", "date": "2026-10-10", "correct": 7, "total": 9}]}
+```
 
 ## POST /api/sessions/{id}/phase
 `phase` is one of `tiles`, `stories`, `summary`. `ends_at` is local time with offset. The phase lengths come from `rules.json` → `session` (35 / 15 / 10 min). With `DEMO_FAST=1` (rules.json `session.demo_fast`) every phase is 1 minute and `/next` gives `seconds: 20`, so a demo session takes about 3 minutes.

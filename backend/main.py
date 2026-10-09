@@ -1,9 +1,10 @@
 import json
+from typing import Optional
 import os
 import random
 import re
 from contextlib import asynccontextmanager
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from datetime import date, datetime, timedelta
 from types import SimpleNamespace
 
@@ -11,11 +12,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from backend import db
+from backend import adapt, db
 from backend.content import Content, Word, format_problems, load_content
 from backend.engine import review, rotation, scoring
 from backend.engine.feedback import feedback_for, mistake_code
-from backend.engine.selector import pick_next, skill_items, weakest_unlocked_skill
+from backend.engine.selector import build_pick, choose_item, pick_next, skill_items, weakest_unlocked_skill
 from backend.engine.state import SkillState, new_state
 from backend.llm.jobs import Job
 from backend.llm.worker import worker
@@ -24,8 +25,9 @@ from backend.llm.fallbacks import choose_story
 from backend.records import event_count, learner_info, load_states
 from backend.schemas import (
     AnswerIn, ApprovalIn, ApprovalItem, Feedback, Group, GroupIn, Hint, Item, Learner,
-    LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, QuizResult, Result, Session, SessionIn,
-    SheetOut, SheetWord, StoryAnswerIn, StoryAnswerOut, StoryOut, StoryQuestion, StoryWord, SummaryOut,
+    LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, ProfileOut, QuizResult, Result, Session,
+    SessionIn, SheetOut, SheetWord, StoryAnswerIn, StoryAnswerOut, StoryOut, StoryQuestion, StoryTurn,
+    StoryTurnQuestion, StoryWord, SummaryOut,
 )
 from backend.tts import audio as tts_audio
 
@@ -94,6 +96,35 @@ def used_items(conn, session_id: str, child_id: str) -> list[str]:
     return [r["item_id"] for r in rows]
 
 
+def interest_words(child) -> list[str]:
+    """Word texts from the learner's interests (content.json interests[].words): tile items prefer them."""
+    mine = set(json.loads(child["interests"]))
+    return [w for i in content.data.interests if i.id in mine for w in i.words]
+
+
+def pick_for(conn, session_id: str, child) -> dict:
+    """The learner's next turn: a diagnostic item first (rules.json placement), else practice with a running
+    re-teach method, an easy item after wrong or slow answers, or the normal choice. Returns the stored turn."""
+    rules = content.rules
+    child_id = child["id"]
+    used = used_items(conn, session_id, child_id)
+    prefer = interest_words(child)
+    skill_id = adapt.placement_skill(conn, content, child)
+    if skill_id is not None:
+        skill = next(sk for sk in content.data.skills if sk.id == skill_id)
+        state = replace(new_state(skill.id, rules), support_level="alone")     # no help: see what the child knows
+        item = choose_item(skill_items(content, skill), used, "easy", prefer)
+        pick = build_pick(content, skill, state, item, "easy", False, False, random.Random())
+        return {**asdict(pick), "mode": "placement", "method": None}
+    results = first_try_results(conn, child_id)
+    run = adapt.active_method(conn, child_id)
+    easy = rotation.needs_easy_item(results, rules) or adapt.last_was_slow(conn, child_id, rules)
+    pick = pick_next(content, load_states(conn, child_id), date.today(), used, results, easy=easy and run is None,
+                     prefer=prefer, method=adapt.method_for_pick(rules, run))
+    mode = "reteach" if run is not None else "easy" if pick.is_easy else "practice"
+    return {**asdict(pick), "mode": mode, "method": run["method"] if run is not None else None}
+
+
 def group_out(conn, group_id: str) -> Group:
     g = get_row(conn, "groups", group_id)
     kids = conn.execute("SELECT * FROM children WHERE group_id = ? ORDER BY rowid", (group_id,))
@@ -136,9 +167,10 @@ def create_group(body: GroupIn):
         group_id = db.new_id("g")
         conn.execute("INSERT INTO groups (id, tutor_name) VALUES (?, ?)", (group_id, body.tutor_name))
         for learner in body.learners:
-            conn.execute("INSERT INTO children (id, group_id, name, picture, profile, interests) "
-                         "VALUES (?, ?, ?, ?, ?, ?)", (db.new_id("c"), group_id, learner.name, learner.picture,
-                                                       learner.profile, json.dumps(learner.interests)))
+            conn.execute("INSERT INTO children (id, group_id, name, picture, profile, interests, placement) "
+                         "VALUES (?, ?, ?, ?, ?, ?, ?)", (db.new_id("c"), group_id, learner.name, learner.picture,
+                                                          learner.profile, json.dumps(learner.interests),
+                                                          "pending" if learner.diagnostic else None))
         return group_out(conn, group_id)
 
 
@@ -204,33 +236,67 @@ def story_questions(story) -> list[dict]:
     return [q if isinstance(q, dict) else q.model_dump() for q in (getattr(story, "questions", None) or [])]
 
 
-@app.post("/api/sessions/{session_id}/story_answer", response_model=StoryAnswerOut)
-def story_answer(session_id: str, body: StoryAnswerIn):
-    """One answer in the story quiz. The first answer to each question counts: it scores the question's
-    comprehension skill, and when every question has one, the next story's level moves (rules.json story_quiz)
-    and that story is written right away in the background."""
-    rules = content.rules
-    quiz_rules = rules.story_quiz
+def _quiz_story(conn, session_row, child_id: str):
+    story_id = json.loads(session_row["story_ids"]).get(child_id)
+    story = (content.stories_by_id.get(story_id) or generated_story(story_id)) if story_id else None
+    return story_id, (story_questions(story) if story else [])
+
+
+def _question_done(conn, session_id: str, child_id: str, story_id: str, index: int) -> bool:
+    """A question ends when it is answered right, or after its second wrong answer (the answer is shown)."""
+    rows = conn.execute("SELECT correct FROM story_answers WHERE session_id = ? AND child_id = ? AND story_id = ? "
+                        "AND question_index = ?", (session_id, child_id, story_id, index)).fetchall()
+    return any(r["correct"] for r in rows) or len(rows) >= 2
+
+
+@app.get("/api/sessions/{session_id}/story_turn", response_model=Optional[StoryTurn])
+def story_turn(session_id: str):
+    """The story phase, learner by learner: each learner answers the questions of their own story
+    (session story_ids), in turn order. null when every learner is done."""
     with db.connect() as conn:
         s = get_row(conn, "sessions", session_id)
-        if json.loads(s["story_ids"]).get(body.child_id) != body.story_id:
-            raise HTTPException(422, "this is not the learner's story in this session")
+        for child_id in json.loads(s["present"]):
+            story_id, questions = _quiz_story(conn, s, child_id)
+            for index, q in enumerate(questions):
+                if not _question_done(conn, session_id, child_id, story_id, index):
+                    child = get_row(conn, "children", child_id)
+                    return StoryTurn(
+                        child_id=child_id, child_name=child["name"], story_id=story_id,
+                        turn_number=index + 1, questions_total=len(questions),
+                        question=StoryTurnQuestion(id=f"{story_id}:{index}", type=q["type"], prompt=q["prompt"],
+                                                   choices=q["choices"], prompt_audio=None))
+    return None
+
+
+@app.post("/api/sessions/{session_id}/story_answer", response_model=StoryAnswerOut)
+def story_answer(session_id: str, body: StoryAnswerIn):
+    """One answer in a learner's story quiz. The first answer to each question counts: it scores the question's
+    comprehension skill, and when every question has one, the next story's level moves (rules.json story_quiz)
+    and that story is written right away in the background. A second wrong answer shows the right choice."""
+    rules = content.rules
+    quiz_rules = rules.story_quiz
+    story_id, _, index_text = body.question_id.rpartition(":")
+    with db.connect() as conn:
+        s = get_row(conn, "sessions", session_id)
+        own_story, questions = _quiz_story(conn, s, body.child_id)
+        if story_id != own_story or not index_text.isdigit() or int(index_text) >= len(questions):
+            raise HTTPException(422, "question_id is not a question of this learner's story in this session")
+        index = int(index_text)
+        if _question_done(conn, session_id, body.child_id, story_id, index):
+            raise HTTPException(409, "this question is already done; call /story_turn")
         child = get_row(conn, "children", body.child_id)
-        story = content.stories_by_id.get(body.story_id) or generated_story(body.story_id)
-        questions = story_questions(story) if story else []
-        if not 0 <= body.question_index < len(questions):
-            raise HTTPException(422, f"question_index must be 0 to {len(questions) - 1}")
-        q = questions[body.question_index]
+        q = questions[index]
         correct = body.choice == q["answer"]
-        key = (session_id, body.child_id, body.story_id)
+        key = (session_id, body.child_id, story_id)
         first = conn.execute("SELECT 1 FROM story_answers WHERE session_id = ? AND child_id = ? AND story_id = ? "
-                             "AND question_index = ?", (*key, body.question_index)).fetchone() is None
+                             "AND question_index = ?", (*key, index)).fetchone() is None
         conn.execute("INSERT INTO story_answers (session_id, child_id, story_id, question_index, question_type, "
                      "choice, correct, first) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                     (*key, body.question_index, q["type"], body.choice, int(correct), int(first)))
+                     (*key, index, q["type"], body.choice, int(correct), int(first)))
         code = None if correct else quiz_rules["mistake_by_type"].get(q["type"])
         feedback = feedback_for(rules, "CORRECT" if correct else code, name=child["name"], syllables=[], slots=0,
-                                turn=body.question_index)
+                                turn=index)
+        done = correct or not first
         quiz = None
         if first:
             skill_id = quiz_rules["skill_by_type"].get(q["type"])
@@ -251,7 +317,17 @@ def story_answer(session_id: str, body: StoryAnswerIn):
                 quiz = QuizResult(correct=right, total=len(questions), story_level_before=before, story_level=after)
     if quiz:
         worker.submit(Job("story", child_id=body.child_id))     # the adapted story, written right after the quiz
-    return StoryAnswerOut(correct=correct, mistake_type=code, feedback=feedback, quiz=quiz)
+    return StoryAnswerOut(correct=correct, mistake_type=code, feedback=feedback,
+                          next_action="next" if done else "retry",
+                          answer=q["answer"] if done and not correct else None, quiz=quiz)
+
+
+@app.get("/api/children/{child_id}/profile", response_model=ProfileOut)
+def child_profile(child_id: str):
+    """The learner profile for the tutor and parents: skills, level, pace, interests, methods that worked."""
+    with db.connect() as conn:
+        get_row(conn, "children", child_id)
+        return ProfileOut(**adapt.profile(conn, content, child_id))
 
 
 @app.post("/api/sessions/{session_id}/phase", response_model=PhaseOut)
@@ -283,15 +359,14 @@ def next_turn(session_id: str):
                 "SELECT id FROM children WHERE group_id = ? ORDER BY rowid", (s["group_id"],))]
             order = rotation.turn_order(group_order, json.loads(s["present"]), rules)
             child_id = rotation.child_for_turn(order, s["turn_number"])
-            results = first_try_results(conn, child_id)
-            pick = pick_next(content, load_states(conn, child_id), date.today(),
-                             used_items(conn, session_id, child_id), results,
-                             easy=rotation.needs_easy_item(results, rules))
+            pick = pick_for(conn, session_id, get_row(conn, "children", child_id))
             conn.execute("UPDATE sessions SET current_child_id = ?, current_item_id = ?, current_turn = ? WHERE id = ?",
-                         (child_id, pick.item_id, json.dumps(asdict(pick)), session_id))
+                         (child_id, pick["item_id"], json.dumps(pick), session_id))
             s = get_row(conn, "sessions", session_id)
         child = get_row(conn, "children", s["current_child_id"])
+        stars, streak = adapt.stars(conn, child["id"]), adapt.streak(conn, child["id"])
     turn = json.loads(s["current_turn"])
+    method = turn.get("method")
 
     return NextTurn(
         child_id=child["id"],
@@ -304,6 +379,11 @@ def next_turn(session_id: str):
         prefill=turn["prefill"],
         gap_slot=turn.get("gap_slot"),   # turns stored before this field have none
         seconds=rules.session.demo_fast.item_seconds if DEMO_FAST else rules.timing.item_seconds,
+        mode=turn.get("mode", "practice"),
+        method=method,
+        method_note=rules.methods[method].description_en if method else None,
+        stars=stars,
+        streak=streak,
     )
 
 
@@ -328,8 +408,13 @@ def answer(session_id: str, body: AnswerIn):
             return feedback_for(rules, code, name=child["name"], syllables=turn["syllables"],
                                 slots=len(expected), turn=rotate, with_hint=with_hint)
 
+        placement = turn.get("mode") == "placement"
         # Correction steps: hints from the ladder, then show the answer, then the rebuild ends the item.
-        if correct:
+        # A diagnostic item has one try only: encouragement, no hints, then the next item.
+        if placement:
+            next_action = "next"
+            feedback = text("CORRECT") if correct else text("SLOW", with_hint=False)
+        elif correct:
             next_action = "next"
             n_correct = conn.execute("SELECT COUNT(*) FROM events WHERE child_id = ? AND correct = 1",
                                      (child["id"],)).fetchone()[0]
@@ -356,12 +441,18 @@ def answer(session_id: str, body: AnswerIn):
 
         conn.execute(
             "INSERT INTO events (session_id, turn_number, child_id, item_id, task_type, skill_id, given, correct, "
-            "mistake_type, hints_used, attempt, time_ms, support_level, next_action) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "mistake_type, hints_used, attempt, time_ms, support_level, next_action, placement) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (session_id, s["turn_number"], child["id"], item_id, turn["task_type"], turn["skill_id"],
              json.dumps(body.given), int(correct), mistake, body.hints_used, body.attempt, body.time_ms,
-             turn["support_level"], next_action))
-        if next_action == "next":
+             turn["support_level"], next_action, int(placement)))
+        method_started = None
+        if placement:
+            adapt.finish_placement(conn, content, child["id"], date.today(), save_state)
+            conn.execute(
+                "UPDATE sessions SET turn_number = turn_number + 1, current_child_id = NULL, current_item_id = NULL, "
+                "current_turn = NULL WHERE id = ?", (session_id,))
+        elif next_action == "next":
             # The item has ended: update the skill once.
             today = date.today()
             first_try = body.attempt == 1 and correct
@@ -371,12 +462,15 @@ def answer(session_id: str, body: AnswerIn):
             if turn["is_review"]:
                 state = review.apply_review(state, first_try, rules, today)
             save_state(conn, child["id"], state)
+            method_started = adapt.after_item(conn, rules, child["id"], turn["skill_id"], first_try)
             conn.execute(
                 "UPDATE sessions SET turn_number = turn_number + 1, current_child_id = NULL, current_item_id = NULL, "
                 "current_turn = NULL WHERE id = ?", (session_id,))
+        stars, streak = adapt.stars(conn, child["id"]), adapt.streak(conn, child["id"])
 
     return Result(correct=correct, mistake_type=mistake, feedback=feedback, hint=hint,
-                  next_action=next_action, answer=answer_tiles)
+                  next_action=next_action, answer=answer_tiles, stars=stars, streak=streak,
+                  method_started=method_started)
 
 
 @app.get("/api/sessions/{session_id}/summary", response_model=SummaryOut)

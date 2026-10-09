@@ -65,7 +65,7 @@ class ApiTest(unittest.TestCase):
         for i, q in enumerate(questions):
             choice = q["answer"] if i < right else next(c for c in q["choices"] if c != q["answer"])
             out.append(self.client.post(f"/api/sessions/{session['id']}/story_answer", json={
-                "child_id": child_id, "story_id": story_id, "question_index": i, "choice": choice}).json())
+                "child_id": child_id, "question_id": f"{story_id}:{i}", "choice": choice}).json())
         return out
 
     def story_level(self, child_id):
@@ -100,17 +100,46 @@ class ApiTest(unittest.TestCase):
     def test_quiz_counts_the_first_answer_only(self):
         _, session = self.make_session()
         ana = session["present"][0]
-        first = self.quiz(session, ana, right=2)[-1]["quiz"]
-        self.assertEqual(first["correct"], 2)
-        again = self.quiz(session, ana, right=3)                  # answering again changes nothing
-        self.assertTrue(all(r["quiz"] is None for r in again))
-        self.assertEqual(self.story_level(ana), first["story_level"])
+        story_id = session["story_ids"][ana]
+        first = self.quiz(session, ana, right=2)
+        self.assertEqual(first[-1]["quiz"]["correct"], 2)
+        self.assertEqual(first[-1]["next_action"], "retry")          # one wrong answer: try again
+        level = self.story_level(ana)
+        url = f"/api/sessions/{session['id']}/story_answer"
+        # A right question is done; the retry of the wrong one is not scored and changes nothing.
+        self.assertEqual(self.client.post(url, json={"child_id": ana, "question_id": f"{story_id}:0",
+                                                     "choice": "x"}).status_code, 409)
+        q = story_questions(CONTENT.stories_by_id.get(story_id) or generated_story(story_id))[2]
+        again = self.client.post(url, json={"child_id": ana, "question_id": f"{story_id}:2", "choice": q["answer"],
+                                            "attempt": 2}).json()
+        self.assertEqual((again["correct"], again["quiz"], again["next_action"]), (True, None, "next"))
+        self.assertEqual(self.story_level(ana), level)
+
+    def test_story_turn_walks_each_learner_through_their_own_story(self):
+        _, session = self.make_session()
+        ana, ben = session["present"]
+        turn = self.client.get(f"/api/sessions/{session['id']}/story_turn").json()
+        self.assertEqual((turn["child_id"], turn["story_id"], turn["turn_number"], turn["questions_total"]),
+                         (ana, session["story_ids"][ana], 1, 3))
+        self.assertNotIn("answer", turn["question"])
+        self.quiz(session, ana, right=3)
+        self.assertEqual(self.client.get(f"/api/sessions/{session['id']}/story_turn").json()["child_id"], ben)
+        wrong = self.quiz(session, ben, right=0)
+        self.assertEqual(wrong[0]["next_action"], "retry")
+        url = f"/api/sessions/{session['id']}/story_answer"
+        story_id = session["story_ids"][ben]
+        for i, q in enumerate(story_questions(CONTENT.stories_by_id.get(story_id) or generated_story(story_id))):
+            bad = next(c for c in q["choices"] if c != q["answer"])
+            r = self.client.post(url, json={"child_id": ben, "question_id": f"{story_id}:{i}", "choice": bad,
+                                            "attempt": 2}).json()
+            self.assertEqual((r["next_action"], r["answer"]), ("next", q["answer"]))   # second wrong: shown
+        self.assertIsNone(self.client.get(f"/api/sessions/{session['id']}/story_turn").json())
 
     def test_quiz_rejects_another_learners_story(self):
         _, session = self.make_session()
         ana, ben = session["present"]
         r = self.client.post(f"/api/sessions/{session['id']}/story_answer", json={
-            "child_id": ana, "story_id": session["story_ids"][ben] + "x", "question_index": 0, "choice": "a"})
+            "child_id": ana, "question_id": session["story_ids"][ben] + "x:0", "choice": "a"})
         self.assertEqual(r.status_code, 422)
 
     def test_session_and_story(self):
@@ -171,7 +200,8 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(r["next_action"], "next")
         correct_lines = [line.format(name="Ana") for line in CONTENT.rules.feedback_templates["CORRECT"].message_fil]
         self.assertIn(r["feedback"]["message_fil"], correct_lines)
-        self.assertEqual(set(r), {"correct", "mistake_type", "feedback", "hint", "next_action", "answer"})
+        self.assertEqual(set(r), {"correct", "mistake_type", "feedback", "hint", "next_action", "answer",
+                                  "stars", "streak", "method_started"})
 
         nxt = self.client.get(f"/api/sessions/{sid}/next").json()
         self.assertEqual(nxt["child_name"], "Ben")

@@ -203,7 +203,7 @@ class LlmTest(unittest.TestCase):
         quiz = None
         for i, q in enumerate(story_questions(story)):                       # all right
             quiz = self.client.post(f"/api/sessions/{session['id']}/story_answer", json={
-                "child_id": ana, "story_id": story_id, "question_index": i, "choice": q["answer"]}).json()["quiz"]
+                "child_id": ana, "question_id": f"{story_id}:{i}", "choice": q["answer"]}).json()["quiz"]
         self.assertEqual(quiz["correct"], 3)
         worker.run_pending()
         self.assertIn("story", self.fake.calls)                                # written right after the quiz

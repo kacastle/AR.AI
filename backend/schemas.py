@@ -22,6 +22,7 @@ class LearnerIn(BaseModel):
     picture: str
     profile: str
     interests: list[str] = []      # ids from content.json interests, at most rules.personalization max
+    diagnostic: bool = False       # true: short placement items first (rules.json placement), then practice
 
 
 class Learner(BaseModel):
@@ -79,9 +80,9 @@ class StoryOut(BaseModel):
 
 class StoryAnswerIn(BaseModel):
     child_id: str
-    story_id: str
-    question_index: int            # 0-based, in the order of StoryOut.questions
+    question_id: str               # StoryTurn.question.id ("{story_id}:{index}")
     choice: str
+    attempt: int = 1               # 1, then 2 after a wrong first answer (the second wrong answer shows it)
 
 
 class QuizResult(BaseModel):
@@ -95,7 +96,27 @@ class StoryAnswerOut(BaseModel):
     correct: bool
     mistake_type: Optional[str]    # C_LITERAL, C_SEQUENCE or C_INFER when wrong
     feedback: "Feedback"
+    next_action: Literal["retry", "next"]
+    answer: Optional[str]          # the right choice, after the second wrong answer
     quiz: Optional[QuizResult]     # set once every question has a first answer; the next story is queued then
+
+
+class StoryTurnQuestion(BaseModel):
+    id: str                        # "{story_id}:{index}"
+    type: str
+    prompt: str
+    choices: list[str]
+    prompt_audio: Optional[str]
+
+
+class StoryTurn(BaseModel):
+    """One question of one learner's quiz on that learner's own story (session.story_ids)."""
+    child_id: str
+    child_name: str
+    story_id: str
+    turn_number: int               # the question number in this learner's quiz, from 1
+    questions_total: int
+    question: StoryTurnQuestion
 
 
 class PhaseIn(BaseModel):
@@ -125,6 +146,11 @@ class NextTurn(BaseModel):
     prefill: list[str]
     gap_slot: Optional[int]
     seconds: int
+    mode: Literal["placement", "reteach", "easy", "practice"] = "practice"
+    method: Optional[str] = None           # running re-teach method (rules.json methods key)
+    method_note: Optional[str] = None      # its description_en, for the tutor
+    stars: int = 0
+    streak: int = 0
 
 
 class AnswerIn(BaseModel):
@@ -154,6 +180,9 @@ class Result(BaseModel):
     hint: Optional[Hint]
     next_action: NextAction
     answer: Optional[list[str]]
+    stars: int = 0                 # the learner's stars after this answer
+    streak: int = 0
+    method_started: Optional[str] = None   # a re-teach method that starts with the learner's next item
 
 
 class LearnerSummary(BaseModel):
@@ -190,3 +219,51 @@ class ApprovalItem(BaseModel):
 
 class ApprovalIn(BaseModel):
     approve: bool
+
+
+class SkillScore(BaseModel):
+    id: str
+    name: str
+    score: float
+
+
+class InterestOut(BaseModel):
+    id: str
+    label: str
+    icon: str
+
+
+class MethodRun(BaseModel):
+    mistake_type: str
+    mistake: str
+    method: str
+    method_description: str
+    correct: int
+    total: int
+    worked: Optional[bool]         # null while it runs
+
+
+class SessionProgress(BaseModel):
+    session_id: str
+    date: str
+    correct: int
+    total: int
+
+
+class ProfileOut(BaseModel):
+    """Per-learner profile for the tutor and parents (backend/adapt.py profile())."""
+    child_id: str
+    name: str
+    profile: str
+    interests: list[InterestOut]
+    diagnostic: Optional[str]      # null (none), "pending", "done"
+    story_level: int
+    pace: Optional[Literal["fast", "steady", "slow"]]
+    current_skill: SkillScore
+    mastered: list[SkillScore]
+    strengths: list[SkillScore]
+    needs_work: list[SkillScore]
+    methods: list[MethodRun]
+    stars: int
+    streak: int
+    sessions: list[SessionProgress]

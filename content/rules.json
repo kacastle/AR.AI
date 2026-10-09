@@ -84,7 +84,9 @@
   },
   "timing": {
     "slow_seconds": 30,
-    "item_seconds": 60
+    "item_seconds": 60,
+    "fast_seconds": 8,
+    "pace_window": 10
   },
   "selection": {
     "skill_order": [
@@ -602,6 +604,93 @@
       "sequence": "C_SEQUENCE",
       "feeling": "C_INFER",
       "main_idea": "C_INFER"
+    }
+  },
+  "reteach": {
+    "note": "Re-teach: when the same mistake comes back, the next items use a method (rules.md 6.7). If a method did not work for this learner before, the next method in the list is used. 'Worked' = this share of first tries right during the method's items.",
+    "after_same_mistake": 2,
+    "within_last_items": 5,
+    "worked_at": 0.67,
+    "support": "guide",
+    "method_order": {
+      "P_SUB_VOWEL": [
+        "minimal_pair_vowels",
+        "syllable_color_clap"
+      ],
+      "P_SUB_CONS": [
+        "minimal_pair_consonants",
+        "syllable_tiles_then_letters"
+      ],
+      "P_OMIT_FINAL": [
+        "syllable_color_clap",
+        "count_slots"
+      ],
+      "P_OMIT_MID": [
+        "syllable_tiles_then_letters",
+        "clap_count_syllables"
+      ],
+      "P_ADD": [
+        "count_slots",
+        "syllable_tiles_then_letters"
+      ],
+      "O_ORDER": [
+        "left_to_right_highlight",
+        "syllable_tiles_then_letters"
+      ],
+      "O_NG": [
+        "ng_sound_pairs",
+        "syllable_tiles_then_letters"
+      ],
+      "S_SYLL_MISS": [
+        "clap_count_syllables",
+        "syllable_color_clap"
+      ],
+      "SN_ORDER": [
+        "first_word_model_sentence"
+      ],
+      "SN_PUNCT": [
+        "capital_period_rule"
+      ]
+    },
+    "effects": {
+      "syllable_color_clap": {
+        "task_type": "dictation_syllables",
+        "difficulty": "easy"
+      },
+      "clap_count_syllables": {
+        "task_type": "dictation_syllables",
+        "difficulty": "easy"
+      },
+      "syllable_tiles_then_letters": {
+        "task_type": "dictation_syllables",
+        "difficulty": "easy"
+      },
+      "minimal_pair_vowels": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "minimal_pair_consonants": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "ng_sound_pairs": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "count_slots": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "left_to_right_highlight": {
+        "task_type": "dictation_letters",
+        "difficulty": "easy"
+      },
+      "first_word_model_sentence": {
+        "difficulty": "easy"
+      },
+      "capital_period_rule": {
+        "difficulty": "easy"
+      }
     }
   }
 }

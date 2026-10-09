@@ -96,6 +96,18 @@ CREATE TABLE IF NOT EXISTS story_answers (
     first INTEGER NOT NULL,          -- 1 = the learner's first answer to this question (the one that counts)
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS method_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    child_id TEXT NOT NULL,
+    skill_id TEXT NOT NULL,
+    mistake_type TEXT NOT NULL,
+    method TEXT NOT NULL,
+    items_left INTEGER NOT NULL,
+    correct INTEGER NOT NULL DEFAULT 0,  -- items right on the first try while the method ran
+    total INTEGER NOT NULL DEFAULT 0,
+    worked INTEGER,                      -- NULL while running; 1 or 0 when finished (rules.json reteach.worked_at)
+    started_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 """
 
 
@@ -125,6 +137,8 @@ ADDED_COLUMNS = [
     ("events", "turn_number", "INTEGER"),
     ("sessions", "story_ids", "TEXT NOT NULL DEFAULT '{}'"),
     ("children", "story_level", "INTEGER"),     # set by the story quiz (rules.json story_quiz); NULL before
+    ("children", "placement", "TEXT"),          # 'pending' -> diagnostic items first, 'done'; NULL = no diagnostic
+    ("events", "placement", "INTEGER NOT NULL DEFAULT 0"),   # 1 = a diagnostic (placement) item
 ]
 
 
