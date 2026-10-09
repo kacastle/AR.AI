@@ -32,5 +32,7 @@ def learner_info(conn, content: Content, child_id: str) -> dict:
     child = conn.execute("SELECT * FROM children WHERE id = ?", (child_id,)).fetchone()
     skill = weakest_unlocked_skill(content, load_states(conn, child_id), words_only=True)
     levels = sorted(int(k) for k in content.rules.story_levels)
-    return {"child_id": child_id, "name": child["name"], "level": min(max(skill.level, levels[0]), levels[-1]),
+    # The story quiz sets story_level (rules.json story_quiz); before the first quiz, the tile skill decides.
+    level = child["story_level"] if child["story_level"] is not None else skill.level
+    return {"child_id": child_id, "name": child["name"], "level": min(max(level, levels[0]), levels[-1]),
             "interests": json.loads(child["interests"]), "weakest": skill.id}

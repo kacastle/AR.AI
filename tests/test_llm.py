@@ -194,6 +194,27 @@ class LlmTest(unittest.TestCase):
         worker.run_pending()
         self.assertTrue(any(a["kind"] == "story" for a in self.approvals_for(group2)))
 
+    def test_quiz_queues_the_next_story_at_the_new_level(self):
+        from backend.main import generated_story, story_questions
+        group, session = self.make_session()
+        ana = group["learners"][0]["id"]
+        story_id = session["story_ids"][ana]
+        story = CONTENT.stories_by_id.get(story_id) or generated_story(story_id)
+        quiz = None
+        for i, q in enumerate(story_questions(story)):                       # all right
+            quiz = self.client.post(f"/api/sessions/{session['id']}/story_answer", json={
+                "child_id": ana, "story_id": story_id, "question_index": i, "choice": q["answer"]}).json()["quiz"]
+        self.assertEqual(quiz["correct"], 3)
+        worker.run_pending()
+        self.assertIn("story", self.fake.calls)                                # written right after the quiz
+        row = self.rows("SELECT payload FROM generated_items WHERE kind = 'story' AND child_id = ?", ana)
+        self.assertEqual(json.loads(row[-1]["payload"])["level"], quiz["story_level"])
+        # At session end, no second story: the adapted one is still waiting.
+        n = len(row)
+        self.end_session(session)
+        worker.run_pending()
+        self.assertEqual(len(self.rows("SELECT id FROM generated_items WHERE kind = 'story' AND child_id = ?", ana)), n)
+
     def test_failed_check_is_retried_once_then_falls_back(self):
         self.fake.bad = 1                          # first output broken, retry passes
         group, _ = self.make_session()

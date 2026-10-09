@@ -582,5 +582,26 @@
       "library_story"
     ],
     "one_story_per_learner_per_session": true
+  },
+  "story_quiz": {
+    "note": "After a learner answers all questions of a story (first answers count): this many right moves the next story's level. The next story is written right after the quiz.",
+    "harder_at_correct": 3,
+    "easier_at_most_correct": 1,
+    "skill_by_type": {
+      "who": "sk_comp_literal",
+      "what": "sk_comp_literal",
+      "where": "sk_comp_literal",
+      "sequence": "sk_comp_sequence",
+      "feeling": "sk_comp_feeling",
+      "main_idea": "sk_comp_feeling"
+    },
+    "mistake_by_type": {
+      "who": "C_LITERAL",
+      "what": "C_LITERAL",
+      "where": "C_LITERAL",
+      "sequence": "C_SEQUENCE",
+      "feeling": "C_INFER",
+      "main_idea": "C_INFER"
+    }
   }
 }

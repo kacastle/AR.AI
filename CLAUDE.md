@@ -47,7 +47,7 @@ content/test_prompts.py (v0.3; runs on Ollama gemma4:e4b by default) holds the p
 Story, practice words, feedback and summary prompts come from content/prompts.md. Retry a failed output once, then use the library or template fallback.
 
 ## API
-POST /api/tutor/login; GET /api/groups/{id}; POST /api/groups; POST /api/sessions; GET /api/stories/{id}; POST /api/sessions/{id}/phase; GET /api/sessions/{id}/next; POST /api/sessions/{id}/answer; GET /api/sessions/{id}/summary; GET /api/children/{id}/sheet; GET /api/approvals; POST /api/approvals/{id}; GET /api/audio/{key}.wav.
+POST /api/tutor/login; GET /api/groups/{id}; POST /api/groups; POST /api/sessions; GET /api/stories/{id}; POST /api/sessions/{id}/phase; GET /api/sessions/{id}/next; POST /api/sessions/{id}/answer; POST /api/sessions/{id}/story_answer (story quiz; moves children.story_level, queues the next story); GET /api/sessions/{id}/summary; GET /api/children/{id}/sheet; GET /api/approvals; POST /api/approvals/{id}; GET /api/audio/{key}.wav.
 Person 1 builds against these shapes, so never change or rename a field without telling me first. Every shape, with one example response, lives in backend/API_CONTRACT.md. Keep that file in sync with the code. CORS allows http://localhost:5173.
 
 Next turn: child_id, child_name, turn_number, task_type, item (id, prompt_audio, slots, tiles, syllables), support_level, prefill, gap_slot, seconds.

@@ -21,7 +21,7 @@ from typing import Optional
 
 from backend import db, summary
 from backend.content import Content, Word, load_content
-from backend.llm import checks, client, prompts
+from backend.llm import checks, client, fallbacks, prompts
 from backend.records import event_count, learner_info
 from backend.tts import audio
 
@@ -157,6 +157,10 @@ def run_story(job: Job, content: Content) -> None:
     with db.connect() as conn:
         if _waiting(conn, "story", job.child_id):
             log(f"{label}: one is already waiting for the tutor; skipped")
+            return
+        # One story ahead per learner: the one written right after the quiz is not replaced at session end.
+        if fallbacks._model_story(conn, job.child_id):
+            log(f"{label}: an approved story is waiting to be read; skipped")
             return
         learner = learner_info(conn, content, job.child_id)
     if not learner["interests"]:

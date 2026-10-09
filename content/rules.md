@@ -154,6 +154,8 @@ Each learner gets one personal story in each session, during his or her story tu
 - `fits_objects`: the interest objects that make sense in this plot (you play with a ball at the park, not with shoes; you draw with crayons, not in the rain). Code chooses a plot that fits one of the learner's interest objects, then one of those objects. A new object must be added to the `fits_objects` of the plots it fits, or code never uses it.
 - Never use `laruang` + an animal (laruang pusa, laruang aso...): it does not read as a toy, and "laruang pusa" can read as an innuendo (Filipino speaker's review, r4).
 
+**Story quiz → next story** (`rules.json` → `story_quiz`): after the learner answers the 3 questions (first answers count), 3 right makes the next story one level harder, 0-1 right one level easier, 2 the same. Each question scores its comprehension skill (`skill_by_type`); a wrong answer gets the `mistake_by_type` feedback (C_LITERAL, C_SEQUENCE, C_INFER). The next story is written right after the quiz, with the learner's interests and the new level.
+
 **Fallback order:** an approved model story for that learner → a filled template from `story_templates` → a library story. Templates need no model, so personalization always works.
 
 **Filling a template (code)**

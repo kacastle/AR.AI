@@ -21,11 +21,11 @@ from backend.llm.jobs import Job
 from backend.llm.worker import worker
 from backend import summary
 from backend.llm.fallbacks import choose_story
-from backend.records import event_count, load_states
+from backend.records import event_count, learner_info, load_states
 from backend.schemas import (
     AnswerIn, ApprovalIn, ApprovalItem, Feedback, Group, GroupIn, Hint, Item, Learner,
-    LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, Result, Session, SessionIn,
-    SheetOut, SheetWord, StoryOut, StoryWord, SummaryOut,
+    LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, QuizResult, Result, Session, SessionIn,
+    SheetOut, SheetWord, StoryAnswerIn, StoryAnswerOut, StoryOut, StoryQuestion, StoryWord, SummaryOut,
 )
 from backend.tts import audio as tts_audio
 
@@ -194,7 +194,64 @@ def get_story(story_id: str):
             words.append(StoryWord(text=text, start_ms=t, end_ms=t + length))
             t += length + 150
     return StoryOut(title=story.title, paragraphs=story.paragraphs, words=words,
-                    audio_url=f"/api/audio/{story.id}.wav")
+                    audio_url=f"/api/audio/{story.id}.wav",
+                    questions=[StoryQuestion(type=q["type"], prompt=q["prompt"], choices=q["choices"])
+                               for q in story_questions(story)])
+
+
+def story_questions(story) -> list[dict]:
+    """A story's questions as dicts (content.json stories hold models, generated stories hold dicts)."""
+    return [q if isinstance(q, dict) else q.model_dump() for q in (getattr(story, "questions", None) or [])]
+
+
+@app.post("/api/sessions/{session_id}/story_answer", response_model=StoryAnswerOut)
+def story_answer(session_id: str, body: StoryAnswerIn):
+    """One answer in the story quiz. The first answer to each question counts: it scores the question's
+    comprehension skill, and when every question has one, the next story's level moves (rules.json story_quiz)
+    and that story is written right away in the background."""
+    rules = content.rules
+    quiz_rules = rules.story_quiz
+    with db.connect() as conn:
+        s = get_row(conn, "sessions", session_id)
+        if json.loads(s["story_ids"]).get(body.child_id) != body.story_id:
+            raise HTTPException(422, "this is not the learner's story in this session")
+        child = get_row(conn, "children", body.child_id)
+        story = content.stories_by_id.get(body.story_id) or generated_story(body.story_id)
+        questions = story_questions(story) if story else []
+        if not 0 <= body.question_index < len(questions):
+            raise HTTPException(422, f"question_index must be 0 to {len(questions) - 1}")
+        q = questions[body.question_index]
+        correct = body.choice == q["answer"]
+        key = (session_id, body.child_id, body.story_id)
+        first = conn.execute("SELECT 1 FROM story_answers WHERE session_id = ? AND child_id = ? AND story_id = ? "
+                             "AND question_index = ?", (*key, body.question_index)).fetchone() is None
+        conn.execute("INSERT INTO story_answers (session_id, child_id, story_id, question_index, question_type, "
+                     "choice, correct, first) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                     (*key, body.question_index, q["type"], body.choice, int(correct), int(first)))
+        code = None if correct else quiz_rules["mistake_by_type"].get(q["type"])
+        feedback = feedback_for(rules, "CORRECT" if correct else code, name=child["name"], syllables=[], slots=0,
+                                turn=body.question_index)
+        quiz = None
+        if first:
+            skill_id = quiz_rules["skill_by_type"].get(q["type"])
+            if skill_id:
+                state = load_states(conn, child["id"]).get(skill_id) or new_state(skill_id, rules)
+                result = scoring.item_result(rules, "alone", 1, correct)
+                save_state(conn, child["id"], scoring.apply_item(rules, state, result, correct, date.today()))
+            firsts = conn.execute("SELECT correct FROM story_answers WHERE session_id = ? AND child_id = ? "
+                                  "AND story_id = ? AND first = 1", key).fetchall()
+            if len(firsts) == len(questions):
+                right = sum(r["correct"] for r in firsts)
+                before = learner_info(conn, content, child["id"])["level"]
+                levels = sorted(int(k) for k in rules.story_levels)
+                step = (1 if right >= quiz_rules["harder_at_correct"]
+                        else -1 if right <= quiz_rules["easier_at_most_correct"] else 0)
+                after = min(max(before + step, levels[0]), levels[-1])
+                conn.execute("UPDATE children SET story_level = ? WHERE id = ?", (after, child["id"]))
+                quiz = QuizResult(correct=right, total=len(questions), story_level_before=before, story_level=after)
+    if quiz:
+        worker.submit(Job("story", child_id=body.child_id))     # the adapted story, written right after the quiz
+    return StoryAnswerOut(correct=correct, mistake_type=code, feedback=feedback, quiz=quiz)
 
 
 @app.post("/api/sessions/{session_id}/phase", response_model=PhaseOut)

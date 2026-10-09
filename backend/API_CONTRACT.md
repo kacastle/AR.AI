@@ -77,6 +77,24 @@ Response
 ```
 (`words` is shortened here.)
 
+## Story quiz
+`GET /api/stories/{id}` also returns `questions`: `[{"type", "prompt", "choices"}]` (3 questions, 3 choices each; the answer is not sent).
+
+### POST /api/sessions/{id}/story_answer
+One answer to one question of the learner's story in this session (`story_id` must be the learner's entry in the session's `story_ids`, else `422`). The **first** answer to each question counts: it scores the question's comprehension skill (`rules.json` → `story_quiz.skill_by_type`). When every question has a first answer, `quiz` is set, the learner's next story level moves (`story_quiz`: 3 of 3 right = one level harder, 0-1 = one level easier, else the same), and the next personal story is written right away in the background.
+
+Request
+```json
+{"child_id": "c_78552429", "story_id": "ts_1a2b3c4d", "question_index": 2, "choice": "sa parke"}
+```
+Response (last question)
+```json
+{"correct": true, "mistake_type": null,
+ "feedback": {"message_fil": "Tama! Magaling, Ana!", "hint_fil": null},
+ "quiz": {"correct": 3, "total": 3, "story_level_before": 1, "story_level": 2}}
+```
+Wrong: `correct` false, `mistake_type` `C_LITERAL` (who/what/where), `C_SEQUENCE` or `C_INFER` (feeling/main_idea), `feedback` from `rules.json` feedback_templates. `quiz` is `null` until the last first answer.
+
 ## POST /api/sessions/{id}/phase
 `phase` is one of `tiles`, `stories`, `summary`. `ends_at` is local time with offset. The phase lengths come from `rules.json` → `session` (35 / 15 / 10 min). With `DEMO_FAST=1` (rules.json `session.demo_fast`) every phase is 1 minute and `/next` gives `seconds: 20`, so a demo session takes about 3 minutes.
 Setting `summary` queues the model summary, then each learner's personal story for the next session.

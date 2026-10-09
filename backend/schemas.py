@@ -63,11 +63,39 @@ class StoryWord(BaseModel):
     end_ms: int
 
 
+class StoryQuestion(BaseModel):
+    type: str                      # who, what, where, sequence, feeling, main_idea
+    prompt: str
+    choices: list[str]             # the answer is checked by POST /api/sessions/{id}/story_answer
+
+
 class StoryOut(BaseModel):
     title: str
     paragraphs: list[str]
     words: list[StoryWord]
     audio_url: str
+    questions: list[StoryQuestion] = []
+
+
+class StoryAnswerIn(BaseModel):
+    child_id: str
+    story_id: str
+    question_index: int            # 0-based, in the order of StoryOut.questions
+    choice: str
+
+
+class QuizResult(BaseModel):
+    correct: int                   # first answers that were right
+    total: int
+    story_level_before: int
+    story_level: int               # the level of the next story (rules.json story_quiz)
+
+
+class StoryAnswerOut(BaseModel):
+    correct: bool
+    mistake_type: Optional[str]    # C_LITERAL, C_SEQUENCE or C_INFER when wrong
+    feedback: "Feedback"
+    quiz: Optional[QuizResult]     # set once every question has a first answer; the next story is queued then
 
 
 class PhaseIn(BaseModel):
