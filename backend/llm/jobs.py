@@ -37,7 +37,8 @@ class Job:
 
 
 def model_name() -> str:
-    return os.environ.get("OLLAMA_MODEL", DEFAULT_MODEL)
+    default = "google/gemma-4-e4b" if os.environ.get("LLM_BACKEND") == "lmstudio" else DEFAULT_MODEL
+    return os.environ.get("OLLAMA_MODEL", default)
 
 
 def log(message: str) -> None:
