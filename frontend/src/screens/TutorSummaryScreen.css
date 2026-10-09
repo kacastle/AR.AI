@@ -1,0 +1,169 @@
+.summary__list {
+  width: min(680px, 100%);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.summary__card {
+  padding: 16px 20px;
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: 0 8px 16px var(--soft-shadow);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.summary__picture {
+  flex: none;
+  width: 88px;
+  height: 88px;
+}
+
+.summary__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary__name {
+  margin: 0;
+  font-size: 28px;
+}
+
+.summary__text,
+.summary__focus,
+.summary__note {
+  margin: 0;
+  font-size: 20px;
+}
+
+.summary__note {
+  width: min(680px, 100%);
+  padding: 12px 20px;
+  border-radius: 16px;
+  background: var(--try-bg);
+}
+
+.summary__print {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Practice sheets: hidden on screen, the only thing printed. */
+.print-sheets {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 16mm;
+  }
+
+  :root,
+  body {
+    background: #fff;
+  }
+
+  .no-print,
+  .tutor-bar,
+  .confetti {
+    display: none !important;
+  }
+
+  .print-sheets {
+    display: block;
+  }
+}
+
+.sheet {
+  color: #000;
+  font-family: 'Andika', system-ui, sans-serif;
+  break-after: page;
+}
+
+.sheet:last-child {
+  break-after: auto;
+}
+
+.sheet__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 8pt;
+  border-bottom: 2pt solid #000;
+}
+
+.sheet__title {
+  margin: 0;
+  font-size: 28pt;
+}
+
+.sheet__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4pt;
+  font-size: 13pt;
+}
+
+.sheet__heading {
+  margin: 18pt 0 8pt;
+  font-size: 15pt;
+}
+
+.sheet__words {
+  margin: 0;
+  padding-left: 20pt;
+  display: flex;
+  flex-direction: column;
+  gap: 12pt;
+}
+
+.sheet__word {
+  display: flex;
+  align-items: baseline;
+  gap: 16pt;
+  font-size: 14pt;
+}
+
+.sheet__syllables {
+  min-width: 210pt;
+  font-size: 26pt;
+  font-weight: 700;
+}
+
+.sheet__whole {
+  min-width: 90pt;
+  font-size: 18pt;
+}
+
+.sheet__line {
+  flex: 1;
+  border-bottom: 1.5pt dashed #555;
+  height: 22pt;
+}
+
+.sheet__line--long {
+  display: block;
+  height: 30pt;
+}
+
+.sheet__sentence {
+  margin: 0;
+  font-size: 24pt;
+}
+
+.sheet__note {
+  margin-top: 24pt;
+  padding: 10pt 14pt;
+  border: 1.5pt solid #000;
+  border-radius: 8pt;
+  font-size: 13pt;
+}

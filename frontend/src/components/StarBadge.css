@@ -1,0 +1,41 @@
+.star-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px 4px 8px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 3px 0 var(--card-shadow), 0 6px 12px var(--soft-shadow);
+  font-size: 18px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.star-badge__stars {
+  flex: none;
+  display: inline-flex;
+  gap: 2px;
+  animation: star-pop 500ms var(--bounce);
+}
+
+.star {
+  width: 26px;
+  height: 26px;
+  fill: var(--slot-bg);
+  stroke: var(--tile-border);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.star--filled {
+  fill: #ffcf5c;
+}
+
+@keyframes star-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.25);
+  }
+}

@@ -12,15 +12,26 @@
   line-height: 1;
   text-transform: lowercase;
   cursor: pointer;
-  box-shadow: 0 6px 0 var(--tile-border);
-  transition: transform 80ms ease, box-shadow 80ms ease;
+  --edge: var(--tile-border);
+  box-shadow: 0 6px 0 var(--edge), 0 8px 16px var(--soft-shadow);
+  transition:
+    transform 220ms var(--bounce),
+    box-shadow 220ms ease;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
+@media (hover: hover) {
+  .tile:hover:not(:disabled) {
+    transform: scale(1.08);
+    box-shadow: 0 6px 0 var(--edge), 0 14px 24px var(--soft-shadow-strong);
+  }
+}
+
 .tile:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 var(--tile-border);
+  transform: scale(0.95);
+  box-shadow: 0 3px 0 var(--edge), 0 4px 8px var(--soft-shadow);
+  transition-duration: 80ms;
 }
 
 .tile:focus-visible {
@@ -31,13 +42,13 @@
 .tile--placed {
   background: var(--placed-bg);
   border-color: var(--placed-border);
-  box-shadow: 0 6px 0 var(--placed-border);
+  --edge: var(--placed-border);
 }
 
 .tile--fixed {
   background: var(--fixed-bg);
   border-color: var(--fixed-border);
-  box-shadow: 0 6px 0 var(--fixed-border);
+  --edge: var(--fixed-border);
 }
 
 .tile--model {

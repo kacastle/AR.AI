@@ -1,0 +1,48 @@
+.story__prompt {
+  margin: 0;
+  font-size: 44px;
+  text-align: center;
+}
+
+.story__choices {
+  width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.action.story__choice {
+  min-height: 96px;
+  border: 4px solid var(--tile-border);
+  border-radius: 28px;
+  background: var(--tile-bg);
+  font-size: 40px;
+  --edge: var(--tile-border);
+}
+
+.action.story__choice--correct,
+.action.story__choice--answer {
+  border-color: var(--primary);
+  background: var(--good-bg);
+  color: var(--good-ink);
+  --edge: var(--primary-shadow);
+}
+
+.action.story__choice--wrong {
+  border-color: var(--try-ink);
+  background: var(--try-bg);
+  color: var(--try-ink);
+  --edge: var(--try-ink);
+}
+
+.action.story__choice:disabled {
+  opacity: 1;
+}
+
+.action.story__choice--wrong:disabled {
+  opacity: 0.6;
+}
+
+.story__choice--shake {
+  animation: tile-shake 420ms ease-in-out;
+}

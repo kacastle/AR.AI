@@ -1,0 +1,72 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(43, 43, 58, 0.35);
+  animation: overlay-fade 200ms ease-out;
+}
+
+.overlay__card {
+  width: min(520px, 100%);
+  padding: 28px 24px 32px;
+  border-radius: 32px;
+  background: var(--card);
+  box-shadow: 0 8px 0 var(--card-shadow), 0 24px 48px rgba(43, 43, 58, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  animation: overlay-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.overlay__face {
+  width: 96px;
+  height: 96px;
+  animation: overlay-wiggle 1.6s ease-in-out 420ms 2;
+}
+
+.overlay__title {
+  margin: 0;
+  font-size: 34px;
+  color: var(--try-ink);
+}
+
+.overlay__body {
+  margin: 0;
+  font-size: 26px;
+}
+
+.overlay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+@keyframes overlay-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes overlay-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes overlay-wiggle {
+  25% {
+    transform: rotate(-8deg);
+  }
+  75% {
+    transform: rotate(8deg);
+  }
+}

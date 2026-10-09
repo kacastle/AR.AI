@@ -1,6 +1,9 @@
 // All user-facing UI text (Filipino). Feedback lines come from the API.
 export const t = {
   loading: 'Sandali lang...',
+  loadingSession: 'Inihahanda ang sesyon...',
+  loadingStory: 'Inihahanda ang kuwento...',
+  loadingSummary: 'Ginagawa ang buod...',
   loadError: 'May problema. Subukan muli.',
   retry: 'Subukan muli',
   turnLabel: (n) => `Tanong ${n}`,
@@ -24,4 +27,116 @@ export const t = {
   next: 'Susunod',
   // Generic fallback from CLAUDE.md, used while the API sends no feedback for wrong attempts.
   tryAgain: (name) => `Subukan natin ulit, ${name}!`,
+  overlay: {
+    title: 'Malapit na!',
+    hints: {
+      replay_by_syllable: 'Pakinggan ulit ang bawat pantig.',
+      highlight_slot: 'Tingnan ang kahong may ilaw.',
+      first_tile: 'Magsimula tayo sa unang kahon.',
+    },
+    retry: 'Subukan ulit',
+    listenAgain: 'Pakinggan ulit',
+    showAnswer: 'Ipakita ang sagot',
+  },
+  phases: {
+    readAlong: 'Sabay na pagbasa',
+    tiles: 'Mga tile',
+    stories: 'Mga tanong sa kuwento',
+  },
+  tutorBar: {
+    tutor: 'Tutor',
+    skip: 'Laktawan',
+    timeLeft: (time) => `Natitirang oras: ${time}`,
+    timeUp: 'Tapos na ang oras',
+  },
+  login: {
+    title: 'Pasok ng Tutor',
+    prompt: 'Ilagay ang iyong PIN',
+    digit: (d) => `Numero ${d}`,
+    filled: (n, total) => `${n} sa ${total} numero`,
+    delete: 'Bura',
+    deleteLabel: 'Burahin ang huling numero',
+    enter: 'Pumasok',
+    demoNote: 'Demo: puwede ang kahit anong PIN.',
+    error: 'May problema sa PIN. Subukan muli.',
+  },
+  group: {
+    greeting: (name) => `Magandang araw, ${name}!`,
+    question: 'Sino ang narito ngayon?',
+    present: 'Narito',
+    absent: 'Wala',
+    count: (n) => `${n} bata ang narito.`,
+    needOne: 'Pumili ng kahit isang bata.',
+    start: 'Simulan ang sesyon',
+  },
+  readAlong: {
+    heading: 'Sabay tayong magbasa',
+    instruction: 'Pakinggan ang kuwento.',
+    echo: 'Ngayon, sabay-sabay nating basahin!',
+    repeat: 'Muling Pakinggan',
+    nextParagraph: 'Susunod na talata',
+    done: 'Tapos na',
+    paragraphOf: (i, n) => `Talata ${i} ng ${n}`,
+  },
+  story: {
+    listen: 'Pakinggan ang tanong',
+    instruction: 'Piliin ang tamang sagot.',
+    choicesLabel: 'Mga pagpipilian',
+  },
+  summary: {
+    subtitle: 'Para sa tutor',
+    title: 'Buod ng sesyon',
+    nextFocus: 'Susunod na pagtuunan:',
+    groupNote: 'Paalala sa grupo:',
+    newSession: 'Bagong sesyon',
+  },
+  progress: {
+    stars: (n) => `${n} bituin`,
+    questions: (n, total) => `${n} sa ${total} tanong`,
+  },
+  sheet: {
+    print: 'Ilimbag ang Magsanay Sheet',
+    preparing: 'Inihahanda...',
+    title: 'Magsanay Tayo!',
+    name: 'Pangalan:',
+    date: 'Petsa:',
+    words: 'Basahin at isulat ang mga salita.',
+    sentence: 'Basahin at isulat ang pangungusap.',
+    parentNote: 'Para sa magulang o kasama sa bahay:',
+  },
+  landing: {
+    title: 'AR.Ai: Ang Matalinong Kaakabay sa Pagbasa',
+    subtitle: 'Katuwang sa Pagbasa para sa DepEd ARAL Program',
+    badges: ['100% Offline & Private', 'Powered by Local AI (Ollama 3B)', 'Key Stage 1 (Grades 1-3) Ready'],
+    features: [
+      {
+        title: 'Maikling Babasahin (Adaptive Stories)',
+        text: 'Mga kuwentong Filipino na ginagawa mismo sa device, ayon sa hilig ng bawat bata.',
+      },
+      {
+        title: 'Tile Board Practice',
+        text: 'Pagbuo ng salita gamit ang mga tile ng titik at pantig, ayon sa Marungko method.',
+      },
+      {
+        title: 'Buod at Printable Worksheets',
+        text: 'Awtomatikong buod para sa tutor at worksheet na maiuuwi para sa pagsasanay sa bahay.',
+      },
+    ],
+    cta: 'Magsimula / Pumasok bilang Tutor',
+  },
+  header: {
+    privacy: '100% Offline | Ligtas ang Datos',
+    logoAlt: 'AR.AI',
+    sound: 'Tunog ng laro',
+    contrast: 'Mas malinaw na kulay',
+  },
+  apiMode: {
+    mock: 'Demo na datos (offline)',
+    server: 'Gamit ang server',
+    fallback: 'Hindi maabot ang server. Demo na datos muna.',
+  },
+  turnSwitch: {
+    start: 'Magsimula',
+    avatar: (name) => `Larawan ni ${name}`,
+  },
 }
