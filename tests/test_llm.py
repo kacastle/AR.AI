@@ -172,6 +172,28 @@ class LlmTest(unittest.TestCase):
         self.assertEqual((got["words"][1]["start_ms"], got["words"][1]["end_ms"]), (100, 180))   # real timings
         self.assertNotIn(story["id"], [a["id"] for a in self.client.get("/api/approvals").json()])
 
+    def test_auto_approve_serves_checked_stories_without_the_tutor(self):
+        os.environ["AUTO_APPROVE"] = "1"                   # demos only
+        try:
+            group, session = self.make_session()
+            self.end_session(session)
+            worker.run_pending()
+        finally:
+            del os.environ["AUTO_APPROVE"]
+        ana = group["learners"][0]["id"]
+        self.assertEqual(self.approvals_for(group), [])     # nothing waits for the tutor
+        row = self.rows("SELECT g.payload, a.status, a.decided_at FROM generated_items g JOIN approvals a "
+                        "ON a.generated_item_id = g.id WHERE g.kind = 'story' AND g.child_id = ?", ana)[0]
+        p = json.loads(row["payload"])
+        self.assertEqual((row["status"], p["approved_by_tutor"]), ("approved", True))
+        self.assertIsNotNone(row["decided_at"])
+        self.assertEqual(self.client.get(f"/api/stories/{p['id']}").status_code, 200)
+        # Without the switch, the next story waits for the tutor again.
+        group2, session2 = self.make_session()
+        self.end_session(session2)
+        worker.run_pending()
+        self.assertTrue(any(a["kind"] == "story" for a in self.approvals_for(group2)))
+
     def test_failed_check_is_retried_once_then_falls_back(self):
         self.fake.bad = 1                          # first output broken, retry passes
         group, _ = self.make_session()

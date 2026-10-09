@@ -188,6 +188,7 @@ Printable practice sheet. No scores.
 ```
 
 ## GET /api/approvals
+With `AUTO_APPROVE=1` (demos only), checked model stories and words are approved when they are saved, so this list stays empty.
 Model items waiting for the tutor, oldest first. Every item passed the checks in `content/test_prompts.py` (a failed one is retried once, then dropped). `kind`:
 - `story`: a personal story, with its audio already made (`GET /api/audio/{payload.id}.wav`, so the tutor can listen before approving). `payload` has the same fields as content.json `stories` (`id` is `gs_…`, `source` is `"model"`), plus `model`, `plot_id` and `object`. Once approved, `GET /api/stories/{payload.id}` serves it, `approved_by_tutor` becomes `true`, and the learner gets it in the next session's `story_ids`.
 - `words`: practice words. `payload` = `{"skill_id", "words": [{"text", "word_id", "syllables", "meaning_en"}], "model"}`; only content.json words. Once approved, they go on the learner's practice sheet while the learner is on that skill.

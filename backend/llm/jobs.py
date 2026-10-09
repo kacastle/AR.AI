@@ -116,11 +116,21 @@ def _waiting(conn, kind: str, child_id: str) -> bool:
 def _save(kind: str, payload: dict, child_id: Optional[str] = None, session_id: Optional[str] = None,
           item_id: Optional[str] = None, approval: bool = True) -> str:
     item_id = item_id or db.new_id("gen")
+    # Demos only (never with real children): AUTO_APPROVE=1 approves checked model items, as the tutor would
+    # with POST /api/approvals/{id}. Only items that passed their checks reach _save.
+    auto = approval and os.environ.get("AUTO_APPROVE") == "1"
+    if auto and "approved_by_tutor" in payload:
+        payload = {**payload, "approved_by_tutor": True}
     with db.connect() as conn:
         conn.execute("INSERT INTO generated_items (id, kind, child_id, session_id, payload) VALUES (?, ?, ?, ?, ?)",
                      (item_id, kind, child_id, session_id, json.dumps(payload, ensure_ascii=False)))
-        if approval:
+        if auto:
+            conn.execute("INSERT INTO approvals (id, generated_item_id, status, decided_at) "
+                         "VALUES (?, ?, 'approved', datetime('now'))", (db.new_id("a"), item_id))
+        elif approval:
             conn.execute("INSERT INTO approvals (id, generated_item_id) VALUES (?, ?)", (db.new_id("a"), item_id))
+    if auto:
+        log(f"{kind} {item_id}: auto-approved (AUTO_APPROVE=1, demo only)")
     return item_id
 
 

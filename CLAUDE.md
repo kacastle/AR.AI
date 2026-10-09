@@ -35,6 +35,7 @@ Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv 
 - Scripts: `python scripts/pregen_audio.py` (`--force` remakes all, `--check` only checks)
 - Testbench: `python scripts/testbench.py` then http://localhost:5173 (first time: `cd frontend; npm ci`)
 - Model worker: on by default in the server; warms up the model and the voice at startup; logs the seconds of every model and voice call ("[llm] HH:MM:SS ... 12.3 s, ok"). `$env:LLM_WORKER="0"` turns it off. Needs Ollama running with OLLAMA_MODEL pulled.
+- Demo auto-approve: `$env:AUTO_APPROVE="1"` approves checked model stories and practice words as soon as they are saved (backend/llm/jobs.py `_save`), so they reach learners without POST /api/approvals. Demos only, never with real children.
 - Demo run: `python scripts/demo_session.py` (DEMO_FAST session with 3 fake learners, real model; prints every model call time).
 - Database: data/tutor.db (gitignored). `DB_PATH` overrides it. New columns are added automatically on startup.
 - Demo timing: `$env:DEMO_FAST="1"` uses rules.json session.demo_fast (1-minute phases, 20-second items).
