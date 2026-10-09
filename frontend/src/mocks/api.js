@@ -9,6 +9,7 @@
 //   POST /api/sessions/{id}/answer    -> submitAnswer(sessionId, body)
 //   GET  /api/sessions/{id}/summary   -> getSummary(sessionId)
 //   GET  /api/children/{id}/sheet     -> getPracticeSheet(childId)
+// Screens import src/api.js, which uses this file when VITE_USE_MOCK=true.
 // NOT in the contract yet (proposal for the backend owner): getStoryTurn() and
 // submitStoryAnswer() for the story questions in content.json `stories[].questions`.
 // Shapes, hint ladder and feedback lines follow backend/main.py and content/rules.json.
@@ -156,7 +157,7 @@ const clone = (value) => JSON.parse(JSON.stringify(value))
 
 let session = null
 let turnNumber = 1
-let storyTurn = 0
+let storyRound = null
 let events = []
 
 function apiError(status, detail) {
@@ -210,7 +211,7 @@ export async function createSession(body) {
     read_along_story_id: 'st_l1_001',
   }
   turnNumber = 1
-  storyTurn = 0
+  storyRound = newStoryRound(session, group.learners)
   events = []
   return clone(session)
 }
@@ -320,28 +321,50 @@ export async function submitAnswer(sessionId, body) {
 }
 
 // PROPOSAL, not in API_CONTRACT.md: one story question per turn, learners in turn order,
-// questions from the read-along story. Returns null when every question is done.
-function currentStoryQuestion() {
-  const story = stories[session.read_along_story_id]
-  if (storyTurn >= story.questions.length) return null
+// questions from the read-along story. Kept apart from the mock session so it also runs next
+// to a real backend session (src/api.js calls startStoryRound).
+function newStoryRound(forSession, learners) {
   return {
-    childId: session.present[storyTurn % session.present.length],
-    question: story.questions[storyTurn],
+    sessionId: forSession.id,
+    present: [...forSession.present],
+    names: Object.fromEntries(learners.map((l) => [l.id, l.name])),
+    storyId: stories[forSession.read_along_story_id] ? forSession.read_along_story_id : 'st_l1_001',
+    turn: 0,
   }
 }
 
+export function startStoryRound(forSession, learners) {
+  storyRound = newStoryRound(forSession, learners)
+}
+
+function requireStoryRound(sessionId) {
+  if (!storyRound || storyRound.sessionId !== sessionId) {
+    throw apiError(404, `session '${sessionId}' not found`)
+  }
+}
+
+function currentStoryQuestion() {
+  const story = stories[storyRound.storyId]
+  if (storyRound.turn >= story.questions.length) return null
+  return {
+    childId: storyRound.present[storyRound.turn % storyRound.present.length],
+    question: story.questions[storyRound.turn],
+  }
+}
+
+// Returns null when every question is done.
 export async function getStoryTurn(sessionId) {
   await delay()
-  requireSession(sessionId)
+  requireStoryRound(sessionId)
   const current = currentStoryQuestion()
   if (!current) return null
   const { answer: _answer, ...question } = current.question
   return clone({
     child_id: current.childId,
-    child_name: nameOf(current.childId),
-    turn_number: storyTurn + 1,
-    questions_total: stories[session.read_along_story_id].questions.length,
-    story_id: session.read_along_story_id,
+    child_name: storyRound.names[current.childId],
+    turn_number: storyRound.turn + 1,
+    questions_total: stories[storyRound.storyId].questions.length,
+    story_id: storyRound.storyId,
     question: { ...question, prompt_audio: `/api/audio/${question.id}.wav` },
   })
 }
@@ -350,18 +373,18 @@ export async function getStoryTurn(sessionId) {
 // reveals the answer and ends the question.
 export async function submitStoryAnswer(sessionId, body) {
   await delay()
-  requireSession(sessionId)
+  requireStoryRound(sessionId)
   const current = currentStoryQuestion()
   if (!current || body.question_id !== current.question.id || body.child_id !== current.childId) {
     throw apiError(409, 'this is not the current question')
   }
-  const name = nameOf(current.childId)
+  const name = storyRound.names[current.childId]
   if (body.choice === current.question.answer) {
-    storyTurn += 1
+    storyRound.turn += 1
     const lines = FEEDBACK_TEMPLATES.CORRECT.message_fil
     return {
       correct: true,
-      feedback: { message_fil: lines[storyTurn % lines.length].replace('{name}', name), hint_fil: null },
+      feedback: { message_fil: lines[storyRound.turn % lines.length].replace('{name}', name), hint_fil: null },
       next_action: 'next',
       answer: null,
     }
@@ -374,7 +397,7 @@ export async function submitStoryAnswer(sessionId, body) {
       answer: null,
     }
   }
-  storyTurn += 1
+  storyRound.turn += 1
   return {
     correct: false,
     feedback: { message_fil: FEEDBACK_TEMPLATES.SHOW_ANSWER.message_fil[0], hint_fil: null },

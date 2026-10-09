@@ -8,7 +8,7 @@ import Confetti from '../components/Confetti.jsx'
 import StarBadge from '../components/StarBadge.jsx'
 import { useAudio } from '../hooks/useAudio.js'
 import SpeakerIcon from '../components/SpeakerIcon.jsx'
-import { getNextTurn, submitAnswer } from '../mocks/api.js'
+import { getNextTurn, submitAnswer } from '../api.js'
 import { t } from '../strings.js'
 import './TileBoardScreen.css'
 

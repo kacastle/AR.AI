@@ -6,7 +6,8 @@ import ReadAlongScreen from './screens/ReadAlongScreen.jsx'
 import TileBoardScreen from './screens/TileBoardScreen.jsx'
 import StoryQuestionScreen from './screens/StoryQuestionScreen.jsx'
 import TutorSummaryScreen from './screens/TutorSummaryScreen.jsx'
-import { setPhase } from './mocks/api.js'
+import ApiModeBadge from './components/ApiModeBadge.jsx'
+import { setPhase } from './api.js'
 import { t } from './strings.js'
 
 // Session order. Steps that map to an API phase call POST /api/sessions/{id}/phase.
@@ -61,6 +62,7 @@ export default function App() {
     <div className={`app${showBar ? ' app--with-bar' : ''}`}>
       {showBar && <TutorBar key={`bar-${step}`} label={t.phases[step]} endsAt={endsAt} onSkip={advance} />}
       <div key={step}>{screens[step]}</div>
+      <ApiModeBadge />
     </div>
   )
 }

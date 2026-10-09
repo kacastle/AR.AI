@@ -101,6 +101,11 @@ export const t = {
     sentence: 'Basahin at isulat ang pangungusap.',
     parentNote: 'Para sa magulang o kasama sa bahay:',
   },
+  apiMode: {
+    mock: 'Demo na datos (offline)',
+    server: 'Gamit ang server',
+    fallback: 'Hindi maabot ang server. Demo na datos muna.',
+  },
   turnSwitch: {
     start: 'Magsimula',
     avatar: (name) => `Larawan ni ${name}`,

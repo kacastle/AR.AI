@@ -59,3 +59,26 @@ Story questions are **not in API_CONTRACT.md yet**. `getStoryTurn()` / `submitSt
 are a proposal using content.json `stories[].questions` (one question per turn, learners in turn order;
 a second wrong answer shows the answer). Question audio uses `/api/audio/{question_id}.wav`, which is
 also not a contract key yet.
+
+## Mock or real backend
+
+All screens call `src/api.js`. `.env` sets the mode:
+
+```
+VITE_USE_MOCK=true                        # default: offline demo data (src/mocks/api.js)
+VITE_API_BASE_URL=http://localhost:8000   # used when VITE_USE_MOCK=false
+```
+
+To use the real backend without editing `.env`: `VITE_USE_MOCK=false npm run dev` (or put the line in
+`.env.local`, which git ignores). Start the backend first:
+`uvicorn backend.main:app --reload --reload-dir backend --port 8000` (add `DEMO_FAST=1` for 1-minute phases).
+
+- Real mode creates the demo group (Teacher Liza: Ana, Ben, Mila) with `POST /api/groups` once and keeps
+  its id in `localStorage` (`rtph.group_id`).
+- Audio paths from the API (`/api/audio/...`) are prefixed with `VITE_API_BASE_URL`.
+- If the backend can't be reached before a session starts, the app switches to the demo data and the
+  corner note says "Hindi maabot ang server. Demo na datos muna." After a real session has started,
+  errors show on the screen instead, so real and demo data never mix.
+- The dev server must run on port 5173: the backend's CORS only allows `http://localhost:5173`.
+  A blocked CORS request looks the same as an unreachable server, so it also falls back to demo data.
+- Story questions always run locally (no endpoint in `API_CONTRACT.md` yet).

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import SpeakerIcon from '../components/SpeakerIcon.jsx'
-import { getStory } from '../mocks/api.js'
+import { getStory } from '../api.js'
 import { t } from '../strings.js'
 import './ReadAlongScreen.css'
 

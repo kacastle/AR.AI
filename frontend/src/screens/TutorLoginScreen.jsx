@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { login } from '../mocks/api.js'
+import { login } from '../api.js'
 import { t } from '../strings.js'
 import './TutorLoginScreen.css'
 

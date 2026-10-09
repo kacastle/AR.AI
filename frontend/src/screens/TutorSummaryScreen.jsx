@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import Confetti from '../components/Confetti.jsx'
 import LearnerPicture from '../components/LearnerPicture.jsx'
-import { SKILL_NAMES_FIL, getPracticeSheet, getSummary } from '../mocks/api.js'
+import { SKILL_NAMES_FIL, getPracticeSheet, getSummary } from '../api.js'
 import { t } from '../strings.js'
 import './TutorSummaryScreen.css'
 

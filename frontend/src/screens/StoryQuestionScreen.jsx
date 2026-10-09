@@ -5,7 +5,7 @@ import TurnSwitchScreen from './TurnSwitchScreen.jsx'
 import Confetti from '../components/Confetti.jsx'
 import StarBadge from '../components/StarBadge.jsx'
 import { useAudio } from '../hooks/useAudio.js'
-import { getStoryTurn, submitStoryAnswer } from '../mocks/api.js'
+import { getStoryTurn, submitStoryAnswer } from '../api.js'
 import { t } from '../strings.js'
 import './StoryQuestionScreen.css'
 

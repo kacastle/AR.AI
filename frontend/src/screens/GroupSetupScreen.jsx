@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import LearnerPicture from '../components/LearnerPicture.jsx'
-import { MOCK_GROUP_ID, createSession, getGroup } from '../mocks/api.js'
+import { createSession, getDemoGroup } from '../api.js'
 import { t } from '../strings.js'
 import './GroupSetupScreen.css'
 
@@ -12,7 +12,7 @@ export default function GroupSetupScreen({ onStart }) {
 
   useEffect(() => {
     let cancelled = false
-    getGroup(MOCK_GROUP_ID)
+    getDemoGroup()
       .then((g) => {
         if (cancelled) return
         setGroup(g)
@@ -40,7 +40,7 @@ export default function GroupSetupScreen({ onStart }) {
     try {
       // `present` keeps the group's order, which is the turn order.
       const ids = group.learners.filter((l) => present.has(l.id)).map((l) => l.id)
-      onStart(await createSession({ group_id: group.id, present: ids }), group)
+      onStart(await createSession({ group_id: group.id, present: ids }, group.learners), group)
     } catch {
       setError(true)
     }
