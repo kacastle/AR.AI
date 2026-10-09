@@ -4,17 +4,15 @@ import Slot from '../components/Slot.jsx'
 import FeedbackBanner from '../components/FeedbackBanner.jsx'
 import FeedbackOverlay from '../components/FeedbackOverlay.jsx'
 import TurnSwitchScreen from './TurnSwitchScreen.jsx'
+import Confetti from '../components/Confetti.jsx'
+import StarBadge from '../components/StarBadge.jsx'
+import { useAudio } from '../hooks/useAudio.js'
 import SpeakerIcon from '../components/SpeakerIcon.jsx'
 import { getNextTurn, submitAnswer } from '../mocks/api.js'
 import { t } from '../strings.js'
 import './TileBoardScreen.css'
 
 const SHAKE_MS = 450
-
-function playAudio(url) {
-  if (!url) return
-  new Audio(url).play().catch(() => {})
-}
 
 // Turns the API's prefill into the starting board.
 // "show" displays the answer as a model and the learner rebuilds it; other prefill
@@ -59,6 +57,9 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
   const [busy, setBusy] = useState(false)
   const itemStart = useRef(0)
   const shakeTimer = useRef(null)
+  const speaker = useAudio()
+  const [stars, setStars] = useState({})
+  const [burst, setBurst] = useState(0)
 
   const applyTurn = useCallback((next) => {
     const nextBoard = buildBoard(next)
@@ -114,7 +115,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
     const start = () => {
       setActiveChild(turn.child_id)
       itemStart.current = Date.now()
-      playAudio(turn.item.prompt_audio)
+      speaker.play(turn.item.prompt_audio)
     }
     const picture = learners.find((l) => l.id === turn.child_id)?.picture
     return <TurnSwitchScreen name={turn.child_name} picture={picture} onStart={start} />
@@ -162,13 +163,15 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
       })
       if (response.correct) {
         setResult(response)
+        setStars((s) => ({ ...s, [turn.child_id]: (s[turn.child_id] ?? 0) + 1 }))
+        setBurst((b) => b + 1)
         return
       }
       setAttempt((a) => a + 1)
       if (response.hint) {
         setHintsUsed((n) => n + 1)
         setHighlight(response.hint.highlight_slot)
-        playAudio(response.hint.audio)
+        speaker.play(response.hint.audio)
       }
       setShake(true)
       clearTimeout(shakeTimer.current)
@@ -206,15 +209,18 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
     <main className="board">
       <header className="board__header">
         <span className="board__progress">{t.turnLabel(turn.turn_number)}</span>
-        <span className="board__learner">{t.learnerTurn(turn.child_name)}</span>
+        <div className="board__header-right">
+          <span className="board__learner">{t.learnerTurn(turn.child_name)}</span>
+          <StarBadge filled={stars[turn.child_id] ?? 0} text={t.progress.stars(stars[turn.child_id] ?? 0)} />
+        </div>
       </header>
 
       <p className="board__instruction">{t.instructions[turn.task_type]}</p>
 
       <button
         type="button"
-        className="action board__listen"
-        onClick={() => playAudio(turn.item.prompt_audio)}
+        className={`action board__listen${speaker.speaking ? ' action--speaking' : ''}`}
+        onClick={() => speaker.play(turn.item.prompt_audio)}
       >
         <SpeakerIcon />
         {t.listen}
@@ -306,9 +312,11 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
           name={turn.child_name}
           onRetry={() => setOverlay(null)}
           onShowAnswer={showAnswer}
-          onListen={playAudio}
+          onListen={speaker.play}
+          speaking={speaker.speaking}
         />
       )}
+      {burst > 0 && <Confetti key={burst} />}
     </main>
   )
 }

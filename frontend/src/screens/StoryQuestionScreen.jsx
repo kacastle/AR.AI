@@ -2,16 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import FeedbackBanner from '../components/FeedbackBanner.jsx'
 import SpeakerIcon from '../components/SpeakerIcon.jsx'
 import TurnSwitchScreen from './TurnSwitchScreen.jsx'
+import Confetti from '../components/Confetti.jsx'
+import StarBadge from '../components/StarBadge.jsx'
+import { useAudio } from '../hooks/useAudio.js'
 import { getStoryTurn, submitStoryAnswer } from '../mocks/api.js'
 import { t } from '../strings.js'
 import './StoryQuestionScreen.css'
 
 const SHAKE_MS = 450
-
-function playAudio(url) {
-  if (!url) return
-  new Audio(url).play().catch(() => {})
-}
 
 export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
   const [turn, setTurn] = useState(null)
@@ -23,6 +21,8 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
   const [shaking, setShaking] = useState(null)
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
+  const [burst, setBurst] = useState(0)
+  const speaker = useAudio()
 
   const applyTurn = useCallback((next) => {
     setTurn(next)
@@ -70,7 +70,7 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
   if (turn.child_id !== activeChild) {
     const start = () => {
       setActiveChild(turn.child_id)
-      playAudio(question.prompt_audio)
+      speaker.play(question.prompt_audio)
     }
     const picture = learners.find((l) => l.id === turn.child_id)?.picture
     return <TurnSwitchScreen name={turn.child_name} picture={picture} onStart={start} />
@@ -89,6 +89,7 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
         attempt,
       })
       setResult(response)
+      if (response.correct) setBurst((b) => b + 1)
       if (!response.correct) {
         setWrong((w) => [...w, choice])
         setShaking(choice)
@@ -115,12 +116,23 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
     <main className="screen story">
       <header className="board__header">
         <span className="board__progress">{t.turnLabel(turn.turn_number)}</span>
-        <span className="board__learner">{t.learnerTurn(turn.child_name)}</span>
+        <div className="board__header-right">
+          <span className="board__learner">{t.learnerTurn(turn.child_name)}</span>
+          <StarBadge
+            filled={turn.turn_number - 1 + (finished ? 1 : 0)}
+            total={turn.questions_total}
+            text={t.progress.questions(turn.turn_number, turn.questions_total)}
+          />
+        </div>
       </header>
 
       <h1 className="story__prompt">{question.prompt}</h1>
 
-      <button type="button" className="action read__listen" onClick={() => playAudio(question.prompt_audio)}>
+      <button
+        type="button"
+        className={`action read__listen${speaker.speaking ? ' action--speaking' : ''}`}
+        onClick={() => speaker.play(question.prompt_audio)}
+      >
         <SpeakerIcon />
         {t.story.listen}
       </button>
@@ -161,6 +173,7 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
           </button>
         )}
       </footer>
+      {burst > 0 && <Confetti key={burst} />}
     </main>
   )
 }

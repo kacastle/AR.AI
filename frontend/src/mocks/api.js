@@ -8,6 +8,7 @@
 //   GET  /api/sessions/{id}/next      -> getNextTurn(sessionId)
 //   POST /api/sessions/{id}/answer    -> submitAnswer(sessionId, body)
 //   GET  /api/sessions/{id}/summary   -> getSummary(sessionId)
+//   GET  /api/children/{id}/sheet     -> getPracticeSheet(childId)
 // NOT in the contract yet (proposal for the backend owner): getStoryTurn() and
 // submitStoryAnswer() for the story questions in content.json `stories[].questions`.
 // Shapes, hint ladder and feedback lines follow backend/main.py and content/rules.json.
@@ -339,6 +340,7 @@ export async function getStoryTurn(sessionId) {
     child_id: current.childId,
     child_name: nameOf(current.childId),
     turn_number: storyTurn + 1,
+    questions_total: stories[session.read_along_story_id].questions.length,
     story_id: session.read_along_story_id,
     question: { ...question, prompt_audio: `/api/audio/${question.id}.wav` },
   })
@@ -396,4 +398,24 @@ export async function getSummary(sessionId) {
     }
   })
   return { learners, group_note: '' }
+}
+
+// Words, sentence and home line as in the API_CONTRACT.md example (weakest skill: sk_vowels).
+const PRACTICE_SHEET = {
+  words: [
+    { text: 'aso', syllables: ['a', 'so'] },
+    { text: 'ahas', syllables: ['a', 'has'] },
+    { text: 'elepante', syllables: ['e', 'le', 'pan', 'te'] },
+    { text: 'eroplano', syllables: ['e', 'ro', 'pla', 'no'] },
+    { text: 'ibon', syllables: ['i', 'bon'] },
+  ],
+  sentence: 'Si Ana ay nasa bahay.',
+  home_line_fil: 'Basahin nang malakas ang mga salitang ito kasama ang isang kasama sa bahay.',
+}
+
+export async function getPracticeSheet(childId) {
+  await delay()
+  const learner = group.learners.find((l) => l.id === childId)
+  if (!learner) throw apiError(404, `child '${childId}' not found`)
+  return clone({ name: learner.name, date: localIso(new Date()).slice(0, 10), ...PRACTICE_SHEET })
 }

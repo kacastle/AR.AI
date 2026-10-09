@@ -17,7 +17,7 @@ function HelperFace() {
 
 // Wrong-answer pop-up. Uses the API's Filipino feedback when it sends one; the API
 // leaves feedback null for attempts 1-3, so those use a hint line for hint.kind.
-export default function FeedbackOverlay({ response, name, onRetry, onShowAnswer, onListen }) {
+export default function FeedbackOverlay({ response, name, onRetry, onShowAnswer, onListen, speaking }) {
   const actionRef = useRef(null)
   const showAnswer = response.next_action === 'show_answer'
   const title = response.feedback.message_fil ?? t.overlay.title
@@ -57,7 +57,11 @@ export default function FeedbackOverlay({ response, name, onRetry, onShowAnswer,
           ) : (
             <>
               {response.hint?.audio && (
-                <button type="button" className="action" onClick={() => onListen(response.hint.audio)}>
+                <button
+                  type="button"
+                  className={`action${speaking ? ' action--speaking' : ''}`}
+                  onClick={() => onListen(response.hint.audio)}
+                >
                   {t.overlay.listenAgain}
                 </button>
               )}

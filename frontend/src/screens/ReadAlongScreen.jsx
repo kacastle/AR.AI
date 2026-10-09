@@ -123,9 +123,8 @@ export default function ReadAlongScreen({ storyId, onDone }) {
       <footer className="screen__actions">
         <button
           type="button"
-          className="action read__listen"
+          className={`action read__listen${playing ? ' action--speaking' : ''}`}
           onClick={() => play(from, to, true)}
-          disabled={playing}
         >
           <SpeakerIcon />
           {heard ? t.readAlong.repeat : t.listen}

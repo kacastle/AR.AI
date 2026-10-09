@@ -87,6 +87,20 @@ export const t = {
     groupNote: 'Paalala sa grupo:',
     newSession: 'Bagong sesyon',
   },
+  progress: {
+    stars: (n) => `${n} bituin`,
+    questions: (n, total) => `${n} sa ${total} tanong`,
+  },
+  sheet: {
+    print: 'Ilimbag ang Magsanay Sheet',
+    preparing: 'Inihahanda...',
+    title: 'Magsanay Tayo!',
+    name: 'Pangalan:',
+    date: 'Petsa:',
+    words: 'Basahin at isulat ang mga salita.',
+    sentence: 'Basahin at isulat ang pangungusap.',
+    parentNote: 'Para sa magulang o kasama sa bahay:',
+  },
   turnSwitch: {
     start: 'Magsimula',
     avatar: (name) => `Larawan ni ${name}`,
