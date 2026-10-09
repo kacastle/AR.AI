@@ -470,3 +470,30 @@ export async function getProfile(childId) {
     sessions: mine.length ? [{ session_id: MOCK_SESSION_ID, date: '', correct: right, total: mine.length }] : [],
   })
 }
+
+// Offline stand-ins for the sign-up: the interest catalog and a new group.
+// Copied from content/content.json interests (no invented text).
+const MOCK_INTERESTS = [
+  { id: 'int_toys', label_fil: "Laruan", label_en: "Toys and play", icon: '🪁' },
+  { id: 'int_drawing', label_fil: "Pagguhit", label_en: "Drawing", icon: '✏️' },
+  { id: 'int_vehicles', label_fil: "Sasakyan", label_en: "Vehicles", icon: '🚙' },
+  { id: 'int_food', label_fil: "Pagkain", label_en: "Food", icon: '🍌' },
+]
+
+export async function getInterests() {
+  await delay()
+  return clone(MOCK_INTERESTS)
+}
+
+export async function createGroup(body) {
+  await delay()
+  group.tutor_name = body.tutor_name
+  group.learners = body.learners.map((l, i) => ({
+    id: `c_mock${i + 1}`,
+    name: l.name,
+    picture: l.picture,
+    profile: l.profile,
+    interests: l.interests ?? [],
+  }))
+  return clone(group)
+}

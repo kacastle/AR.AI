@@ -138,7 +138,7 @@ class LlmTest(unittest.TestCase):
     def test_session_queues_words_stories_come_at_the_end_and_turns_queue_nothing(self):
         _, session = self.make_session()
         kinds = sorted(j.kind for j in worker.pending() if j.kind != "story_audio")
-        self.assertEqual(kinds, ["words", "words"])
+        self.assertEqual(kinds, ["lesson", "lesson", "words", "words"])   # lesson stories too
         # Filled template stories get their audio in the background too.
         self.assertEqual({j.story_id for j in worker.pending() if j.kind == "story_audio"},
                          {i for i in session["story_ids"].values() if i.startswith("ts_")})

@@ -104,6 +104,7 @@ TEMPLATES = {
     "words": code_after(section("## 2. Practice words"), "**User**"),
     "feedback": code_after(section("## 3. Feedback"), "**User**"),
     "summary": code_after(section("## 4. Tutor summary"), "**User**"),
+    "lesson": code_after(section("## 7. Mini lesson story"), "**User**"),
 }
 
 def fill(template, values):
@@ -502,6 +503,52 @@ def summary_case(rnd):
             "_shared_mistake": len(set(main)) < len(main)}
 
 # ---------------------------------------------------------------- mock outputs (for --mock)
+def lesson_case(learner, rnd):
+    """The mini lesson story (prompts.md section 7): 2 words of the skill, an object from the interests."""
+    sk = learner.get("lesson_skill") or learner["weakest"]
+    words = [w["text"] for w in WORDS if sk in w["skill_ids"]]
+    lesson_words = rnd.sample(words, min(2, len(words)))
+    objects = [o for i in learner["interests"] for o in INTERESTS[i]["objects"]] if learner.get("interests") else []
+    obj = rnd.choice(objects) if objects else "bola"
+    s = {"type": "string"}
+    return {"name": learner["name"], "object": obj, "skill_name_en": SKILLS[sk]["name_en"],
+            "pattern_description": PATTERNS.get(sk, SKILLS[sk]["name_en"]), "lesson_words": ", ".join(lesson_words),
+            "_words": lesson_words, "_skill": sk,
+            "_schema": {"type": "object", "required": ["sentences"], "properties": {
+                "sentences": {"type": "array", "minItems": 3, "maxItems": 3, "items": s}}}}
+
+
+def check_lesson(out, v, learner):
+    try:
+        d = json.loads(out)
+    except Exception:
+        return ["json_parse"], None
+    sents = d.get("sentences") if isinstance(d, dict) else None
+    if not isinstance(sents, list) or len(sents) != 3:
+        return [f"sentences_{len(sents) if isinstance(sents, list) else 0}"], d
+    fails = []
+    text = " ".join(str(x) for x in sents)
+    tokens = [w.lower() for w in words_in(text)]
+    if any(not (4 <= len(words_in(str(x))) <= 8) for x in sents):
+        fails.append("sentence_length")
+    if not re.search(r"\b" + re.escape(v["name"]) + r"\b", text):
+        fails.append("name_missing")
+    if not has_object(text, v["object"], head_ok=True):
+        fails.append("object_missing")
+    missing = [w for w in v["_words"] if w.lower() not in tokens]
+    if missing:
+        fails.append("lesson_words_missing_" + "_".join(missing))
+    extra = names_used(text) - {v["name"]}
+    if extra:
+        fails.append("other_names_" + "_".join(sorted(extra)))
+    english = english_words(text)
+    if english:
+        fails.append("english_" + "_".join(english))
+    if blocklisted(text):
+        fails.append("blocklist")
+    return fails, d
+
+
 def mock_output(kind, v, learner):
     if kind == "story":
         n, o = learner["name"], v["object"]
@@ -529,6 +576,11 @@ def mock_output(kind, v, learner):
         return json.dumps({"words": [{"text": w, "meaning_en": ""} for w in c]})
     if kind == "feedback":
         return json.dumps({"message_fil": "Malapit na!", "hint_fil": "Pakinggan ulit ang salita."})
+    if kind == "lesson":
+        a, b = (v["_words"] + v["_words"])[:2]
+        return json.dumps({"sentences": [f"Si {v['name']} ay may {v['object']} sa bahay.",
+                                         f"Nakita niya ang {a} at {b} doon.",
+                                         f"Masaya siya sa {a} at {b}."]}, ensure_ascii=False)
     st = v["_stats"]
     return json.dumps({"learners": [{"child_id": k, "summary": f'{s["correct"]} of {s["total"]} correct.',
                                      "next_focus_skill": "sk_ng", "next_method": "ng_sound_pairs"} for k, s in st.items()],
@@ -600,19 +652,30 @@ def selftest():
                               {"attempt": 1, "expected": "bahay"})
     if not any(f.startswith("judgmental") for f in fails):
         problems.append(f"feedback: judgmental passed: {fails}")
+    # Mini lesson story: the mock passes; a missing lesson word and an extra name fail.
+    lv = lesson_case(dict(LEARNERS[0]), random.Random(1))
+    fails, _ = check_lesson(mock_output("lesson", lv, LEARNERS[0]), lv, LEARNERS[0])
+    if fails:
+        problems.append(f"lesson mock fails: {fails}")
+    bad_lesson = json.dumps({"sentences": [f"Si {lv['name']} ay may {lv['object']} dito.", "Sumama si Maria sa bahay.",
+                                           "Masaya sila sa bahay ngayon."]})
+    fails, _ = check_lesson(bad_lesson, lv, LEARNERS[0])
+    if not any(f.startswith("lesson_words_missing") for f in fails) or "other_names_Maria" not in fails:
+        problems.append(f"lesson: bad story passed: {fails}")
     print("Self-test:", "PASS" if not problems else "FAIL")
     for p in problems:
         print("  -", p)
     return not problems
 
 # ---------------------------------------------------------------- main
-SETTINGS_BY_KIND = {"story": (0.5, 600), "words": (0.3, 300), "feedback": (0.4, 120), "summary": (0.3, 400)}
+SETTINGS_BY_KIND = {"story": (0.5, 600), "words": (0.3, 300), "feedback": (0.4, 120), "summary": (0.3, 400),
+                    "lesson": (0.5, 200)}
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default=None, help="default: gemma4:e4b (Ollama), google/gemma-4-e4b (LM Studio)")
     ap.add_argument("--runs", type=int, default=10)
-    ap.add_argument("--prompt", default="all", choices=["all", "story", "words", "feedback", "summary"])
+    ap.add_argument("--prompt", default="all", choices=["all", "story", "words", "feedback", "summary", "lesson"])
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--mock", action="store_true")
     ap.add_argument("--backend", default="ollama", choices=["ollama", "lmstudio"])
@@ -631,14 +694,15 @@ def main():
             print(m)
         return
     rnd = random.Random(a.seed)
-    kinds = ["story", "words", "feedback", "summary"] if a.prompt == "all" else [a.prompt]
+    kinds = ["story", "words", "feedback", "summary", "lesson"] if a.prompt == "all" else [a.prompt]
 
     rows, review = [], []
     for kind in kinds:
         for i in range(a.runs):
             learner = LEARNERS[i % len(LEARNERS)]
             v = {"story": lambda: story_case(learner, rnd), "words": lambda: words_case(learner, rnd),
-                 "feedback": lambda: feedback_case(learner, rnd), "summary": lambda: summary_case(rnd)}[kind]()
+                 "feedback": lambda: feedback_case(learner, rnd), "summary": lambda: summary_case(rnd),
+                 "lesson": lambda: lesson_case(learner, rnd)}[kind]()
             prompt, unfilled = fill(TEMPLATES[kind], {k: x for k, x in v.items() if not k.startswith("_")})
             temp, num = SETTINGS_BY_KIND[kind]
 
@@ -659,7 +723,8 @@ def main():
                     return None, 0.0, [f"error_{err}"], None
                 fails, parsed = {"story": lambda: check_story(out, v, learner), "words": lambda: check_words(out, v),
                                  "feedback": lambda: check_feedback(out, v),
-                                 "summary": lambda: check_summary(out, v)}[kind]()
+                                 "summary": lambda: check_summary(out, v),
+                                 "lesson": lambda: check_lesson(out, v, learner)}[kind]()
                 if finish == "length":
                     fails.insert(0, "truncated")
                 if unfilled:

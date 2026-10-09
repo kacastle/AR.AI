@@ -99,6 +99,20 @@ Request: `{"child_id", "question_id", "choice", "attempt"}` (`attempt` 1, then 2
  "quiz": {"correct": 3, "total": 3, "story_level_before": 1, "story_level": 2}}
 ```
 
+## Sign-up and lessons
+### GET /api/interests
+The interest catalog for the learner sign-up (content.json `interests` that have objects): `[{"id", "label_fil", "label_en", "icon"}]`. The tutor creates the group with each learner's name, picture, interests (ids from this list) and `diagnostic`.
+
+### Lessons in the next turn (backend/lessons.py)
+`GET /api/sessions/{id}/next` returns `lesson` (or `null`): teach before this item. A lesson comes before the learner's first item of a skill (`reason: "new"`) and, in another style, when a re-teach method starts (`reason: "reteach"`). `style` is `visual` (the example word's tiles, `highlight` = tiles to light up, and its syllables), `steps` (`steps`: the word built syllable by syllable) or `story` (`story.sentences` with `story.words` lit up: a checked, approved model lesson story, prompts.md section 7, else a content sentence). Whether a lesson worked (rules.json `lessons`) is remembered per learner; the next lesson prefers a style that worked.
+```json
+{"skill_id": "sk_vowels", "skill_name_fil": "Mga patinig: a, e, i, o, u", "skill_name_en": "Vowel sounds",
+ "reason": "new", "style": "visual",
+ "example": {"text": "ahas", "tiles": ["a", "h", "a", "s"], "syllables": ["a", "has"], "highlight": [0, 2]},
+ "steps": ["a", "ahas"], "more_words": [{"text": "ibon", "syllables": ["i", "bon"]}], "story": null}
+```
+`POST /api/sessions/{id}/answer` also returns `mastered_skill` (the skill's `name_fil`) when the answer mastered a skill.
+
 ## Learner loop (backend/adapt.py)
 - **Diagnostic.** `POST /api/groups` learners take `"diagnostic": true` (default false). Their first tile turns are placement items (`mode: "placement"`): support `alone`, one try, encouragement, no hints. When it ends (rules.json `placement`), passed skills count as mastered and `profile` is set (`low_emergent` / `high_emergent`).
 - **Next turn** (`GET /api/sessions/{id}/next`) also returns `mode` (`placement`, `reteach`, `easy`, `practice`), `method` and `method_note` (the running re-teach method and its `description_en`, for the tutor), `stars`, `streak`. Items whose word is in the learner's interest `words` come first.

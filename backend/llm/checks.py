@@ -25,4 +25,6 @@ def check(kind: str, out: str, values: dict, learner: Optional[dict]) -> tuple[l
         return tp.check_words(out, values)
     if kind == "summary":
         return tp.check_summary(out, values)
+    if kind == "lesson":
+        return tp.check_lesson(out, values, learner)
     raise ValueError(f"no checks for {kind!r}")

@@ -156,6 +156,8 @@ Each learner gets one personal story in each session, during his or her story tu
 
 **Diagnostic, pace, re-teach** (`rules.json` → `placement`, `timing.fast_seconds` / `pace_window`, `reteach`): a learner can start with the placement items (rules.md 5). Pace is the median time of the last first tries. When the same mistake comes back (`reteach.after_same_mistake` within `within_last_items`), the next items use a method from `reteach.method_order` (its effect in `reteach.effects`); a method that worked for the learner comes first next time, one that did not is skipped (`worked_at`).
 
+**Lessons** (`rules.json` → `lessons`): the learner is taught before practising. A lesson comes before the first item of a skill and, in a different style, when a re-teach method starts. Styles: `visual` and `steps` (built from `content.json` words) and `story` (a model mini story, `prompts.md` section 7, else a `content.json` sentence of the skill). A lesson worked when `worked_at` of the next `check_items` first tries are right; the next lesson prefers a style that worked for the learner.
+
 **Story quiz → next story** (`rules.json` → `story_quiz`): after the learner answers the 3 questions (first answers count), 3 right makes the next story one level harder, 0-1 right one level easier, 2 the same. Each question scores its comprehension skill (`skill_by_type`); a wrong answer gets the `mistake_by_type` feedback (C_LITERAL, C_SEQUENCE, C_INFER). The next story is written right after the quiz, with the learner's interests and the new level.
 
 **Fallback order:** an approved model story for that learner → a filled template from `story_templates` → a library story. Templates need no model, so personalization always works.

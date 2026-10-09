@@ -15,18 +15,9 @@ const TIMEOUT_MS = 5000
 const GROUP_KEY = 'rtph.group_id'
 const groupKey = () => `${GROUP_KEY}.${GROUP_KEY_VERSION}`
 
-// Demo group created on the backend the first time (POST /api/groups); its id is kept in
-// localStorage so later visits reuse it. Interests theme each learner's stories and words;
-// `diagnostic` starts each learner with a short placement before practice.
-const GROUP_KEY_VERSION = 'v2' // new learner fields: a new demo group on the server
-const DEMO_GROUP = {
-  tutor_name: 'Teacher Liza',
-  learners: [
-    { name: 'Ana', picture: 'cat', profile: 'low_emergent', interests: ['int_drawing', 'int_toys'], diagnostic: true },
-    { name: 'Ben', picture: 'dog', profile: 'high_emergent', interests: ['int_basketball', 'int_vehicles'], diagnostic: true },
-    { name: 'Mila', picture: 'star', profile: 'low_emergent', interests: ['int_food', 'int_space'], diagnostic: true },
-  ],
-}
+// The tutor's group is created in the sign-up (names, pictures, interests); its id is kept in localStorage
+// so later visits reuse it. A new learner field set means a new key, so old groups are not reused.
+const GROUP_KEY_VERSION = 'v3'
 
 let mode = USE_MOCK ? 'mock' : 'server' // 'mock' | 'server' | 'fallback'
 let realSession = false
@@ -95,23 +86,38 @@ const absolute = (path) => (path?.startsWith('/') ? API_BASE_URL + path : path)
 export const login = (body) =>
   call(() => request('POST', '/api/tutor/login', body), () => mock.login(body))
 
-export const getDemoGroup = () =>
+// The saved group, or null when the tutor has not signed up the learners yet.
+export const getSavedGroup = () =>
   call(
     async () => {
       const saved = localStorage.getItem(groupKey())
-      if (saved) {
-        try {
-          return await request('GET', `/api/groups/${saved}`)
-        } catch (error) {
-          if (error.status !== 404) throw error
-        }
+      if (!saved) return null
+      try {
+        return await request('GET', `/api/groups/${saved}`)
+      } catch (error) {
+        if (error.status !== 404) throw error
+        localStorage.removeItem(groupKey())
+        return null
       }
-      const group = await request('POST', '/api/groups', DEMO_GROUP)
-      localStorage.setItem(groupKey(), group.id)
-      return group
     },
     () => mock.getGroup(mock.MOCK_GROUP_ID),
   )
+
+// body = { tutor_name, learners: [{ name, picture, profile, interests, diagnostic }] }
+export const createGroup = (body) =>
+  call(
+    async () => {
+      const group = await request('POST', '/api/groups', body)
+      localStorage.setItem(groupKey(), group.id)
+      return group
+    },
+    () => mock.createGroup(body),
+  )
+
+export const forgetGroup = () => localStorage.removeItem(groupKey())
+
+// The interest catalog for the sign-up: [{ id, label_fil, label_en, icon }].
+export const getInterests = () => call(() => request('GET', '/api/interests'), () => mock.getInterests())
 
 export const createSession = (body) =>
   call(

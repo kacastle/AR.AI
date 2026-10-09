@@ -135,16 +135,40 @@ export const t = {
     server: 'Gamit ang server',
     fallback: 'Hindi maabot ang server. Demo na datos muna.',
   },
+  lesson: {
+    // From rules.json feedback_templates SHOW_ANSWER (reviewed Filipino), not new text.
+    yourTurn: 'Ngayon, ikaw naman ang bumuo.',
+  },
   turnSwitch: {
     start: 'Magsimula',
     avatar: (name) => `Larawan ni ${name}`,
   },
   // For the tutor and parents. English for now: a Filipino speaker translates these (CLAUDE.md: no invented Tagalog).
   tutorNotes: {
+    lesson: (style, skill, reason) =>
+      `Tutor: ${reason === 'reteach' ? 're-teaching' : 'teaching'} "${skill}" (${{ visual: 'visual', steps: 'step by step', story: 'story' }[style]}) before practice.`,
     placement: () => 'Tutor: diagnostic item (one try, no hints) to find where this learner starts.',
     reteach: (note) => `Tutor: re-teaching with a new approach. ${note ?? ''}`.trim(),
     easy: () => 'Tutor: an easier item after a hard or slow answer.',
   },
+  signup: {
+    subtitle: 'For the tutor',
+    title: 'Who are the learners?',
+    tutorName: 'Your name (tutor)',
+    childName: (n) => `Learner ${n}: first name`,
+    firstNameOnly: 'First name only',
+    picture: 'Picture',
+    interests: (n, max) => `What does this learner like? (${n} of ${max})`,
+    diagnostic: 'Start with a short diagnostic (finds where this learner starts)',
+    addChild: 'Add a learner',
+    remove: (who) => `Remove ${who}`,
+    needed: "Add each learner's first name and at least one interest.",
+    ready: (n) => `${n} learner${n === 1 ? '' : 's'} ready.`,
+    save: 'Save the group',
+    cancel: 'Back',
+    newGroup: 'New group',
+  },
+  streak: (n) => `${n} in a row`,
   quizResult: {
     title: 'Quiz result',
     levelUp: (level) => `Next story: level ${level} (harder)`,

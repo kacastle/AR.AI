@@ -11,6 +11,7 @@ SETTINGS = tp.SETTINGS_BY_KIND
 
 story_case = tp.story_case       # (learner, rnd) -> values for the personal story prompt
 words_case = tp.words_case       # (learner, rnd) -> values for the practice words prompt
+lesson_case = tp.lesson_case     # (learner + lesson_skill, rnd) -> values for the mini lesson story prompt
 
 
 def build(kind: str, values: dict) -> tuple[str, str, list[str]]:

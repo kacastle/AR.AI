@@ -4,6 +4,7 @@ import Slot from '../components/Slot.jsx'
 import FeedbackBanner from '../components/FeedbackBanner.jsx'
 import FeedbackOverlay from '../components/FeedbackOverlay.jsx'
 import TurnSwitchScreen from './TurnSwitchScreen.jsx'
+import LessonScreen from './LessonScreen.jsx'
 import Confetti from '../components/Confetti.jsx'
 import LoadingOverlay from '../components/LoadingOverlay.jsx'
 import { playChime, playPop } from '../sfx.js'
@@ -62,6 +63,8 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
   const speaker = useAudio()
   const [stars, setStars] = useState({})
   const [burst, setBurst] = useState(0)
+  const [lessonSeen, setLessonSeen] = useState(null) // turn_number whose lesson was shown
+  const [mastered, setMastered] = useState(null) // skill name to celebrate
 
   const applyTurn = useCallback((next) => {
     const nextBoard = buildBoard(next)
@@ -115,14 +118,26 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
     )
   }
 
+  const needsLesson = Boolean(turn.lesson) && lessonSeen !== turn.turn_number
+
   if (turn.child_id !== activeChild) {
     const start = () => {
       setActiveChild(turn.child_id)
       itemStart.current = Date.now()
-      speaker.play(turn.item.prompt_audio)
+      if (!needsLesson) speaker.play(turn.item.prompt_audio)
     }
     const picture = learners.find((l) => l.id === turn.child_id)?.picture
     return <TurnSwitchScreen name={turn.child_name} picture={picture} onStart={start} />
+  }
+
+  // Teach first: a new skill, or the same skill another way when the learner is stuck.
+  if (needsLesson) {
+    const practise = () => {
+      setLessonSeen(turn.turn_number)
+      itemStart.current = Date.now()
+      speaker.play(turn.item.prompt_audio)
+    }
+    return <LessonScreen key={turn.turn_number} lesson={turn.lesson} childName={turn.child_name} onDone={practise} />
   }
 
   const keepCase = turn.task_type === 'sentence_builder'
@@ -174,6 +189,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
         }))
         setBurst((b) => b + 1)
         playChime()
+        if (response.mastered_skill) setMastered(response.mastered_skill)
         return
       }
       if (response.next_action === 'next') {
@@ -225,6 +241,11 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
         <span className="board__progress">{t.turnLabel(turn.turn_number)}</span>
         <div className="board__header-right">
           <span className="board__learner">{t.learnerTurn(turn.child_name)}</span>
+          {turn.streak >= 2 && (
+            <span key={turn.streak} className="board__streak pop-in" aria-label={t.streak(turn.streak)}>
+              🔥 {turn.streak}
+            </span>
+          )}
           <StarBadge filled={stars[turn.child_id] ?? 0} text={t.progress.stars(stars[turn.child_id] ?? 0)} />
         </div>
       </header>
@@ -335,6 +356,19 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
         />
       )}
       {burst > 0 && <Confetti key={burst} />}
+      {mastered && (
+        <div className="board__mastered" role="dialog" aria-live="polite">
+          <div className="board__mastered-card pop-in">
+            <span className="board__mastered-badge" aria-hidden="true">🏆</span>
+            <p className="board__mastered-name">{mastered}</p>
+            <p>{result?.feedback?.message_fil}</p>
+            <button type="button" className="action action--primary action--glow" onClick={() => setMastered(null)}>
+              {t.next}
+            </button>
+          </div>
+          <Confetti count={80} />
+        </div>
+      )}
     </main>
   )
 }

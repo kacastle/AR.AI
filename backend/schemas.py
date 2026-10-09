@@ -136,6 +136,44 @@ class Item(BaseModel):
     syllables: list[str]
 
 
+class LessonExample(BaseModel):
+    text: str
+    tiles: list[str]
+    syllables: list[str]
+    highlight: list[int]           # tile indexes to light up (the skill's letters, or the part it is about)
+
+
+class LessonWord(BaseModel):
+    text: str
+    syllables: list[str]
+
+
+class LessonStory(BaseModel):
+    sentences: list[str]
+    words: list[str]               # words of the skill to light up in the sentences
+    source: str                    # model (a checked, approved lesson story) or content
+
+
+class Lesson(BaseModel):
+    """Shown before the item: teach first, then practise (backend/lessons.py)."""
+    skill_id: str
+    skill_name_fil: str
+    skill_name_en: str
+    reason: Literal["new", "reteach"]
+    style: Literal["visual", "steps", "story"]
+    example: LessonExample
+    steps: list[str]               # the example built up: "ba", "bahay"
+    more_words: list[LessonWord]
+    story: Optional[LessonStory]   # set when style is story
+
+
+class InterestInfo(BaseModel):
+    id: str
+    label_fil: str
+    label_en: str
+    icon: str
+
+
 class NextTurn(BaseModel):
     child_id: str
     child_name: str
@@ -151,6 +189,7 @@ class NextTurn(BaseModel):
     method_note: Optional[str] = None      # its description_en, for the tutor
     stars: int = 0
     streak: int = 0
+    lesson: Optional[Lesson] = None        # teach before this item (a new skill, or re-teach another way)
 
 
 class AnswerIn(BaseModel):
@@ -183,6 +222,7 @@ class Result(BaseModel):
     stars: int = 0                 # the learner's stars after this answer
     streak: int = 0
     method_started: Optional[str] = None   # a re-teach method that starts with the learner's next item
+    mastered_skill: Optional[str] = None   # name_fil of a skill this answer mastered (celebrate it)
 
 
 class LearnerSummary(BaseModel):

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import LearnerPicture from '../components/LearnerPicture.jsx'
 import LoadingOverlay from '../components/LoadingOverlay.jsx'
-import { createSession, getDemoGroup } from '../api.js'
+import SignupScreen from './SignupScreen.jsx'
+import { createSession, forgetGroup, getSavedGroup } from '../api.js'
 import { t } from '../strings.js'
 import './GroupSetupScreen.css'
 
@@ -10,14 +11,21 @@ export default function GroupSetupScreen({ onStart }) {
   const [present, setPresent] = useState(() => new Set())
   const [error, setError] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [signup, setSignup] = useState(false) // no group yet, or the tutor signs up a new one
+
+  const applyGroup = (g) => {
+    setGroup(g)
+    setPresent(new Set(g.learners.map((l) => l.id)))
+    setSignup(false)
+  }
 
   useEffect(() => {
     let cancelled = false
-    getDemoGroup()
+    getSavedGroup()
       .then((g) => {
         if (cancelled) return
-        setGroup(g)
-        setPresent(new Set(g.learners.map((l) => l.id)))
+        if (g) applyGroup(g)
+        else setSignup(true)
       })
       .catch(() => !cancelled && setError(true))
     return () => {
@@ -26,6 +34,10 @@ export default function GroupSetupScreen({ onStart }) {
   }, [])
 
   if (error) return <main className="screen screen--center">{t.loadError}</main>
+  if (signup) {
+    const cancel = group ? () => setSignup(false) : null
+    return <SignupScreen onDone={applyGroup} onCancel={cancel} />
+  }
   if (!group) return <LoadingOverlay />
 
   const toggle = (id) =>
@@ -74,6 +86,16 @@ export default function GroupSetupScreen({ onStart }) {
         {present.size === 0 ? t.group.needOne : t.group.count(present.size)}
       </p>
       <footer className="screen__actions">
+        <button
+          type="button"
+          className="action"
+          onClick={() => {
+            forgetGroup()
+            setSignup(true)
+          }}
+        >
+          {t.signup.newGroup}
+        </button>
         <button
           type="button"
           className="action action--primary"

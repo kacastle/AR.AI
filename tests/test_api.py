@@ -201,7 +201,7 @@ class ApiTest(unittest.TestCase):
         correct_lines = [line.format(name="Ana") for line in CONTENT.rules.feedback_templates["CORRECT"].message_fil]
         self.assertIn(r["feedback"]["message_fil"], correct_lines)
         self.assertEqual(set(r), {"correct", "mistake_type", "feedback", "hint", "next_action", "answer",
-                                  "stars", "streak", "method_started"})
+                                  "stars", "streak", "method_started", "mastered_skill"})
 
         nxt = self.client.get(f"/api/sessions/{sid}/next").json()
         self.assertEqual(nxt["child_name"], "Ben")

@@ -230,3 +230,40 @@
   font-size: 0.85rem;
   text-align: center;
 }
+
+.board__streak {
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: #ffe9c7;
+}
+
+/* A skill was mastered: a trophy card over the board. */
+.board__mastered {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(30, 30, 50, 0.45);
+  z-index: 50;
+}
+
+.board__mastered-card {
+  padding: 24px 32px;
+  border-radius: 28px;
+  background: var(--card);
+  text-align: center;
+  box-shadow: 0 20px 40px var(--soft-shadow-strong, rgba(0, 0, 0, 0.25));
+}
+
+.board__mastered-badge {
+  display: block;
+  font-size: 4.5rem;
+  animation: float 2.2s ease-in-out infinite;
+}
+
+.board__mastered-name {
+  margin: 0.25rem 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}

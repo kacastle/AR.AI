@@ -692,5 +692,15 @@
         "difficulty": "easy"
       }
     }
+  },
+  "lessons": {
+    "note": "Lesson player: a lesson before a learner's first item of a skill, and another one (a different style) when a re-teach method starts. A lesson worked when this share of the next check_items first tries is right; the next lesson prefers a style that worked for the learner.",
+    "styles": [
+      "visual",
+      "steps",
+      "story"
+    ],
+    "check_items": 3,
+    "worked_at": 0.67
   }
 }

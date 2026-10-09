@@ -96,6 +96,19 @@ CREATE TABLE IF NOT EXISTS story_answers (
     first INTEGER NOT NULL,          -- 1 = the learner's first answer to this question (the one that counts)
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS lesson_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    child_id TEXT NOT NULL,
+    skill_id TEXT NOT NULL,
+    style TEXT NOT NULL,                 -- visual, steps, story (rules.json lessons.styles)
+    reason TEXT NOT NULL,                -- new (first item of the skill) or reteach
+    method_run_id INTEGER,               -- the re-teach run it belongs to
+    session_id TEXT,
+    correct INTEGER NOT NULL DEFAULT 0,  -- first tries right on the next items of the skill
+    total INTEGER NOT NULL DEFAULT 0,
+    worked INTEGER,                      -- NULL until lessons.check_items items were done
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE TABLE IF NOT EXISTS method_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     child_id TEXT NOT NULL,

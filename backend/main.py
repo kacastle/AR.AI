@@ -12,7 +12,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from backend import adapt, db
+from backend import adapt, db, lessons
 from backend.content import Content, Word, format_problems, load_content
 from backend.engine import review, rotation, scoring
 from backend.engine.feedback import feedback_for, mistake_code
@@ -25,7 +25,7 @@ from backend.llm.fallbacks import choose_story
 from backend.records import event_count, learner_info, load_states
 from backend.schemas import (
     AnswerIn, ApprovalIn, ApprovalItem, Feedback, Group, GroupIn, Hint, Item, Learner,
-    LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, ProfileOut, QuizResult, Result, Session,
+    LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, ProfileOut, QuizResult, InterestInfo, Result, Session,
     SessionIn, SheetOut, SheetWord, StoryAnswerIn, StoryAnswerOut, StoryOut, StoryQuestion, StoryTurn,
     StoryTurnQuestion, StoryWord, SummaryOut,
 )
@@ -115,14 +115,23 @@ def pick_for(conn, session_id: str, child) -> dict:
         state = replace(new_state(skill.id, rules), support_level="alone")     # no help: see what the child knows
         item = choose_item(skill_items(content, skill), used, "easy", prefer)
         pick = build_pick(content, skill, state, item, "easy", False, False, random.Random())
-        return {**asdict(pick), "mode": "placement", "method": None}
+        return {**asdict(pick), "mode": "placement", "method": None, "lesson": None}
     results = first_try_results(conn, child_id)
+    states = load_states(conn, child_id)
     run = adapt.active_method(conn, child_id)
     easy = rotation.needs_easy_item(results, rules) or adapt.last_was_slow(conn, child_id, rules)
-    pick = pick_next(content, load_states(conn, child_id), date.today(), used, results, easy=easy and run is None,
+    pick = pick_next(content, states, date.today(), used, results, easy=easy and run is None,
                      prefer=prefer, method=adapt.method_for_pick(rules, run))
     mode = "reteach" if run is not None else "easy" if pick.is_easy else "practice"
-    return {**asdict(pick), "mode": mode, "method": run["method"] if run is not None else None}
+    turn = {**asdict(pick), "mode": mode, "method": run["method"] if run is not None else None,
+            "method_run_id": run["id"] if run is not None else None}
+    # Teach first: a lesson before the first item of a skill, and another way when a re-teach method starts.
+    reason = lessons.due(conn, child_id, turn, states)
+    lesson = lessons.build(conn, content, child, pick.skill_id, pick.item_id, reason, prefer) if reason else None
+    if lesson is not None:
+        lessons.record(conn, child_id, session_id, lesson, turn["method_run_id"])
+    turn["lesson"] = lesson
+    return turn
 
 
 def group_out(conn, group_id: str) -> Group:
@@ -140,6 +149,13 @@ def session_out(s) -> Session:
 
 
 # ---------- endpoints ----------
+
+@app.get("/api/interests", response_model=list[InterestInfo])
+def interests():
+    """The interest catalog (content.json interests) for the learner sign-up."""
+    return [InterestInfo(id=i.id, label_fil=i.label_fil, label_en=i.label_en, icon=i.icon)
+            for i in content.data.interests if i.objects]
+
 
 @app.get("/api/health")
 def health():
@@ -206,6 +222,7 @@ def create_session(body: SessionIn):
         if story_id.startswith("ts_"):
             worker.submit(Job("story_audio", story_id=story_id))
     for child_id in body.present:
+        worker.submit(Job("lesson", child_id=child_id))      # a story lesson for the skill each one learns now
         worker.submit(Job("words", child_id=child_id))
     return out
 
@@ -384,6 +401,7 @@ def next_turn(session_id: str):
         method_note=rules.methods[method].description_en if method else None,
         stars=stars,
         streak=streak,
+        lesson=turn.get("lesson"),
     )
 
 
@@ -446,7 +464,7 @@ def answer(session_id: str, body: AnswerIn):
             (session_id, s["turn_number"], child["id"], item_id, turn["task_type"], turn["skill_id"],
              json.dumps(body.given), int(correct), mistake, body.hints_used, body.attempt, body.time_ms,
              turn["support_level"], next_action, int(placement)))
-        method_started = None
+        method_started = mastered_skill = None
         if placement:
             adapt.finish_placement(conn, content, child["id"], date.today(), save_state)
             conn.execute(
@@ -457,20 +475,27 @@ def answer(session_id: str, body: AnswerIn):
             today = date.today()
             first_try = body.attempt == 1 and correct
             state = load_states(conn, child["id"]).get(turn["skill_id"]) or new_state(turn["skill_id"], rules)
+            was_mastered = state.mastered
             result = scoring.item_result(rules, turn["support_level"], body.attempt, correct=correct)
             state = scoring.apply_item(rules, state, result, first_try, today)
             if turn["is_review"]:
                 state = review.apply_review(state, first_try, rules, today)
             save_state(conn, child["id"], state)
             method_started = adapt.after_item(conn, rules, child["id"], turn["skill_id"], first_try)
+            lessons.after_item(conn, rules, child["id"], turn["skill_id"], first_try)
+            if state.mastered and not was_mastered:
+                mastered_skill = next(sk.name_fil for sk in content.data.skills if sk.id == turn["skill_id"])
             conn.execute(
                 "UPDATE sessions SET turn_number = turn_number + 1, current_child_id = NULL, current_item_id = NULL, "
                 "current_turn = NULL WHERE id = ?", (session_id,))
         stars, streak = adapt.stars(conn, child["id"]), adapt.streak(conn, child["id"])
 
+    if method_started:
+        # A story lesson for the re-teach, written in the background (the turn never waits for it).
+        worker.submit(Job("lesson", child_id=body.child_id, skill_id=turn["skill_id"]))
     return Result(correct=correct, mistake_type=mistake, feedback=feedback, hint=hint,
                   next_action=next_action, answer=answer_tiles, stars=stars, streak=streak,
-                  method_started=method_started)
+                  method_started=method_started, mastered_skill=mastered_skill)
 
 
 @app.get("/api/sessions/{session_id}/summary", response_model=SummaryOut)
