@@ -10,7 +10,7 @@ Four prompts run on the local 3B model in Ollama: **personal story**, **practice
 
 | Prompt | Temperature | Max tokens (`num_predict`) | When it runs | Fallback |
 |---|---|---|---|---|
-| Personal story | 0.7 | 600 | Background, end of session, one for each learner | A filled template from `story_templates` |
+| Personal story | 0.5 | 600 | Background, end of session, one for each learner | A filled template from `story_templates` |
 | Practice words | 0.3 | 300 | Background | Words from the skill's list in `content.json` |
 | Feedback | 0.4 | 120 | Optional (see note) | `feedback_templates` in `rules.json` |
 | Tutor summary | 0.3 | 400 | End of session | Fixed template (section 4) |
@@ -45,25 +45,23 @@ The only network address is `localhost`. Nothing goes to the internet.
 
 ---
 
-## 1. Personal story (learner's name and interests)
+## 1. Personal story (guided)
 
-The learner is the main character. The story uses words from the learner's interests.
+Code chooses the plot, the object, and the example. The model only writes the plot in simple Filipino. This keeps the stories logical: small models write nonsense when they get long word lists and a free plot.
 
 **Variables**
 
 | Variable | Source |
 |---|---|
 | `{name}` | Learner's **first name only** |
-| `{interest_labels}` | `label_en` of the learner's interests in `content.json` → `interests` (for example "Animals, Basketball") |
-| `{interest_words}` | `words` + `objects` of those interests (for example "aso, pusa, tuta, bola, laro") |
+| `{object}` | One item from `objects` of one of the learner's interests (`content.json` → `interests`). Rotate between sessions. |
+| `{plot}` | `content.json` → `story_plots` at the learner's level, with `{name}` and `{object}` filled. Not the same plot as in the last 2 sessions. |
+| `{other_names}` | The plot's `characters` (for example "Nanay") |
 | `{level}` | Learner's current level |
 | `{min_words}`, `{max_words}`, `{max_words_per_sentence}`, `{question_types}` | `rules.json` → `story_levels.<level>` |
 | `{min_sentences}`, `{max_sentences}` | Level 1: 4–6; Level 2: 8–10 |
-| `{target_words}` | 2–3 words from the learner's weakest skill (`content.json`) |
-| `{known_words}` | Up to 20 words from mastered skills |
-| `{setting}` | One of: bahay, palengke, ilog, bukid, kubo, paaralan, parke |
-| `{level_rule}` | Level 2: "One small problem and a happy ending. The problem comes from weather, a lost object, or chance, never from {name}. {name} helps solve it." Level 1: empty |
-| `{other_names}` | Up to 2 names from `personalization.neutral_distractor_names` |
+| `{optional_words}` | 2 words from the learner's weakest skill. Optional: the model uses one only if it fits. |
+| `{example_plot}`, `{example_story}` | `content.json` → `story_examples.<level>` |
 
 **System**
 
@@ -76,43 +74,44 @@ Follow every rule. Output only valid JSON. No other text.
 **User**
 
 ```
-Write one story about a child named {name}.
-{name} likes: {interest_labels}.
-Use at least 2 of these interest words: {interest_words}
-Level: {level}. Use {min_sentences} to {max_sentences} sentences and {min_words} to {max_words} words.
-Use ALL of these target words: {target_words}
-Prefer these known words: {known_words}
-Setting: {setting}
-Other characters may only be: {other_names}.
+Write a short story in simple, natural Filipino for a child aged 6 to 8.
+Follow this plot exactly. Do not add other events, places, or characters.
+Plot: {plot}
+Main character: {name}. Object: {object}.
+Other characters (only these): {other_names}.
+Length: {min_sentences} to {max_sentences} sentences. Each sentence has {max_words_per_sentence} words or fewer. Total {min_words} to {max_words} words.
+If it fits naturally, use one of these words: {optional_words}. Do not force it.
 Rules:
-- {name} is the main character. Use the name {name} at least 2 times.
-- {name} is kind, brave, and successful in the story.
-- Each sentence has {max_words_per_sentence} words or fewer.
-- Safe topics only: family, animals, food, play, helping, weather.
-- No violence, fear, death, romance, brand names, or real people.
-- Do not add a surname, a school name, or a place name that is not in the setting.
-- {level_rule}
-- Write exactly 3 questions of these types: {question_types}.
-- Each question has 3 short choices. Exactly one choice is correct.
-- If a choice is a person, use {name} or one of: {other_names}.
+- Every sentence must make sense in real life. Use only common words that a Grade 1 child knows.
+- Use the name {name} at least 2 times and the word "{object}" at least 1 time.
+- Kind, safe, and a happy ending. No violence, fear, or sadness at the end.
+- Then write exactly 3 questions about the story, of these types: {question_types}.
+- Each question has 3 short choices. Exactly one choice is correct, and the correct answer is written in the story.
+
+Example of a plot and its story:
+Plot: {example_plot}
+Story: {example_story}
+
 Output JSON:
 {"title": "", "paragraphs": [""], "questions": [{"type": "", "prompt": "", "choices": ["", "", ""], "answer": ""}]}
 ```
 
+Temperature: **0.5**.
+
 **Checks**
 
 - [ ] JSON parses; `title`, `paragraphs`, and 3 `questions` are present.
-- [ ] `{name}` appears 2 times or more.
-- [ ] 2 or more interest words appear (substring match, so "nagbasketbol" counts for "basketbol").
-- [ ] No person names except `{name}` and `{other_names}` (check capitalized words against a list of allowed words).
-- [ ] Word count is between `min_words` and `max_words`; each sentence has `max_words_per_sentence` words or fewer.
-- [ ] All target words are in the story.
+- [ ] Sentence count, word count, and sentence length are in range.
+- [ ] `{name}` appears 2 times or more; `{object}` appears 1 time or more.
+- [ ] No person names except `{name}` and `{other_names}`.
 - [ ] Each `answer` is one of its `choices`; the 3 choices are different; each `type` is allowed.
+- [ ] For `who`, `what`, and `where` questions, the answer is in the story text.
 - [ ] No blocklist word.
+- [ ] The Filipino speaker's rating (in tests) is 4 or more for "makes sense."
 
-**After the checks:** split the story into paragraphs of 2–3 sentences. Add `id`, `level`, `skill_ids`, `target_word_ids`, `for_child_id`, `source: "model"`, `approved_by_tutor: false`. Generate audio in the background.
+**After the checks:** split the story into paragraphs of 2–3 sentences. Add `id`, `level`, `skill_ids`, `for_child_id`, `plot_id`, `source: "model"`, `approved_by_tutor: false`. Generate audio in the background.
 
-**Fallback:** fill a template from `content.json` → `story_templates` at the learner's level (see `rules.md` section 9). Use a library story only if no template fits.
+**Fallback:** fill a template from `content.json` → `story_templates` at the learner's level (see `rules.md` section 9).
 
 ---
 

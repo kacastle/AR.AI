@@ -5,7 +5,7 @@
     1,
     2
   ],
-  "notes": "Starter content for the hackathon demo. AI-assisted draft: a Filipino speaker must check every item, then set reviewed to true. 'kind' is 'word' or 'syllable'. 'ng' is one tile. 'interests' is the interest catalog (the tutor or the learner picks up to 3 for each learner). 'story_templates' are personal fallback stories that code fills with the learner's first name and an object from one of the learner's interests; they need no model. All stories are individual: one learner, one story.",
+  "notes": "Starter content for the hackathon demo. AI-assisted draft: a Filipino speaker must check every item, then set reviewed to true. 'kind' is 'word' or 'syllable'. 'ng' is one tile. 'interests' is the interest catalog (the tutor or the learner picks up to 3 for each learner). 'story_templates' are personal fallback stories that code fills with the learner's first name and an object from one of the learner's interests; they need no model. All stories are individual: one learner, one story. 'story_plots' are safe plot outlines in English; code picks one and the model writes it in Filipino. 'story_examples' is the one-shot example for the story prompt at each level.",
   "skills": [
     {
       "id": "sk_vowels",
@@ -4817,5 +4817,69 @@
         }
       ]
     }
-  ]
+  ],
+  "story_plots": [
+    {
+      "id": "plot_l1_park",
+      "level": 1,
+      "characters": [
+        "Kuya"
+      ],
+      "outline_en": "In the morning, {name} takes the {object} to the park. {name} sees Kuya there. They play together and share. They go home happy."
+    },
+    {
+      "id": "plot_l1_rain",
+      "level": 1,
+      "characters": [
+        "Nanay"
+      ],
+      "outline_en": "It rains hard. {name} cannot play outside. {name} plays with the {object} inside the house. Nanay smiles at {name}."
+    },
+    {
+      "id": "plot_l1_clean",
+      "level": 1,
+      "characters": [
+        "Tatay"
+      ],
+      "outline_en": "{name} helps Tatay clean the house. {name} finds the {object} under the bed. Tatay says thank you to {name}."
+    },
+    {
+      "id": "plot_l2_market",
+      "level": 2,
+      "characters": [
+        "Nanay"
+      ],
+      "outline_en": "{name} brings the {object} and goes to the market with Nanay. They buy fish, tomatoes, and bread. The basket is heavy. {name} helps carry it. At home, Nanay cooks lunch. Nanay thanks {name}."
+    },
+    {
+      "id": "plot_l2_gift",
+      "level": 2,
+      "characters": [
+        "Lola"
+      ],
+      "outline_en": "It is Lola's birthday. {name} wants to give her a gift. {name} draws a picture of the {object}. The picture is beautiful. Lola is very happy. She hugs {name}."
+    },
+    {
+      "id": "plot_l2_wind",
+      "level": 2,
+      "characters": [
+        "Nanay"
+      ],
+      "outline_en": "{name} plays with the {object} in the yard. The wind becomes strong and dark clouds come. {name} goes inside before the rain. Nanay says that {name} is careful. After the rain, {name} plays again."
+    }
+  ],
+  "story_examples": {
+    "1": {
+      "name": "Carlo",
+      "object": "payong",
+      "plot_en": "Carlo has an umbrella. The umbrella is nice. Carlo brings it to Lola. Lola likes it. Carlo is happy.",
+      "story_fil": "Si Carlo ay may payong. Maganda ang payong ni Carlo. Dinala niya ang payong kay Lola. \"Ang ganda!\" sabi ni Lola. Masaya si Carlo."
+    },
+    "2": {
+      "name": "Carlo",
+      "object": "payong",
+      "plot_en": "Carlo looks for his umbrella. It is not on the table or the bed. Carlo is sad. Kuya helps him. They find it under the chair. Carlo thanks Kuya. Now he keeps the umbrella in a box.",
+      "story_fil": "Hinahanap ni Carlo ang kanyang payong. Wala ito sa mesa. Wala rin ito sa kama. Nalungkot si Carlo. Tinulungan siya ni Kuya. Tumingin sila sa ilalim ng upuan. Nandoon ang payong! \"Salamat, Kuya!\" sabi ni Carlo. Natuwa si Carlo. Mula noon, inilalagay na niya ang payong sa kahon."
+    }
+  }
 }

@@ -142,7 +142,7 @@ Settings are in `rules.json` → `personalization`. The interest catalog is in `
 
 **Which story the app uses**
 
-Each learner gets one personal story in each session, during his or her story turn. The learner is the main character, and the story uses 2 or more words from the learner's interests.
+Each learner gets one personal story in each session, during his or her story turn. The learner is the main character. Code chooses a plot from `story_plots` (not used in the last 2 sessions) and one object from the learner's interests; the model only writes that plot in Filipino (see `prompts.md` section 1).
 
 **Fallback order:** an approved model story for that learner → a filled template from `story_templates` → a library story. Templates need no model, so personalization always works.
 

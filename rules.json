@@ -161,7 +161,7 @@
   },
   "story_levels": {
     "1": {
-      "min_words": 25,
+      "min_words": 20,
       "max_words": 40,
       "max_words_per_sentence": 8,
       "question_types": [
@@ -490,8 +490,10 @@
     "personal_story": {
       "main_character": "the learner",
       "min_name_mentions": 2,
-      "min_interest_words": 2,
-      "interest_words_from": "content.json interests[].words and interests[].objects of the learner's interests"
+      "min_interest_words": 1,
+      "interest_words_from": "one object chosen by code from the learner's interests; it must appear in the story",
+      "plot_from": "content.json story_plots at the learner's level; do not repeat the plot from the last 2 sessions",
+      "target_words": "optional: the model uses one only if it fits naturally"
     },
     "positive_role": "A named learner is always kind and successful. A problem in the story comes from weather, a lost object, or chance, never from the learner. The learner helps solve it.",
     "never_include": [
