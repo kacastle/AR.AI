@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import Confetti from '../components/Confetti.jsx'
 import LearnerPicture from '../components/LearnerPicture.jsx'
+import LoadingOverlay from '../components/LoadingOverlay.jsx'
 import { SKILL_NAMES_FIL, getPracticeSheet, getSummary } from '../api.js'
 import { t } from '../strings.js'
 import './TutorSummaryScreen.css'
@@ -68,7 +69,7 @@ export default function TutorSummaryScreen({ sessionId, learners, onRestart }) {
   }, [sessionId])
 
   if (error) return <main className="screen screen--center">{t.loadError}</main>
-  if (!summary) return <main className="screen screen--center">{t.loading}</main>
+  if (!summary) return <LoadingOverlay label={t.loadingSummary} />
 
   const byId = Object.fromEntries(learners.map((l) => [l.id, l]))
 
@@ -124,6 +125,7 @@ export default function TutorSummaryScreen({ sessionId, learners, onRestart }) {
           </button>
         </footer>
         <Confetti count={48} />
+        {preparing && <LoadingOverlay label={t.sheet.preparing} />}
       </main>
       {sheets && (
         <section className="print-sheets">

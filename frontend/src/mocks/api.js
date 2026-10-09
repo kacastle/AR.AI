@@ -196,8 +196,10 @@ export async function getGroup(groupId) {
   return clone(group)
 }
 
+// Longer waits on session start and summary stand in for local AI work, so the loading
+// screen shows in demos.
 export async function createSession(body) {
-  await delay()
+  await delay(900)
   if (body.group_id !== group.id) throw apiError(404, `group '${body.group_id}' not found`)
   if (!body.present?.length) throw apiError(422, 'present must list at least one child id')
   const ids = new Set(group.learners.map((l) => l.id))
@@ -407,7 +409,7 @@ export async function submitStoryAnswer(sessionId, body) {
 }
 
 export async function getSummary(sessionId) {
-  await delay()
+  await delay(900)
   requireSession(sessionId)
   const learners = session.present.map((childId) => {
     const mine = events.filter((e) => e.child_id === childId)

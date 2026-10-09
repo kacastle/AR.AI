@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import LearnerPicture from '../components/LearnerPicture.jsx'
+import LoadingOverlay from '../components/LoadingOverlay.jsx'
 import { createSession, getDemoGroup } from '../api.js'
 import { t } from '../strings.js'
 import './GroupSetupScreen.css'
@@ -25,7 +26,7 @@ export default function GroupSetupScreen({ onStart }) {
   }, [])
 
   if (error) return <main className="screen screen--center">{t.loadError}</main>
-  if (!group) return <main className="screen screen--center">{t.loading}</main>
+  if (!group) return <LoadingOverlay />
 
   const toggle = (id) =>
     setPresent((prev) => {
@@ -82,6 +83,7 @@ export default function GroupSetupScreen({ onStart }) {
           {t.group.start}
         </button>
       </footer>
+      {busy && <LoadingOverlay label={t.loadingSession} />}
     </main>
   )
 }

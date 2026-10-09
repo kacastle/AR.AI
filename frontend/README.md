@@ -82,3 +82,15 @@ To use the real backend without editing `.env`: `VITE_USE_MOCK=false npm run dev
 - The dev server must run on port 5173: the backend's CORS only allows `http://localhost:5173`.
   A blocked CORS request looks the same as an unreachable server, so it also falls back to demo data.
 - Story questions always run locally (no endpoint in `API_CONTRACT.md` yet).
+
+## Branding, loading, sound and accessibility
+
+- `Header` (every screen): "100% Offline | Ligtas ang Datos" pill, the logo (`src/assets/logo.png`;
+  `logo-trim.png` is the same image cropped to the artwork), a sound toggle and a high-contrast toggle.
+- `LoadingOverlay`: full-screen logo with the book glowing and a page flipping. Used for group, session,
+  story, turn and summary loads; it fades in after 200 ms so quick loads don't flash. The mock waits
+  900 ms on session start and summary so it shows in demos.
+- `sfx.js`: Web Audio "pop" when a tile is placed and a chime on correct answers. The sound toggle only
+  mutes these effects, not the spoken prompts. Settings are stored in `localStorage` (`preferences.js`).
+- Turn switch slides in from the right and out to the left; each turn slides in.
+- High contrast (`data-contrast="high"` on `<html>`): yellow on black, tiles 88px / text 48px.

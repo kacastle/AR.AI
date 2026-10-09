@@ -3,6 +3,8 @@ import FeedbackBanner from '../components/FeedbackBanner.jsx'
 import SpeakerIcon from '../components/SpeakerIcon.jsx'
 import TurnSwitchScreen from './TurnSwitchScreen.jsx'
 import Confetti from '../components/Confetti.jsx'
+import LoadingOverlay from '../components/LoadingOverlay.jsx'
+import { playChime } from '../sfx.js'
 import StarBadge from '../components/StarBadge.jsx'
 import { useAudio } from '../hooks/useAudio.js'
 import { getStoryTurn, submitStoryAnswer } from '../api.js'
@@ -54,7 +56,7 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
     }
   }
 
-  if (status === 'loading') return <main className="screen screen--center">{t.loading}</main>
+  if (status === 'loading') return <LoadingOverlay />
   if (status === 'error') return <main className="screen screen--center">{t.loadError}</main>
   if (status === 'done') {
     return (
@@ -89,7 +91,10 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
         attempt,
       })
       setResult(response)
-      if (response.correct) setBurst((b) => b + 1)
+      if (response.correct) {
+        setBurst((b) => b + 1)
+        playChime()
+      }
       if (!response.correct) {
         setWrong((w) => [...w, choice])
         setShaking(choice)
@@ -113,7 +118,7 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
   }
 
   return (
-    <main className="screen story">
+    <main className="screen story slide-in">
       <header className="board__header">
         <span className="board__progress">{t.turnLabel(turn.turn_number)}</span>
         <div className="board__header-right">

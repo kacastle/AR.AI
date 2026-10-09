@@ -42,6 +42,7 @@
   --soft-shadow-strong: rgba(43, 43, 58, 0.22);
   --bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --bar-h: 0px;
+  --header-h: 72px;
 
   font-family: 'Andika', system-ui, sans-serif;
   color: var(--ink);
@@ -60,12 +61,35 @@ body {
   min-height: 100dvh;
 }
 
+.app {
+  overflow-x: clip;
+}
+
+/* Horizontal slide between learners and into each turn. */
+.slide-in {
+  animation: slide-in-right 380ms cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(40%);
+  }
+}
+
+@keyframes slide-out-left {
+  to {
+    opacity: 0;
+    transform: translateX(-40%);
+  }
+}
+
 .app--with-bar {
   --bar-h: 52px;
 }
 
 .screen {
-  min-height: calc(100dvh - var(--bar-h));
+  min-height: calc(100dvh - var(--bar-h) - var(--header-h));
   max-width: 760px;
   margin: 0 auto;
   padding: 32px 16px;
@@ -98,6 +122,65 @@ body {
   justify-content: center;
   gap: 16px;
   margin-top: auto;
+}
+
+/* High-contrast mode: yellow on black, bigger tiles. Toggled in the header. */
+:root[data-contrast='high'] {
+  --tile-size: 88px;
+  --word-size: 48px;
+  --bg: #000;
+  --ink: #ffeb3b;
+  --card: #141414;
+  --card-shadow: #6b6200;
+  --tile-bg: #000;
+  --tile-border: #ffeb3b;
+  --placed-bg: #ffeb3b;
+  --placed-border: #fff;
+  --fixed-bg: #2e2e2e;
+  --fixed-border: #d0d0d0;
+  --highlight: #00e5ff;
+  --slot-bg: #1c1c1c;
+  --slot-border: #ffeb3b;
+  --primary: #ffeb3b;
+  --primary-shadow: #9c8f00;
+  --focus: #00e5ff;
+  --good-bg: #0b3d1c;
+  --good-ink: #8dffad;
+  --try-bg: #401a05;
+  --try-ink: #ffb38a;
+  --soft-shadow: rgba(0, 0, 0, 0);
+  --soft-shadow-strong: rgba(255, 235, 59, 0.25);
+}
+
+[data-contrast='high'] .tile--placed,
+[data-contrast='high'] .action--primary,
+[data-contrast='high'] .pin__key--enter,
+[data-contrast='high'] .read__word--active {
+  color: #000;
+}
+
+[data-contrast='high'] .read__word--active {
+  background: #ffeb3b;
+}
+
+[data-contrast='high'] .tile,
+[data-contrast='high'] .slot--empty {
+  border-width: 4px;
+}
+
+[data-contrast='high'] .turn-switch {
+  background: var(--bg);
+}
+
+/* The logo's blue letters need a light plate on black. */
+[data-contrast='high'] .app-header__logo-plate,
+[data-contrast='high'] .loading__plate {
+  padding: 4px 12px;
+  background: #fff;
+}
+
+[data-contrast='high'] .loading__plate {
+  padding: 16px;
 }
 
 @media (prefers-reduced-motion: reduce) {

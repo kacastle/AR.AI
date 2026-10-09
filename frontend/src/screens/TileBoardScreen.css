@@ -1,5 +1,5 @@
 .board {
-  min-height: calc(100dvh - var(--bar-h));
+  min-height: calc(100dvh - var(--bar-h) - var(--header-h));
   max-width: 720px;
   margin: 0 auto;
   padding: 24px 16px 32px;

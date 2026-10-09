@@ -1,6 +1,9 @@
 // All user-facing UI text (Filipino). Feedback lines come from the API.
 export const t = {
   loading: 'Sandali lang...',
+  loadingSession: 'Inihahanda ang sesyon...',
+  loadingStory: 'Inihahanda ang kuwento...',
+  loadingSummary: 'Ginagawa ang buod...',
   loadError: 'May problema. Subukan muli.',
   retry: 'Subukan muli',
   turnLabel: (n) => `Tanong ${n}`,
@@ -100,6 +103,12 @@ export const t = {
     words: 'Basahin at isulat ang mga salita.',
     sentence: 'Basahin at isulat ang pangungusap.',
     parentNote: 'Para sa magulang o kasama sa bahay:',
+  },
+  header: {
+    privacy: '100% Offline | Ligtas ang Datos',
+    logoAlt: 'AR.AI',
+    sound: 'Tunog ng laro',
+    contrast: 'Mas malinaw na kulay',
   },
   apiMode: {
     mock: 'Demo na datos (offline)',

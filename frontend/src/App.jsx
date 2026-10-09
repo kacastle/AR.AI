@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Header from './components/Header.jsx'
 import TutorBar from './components/TutorBar.jsx'
 import TutorLoginScreen from './screens/TutorLoginScreen.jsx'
 import GroupSetupScreen from './screens/GroupSetupScreen.jsx'
@@ -60,6 +61,7 @@ export default function App() {
   const showBar = step in t.phases
   return (
     <div className={`app${showBar ? ' app--with-bar' : ''}`}>
+      <Header />
       {showBar && <TutorBar key={`bar-${step}`} label={t.phases[step]} endsAt={endsAt} onSkip={advance} />}
       <div key={step}>{screens[step]}</div>
       <ApiModeBadge />

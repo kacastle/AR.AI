@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import LoadingOverlay from '../components/LoadingOverlay.jsx'
 import SpeakerIcon from '../components/SpeakerIcon.jsx'
 import { getStory } from '../api.js'
 import { t } from '../strings.js'
@@ -43,7 +44,7 @@ export default function ReadAlongScreen({ storyId, onDone }) {
   }, [storyId])
 
   if (error) return <main className="screen screen--center">{t.loadError}</main>
-  if (!story) return <main className="screen screen--center">{t.loading}</main>
+  if (!story) return <LoadingOverlay label={t.loadingStory} />
 
   const ranges = wordRanges(story.paragraphs)
   const [from, to] = ranges[paragraph]

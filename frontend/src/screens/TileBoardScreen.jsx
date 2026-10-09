@@ -5,6 +5,8 @@ import FeedbackBanner from '../components/FeedbackBanner.jsx'
 import FeedbackOverlay from '../components/FeedbackOverlay.jsx'
 import TurnSwitchScreen from './TurnSwitchScreen.jsx'
 import Confetti from '../components/Confetti.jsx'
+import LoadingOverlay from '../components/LoadingOverlay.jsx'
+import { playChime, playPop } from '../sfx.js'
 import StarBadge from '../components/StarBadge.jsx'
 import { useAudio } from '../hooks/useAudio.js'
 import SpeakerIcon from '../components/SpeakerIcon.jsx'
@@ -97,7 +99,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
   }
 
   if (status === 'loading') {
-    return <main className="board board--center">{t.loading}</main>
+    return <LoadingOverlay />
   }
 
   if (status === 'error') {
@@ -141,6 +143,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
     if (locked || empty === -1) return
     const placed = { text: turn.item.tiles[tileIndex], fixed: false, tileIndex }
     edit((prev) => prev.map((s, i) => (i === empty ? placed : s)))
+    playPop()
   }
 
   const removeTile = (index) => {
@@ -165,6 +168,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
         setResult(response)
         setStars((s) => ({ ...s, [turn.child_id]: (s[turn.child_id] ?? 0) + 1 }))
         setBurst((b) => b + 1)
+        playChime()
         return
       }
       setAttempt((a) => a + 1)
@@ -206,7 +210,7 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
     ))
 
   return (
-    <main className="board">
+    <main className="board slide-in">
       <header className="board__header">
         <span className="board__progress">{t.turnLabel(turn.turn_number)}</span>
         <div className="board__header-right">
