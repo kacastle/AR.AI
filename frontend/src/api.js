@@ -9,7 +9,8 @@ import * as mock from './mocks/api.js'
 export { SKILL_NAMES_FIL } from './mocks/api.js'
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
-export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '')
+// Empty (the default): same origin, through Vite's /api proxy to the backend (vite.config.js).
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '')
 
 const TIMEOUT_MS = 5000
 const GROUP_KEY = 'rtph.group_id'
@@ -54,7 +55,7 @@ async function request(method, path, body) {
       signal: AbortSignal.timeout(TIMEOUT_MS),
     })
   } catch {
-    throw new ApiError(0, `backend unreachable at ${API_BASE_URL}`, true)
+    throw new ApiError(0, `backend unreachable at ${API_BASE_URL || window.location.origin}/api (is uvicorn running on port 8000?)`, true)
   }
   if (!response.ok) {
     let detail = response.statusText

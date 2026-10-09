@@ -53,7 +53,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="ReadingTutor PH", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    # Any local dev port (Vite moves to 5174+ when 5173 is busy; 127.0.0.1 or localhost).
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_methods=["*"],
     allow_headers=["*"],
 )

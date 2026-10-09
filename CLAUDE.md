@@ -44,7 +44,7 @@ Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv 
 - Docs page: http://localhost:8000/docs
 - Demo data: `python scripts/seed_demo.py --fresh` (3 fake returning learners, 3 past sessions each, for the progress graph and the "Returning learners" picker).
 - Cloud model (optional, local first): `$env:LLM_PROVIDER="auto"; $env:GEMINI_API_KEY="..."` (optional `GEMINI_MODEL`, default gemini-2.5-flash). Story jobs go to Gemini when online; any error or no internet falls back to the local model. Default `local`.
-- Frontend: VITE_USE_MOCK=false is the default now (frontend/.env); the mock fallback shows a red banner.
+- Frontend: VITE_USE_MOCK=false is the default now (frontend/.env); the mock fallback shows a red banner. Run the backend (`uvicorn backend.main:app --port 8000`) and then `cd frontend; npm run dev`, and open http://localhost:5173: Vite proxies /api to port 8000 (BACKEND_URL overrides). CORS accepts any localhost or 127.0.0.1 port.
 
 ## Model prompts and checks
 content/test_prompts.py (v0.3; runs on Ollama gemma4:e4b by default) holds the prompt text and the check functions I use to compare models. It reads the content files next to it and writes its results*.csv and stories_for_review*.md files next to itself. Reuse them; do not write a second copy of any prompt or check. If code must move, move it into backend/llm/ and make test_prompts.py import from there.
