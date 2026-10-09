@@ -308,12 +308,15 @@ class LlmTest(unittest.TestCase):
 
     # ---------- audio before approval ----------
 
-    def test_a_story_without_audio_never_reaches_the_tutor(self):
+    def test_a_story_without_audio_reaches_the_tutor_as_text_only(self):
+        # No voice model (round 2: audio_cache covers words and library stories): the story is kept as text.
         self.speaker.broken = True
         group, _ = self.make_session()
         jobs.run(jobs.Job("story", child_id=group["learners"][0]["id"]))
         self.assertEqual(self.fake.calls, ["story"])
-        self.assertEqual([a for a in self.approvals_for(group) if a["kind"] == "story"], [])
+        stories = [a for a in self.approvals_for(group) if a["kind"] == "story"]
+        self.assertEqual(len(stories), 1)
+        self.assertFalse(stories[0]["payload"]["audio"])
 
     # ---------- Ollama off ----------
 

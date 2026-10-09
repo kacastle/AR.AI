@@ -1,7 +1,7 @@
 """Model jobs, run by the background worker (never inside /next or /answer).
 
 - story:       a personal story for one learner (content/prompts.md section 1). Its audio is made before
-               it goes to GET /api/approvals; learners only see it after the tutor approves it.
+               it goes to GET /api/approvals (without a voice model it is kept as text only); learners only see it after the tutor approves it.
 - words:       practice words for one learner (section 2) -> approvals; approved ones go on the sheet
 - summary:     the tutor summary for one session (section 4) -> GET /summary while it is current
 - story_audio: audio for a filled template story (no model call)
@@ -181,11 +181,14 @@ def run_story(job: Job, content: Content) -> None:
     if parsed is None:
         return
     story_id = db.new_id("gs")
+    has_audio = True
     try:
         make_story_audio(story_id, parsed["paragraphs"])
-    except Exception as e:                            # no voice model: the tutor never sees a silent story
-        log(f"{label}: audio failed ({e!r}); story dropped, fallback stories are used")
-        return
+    except Exception as e:
+        # No voice model (audio_cache covers words and library stories, not new text): keep the story as text.
+        # The read-along shows it with estimated word timings; the learner's personal story still arrives.
+        has_audio = False
+        log(f"{label}: no audio ({e!r}); story kept as text only")
     text = " ".join(parsed["paragraphs"])
     words = {w.text: w.id for w in content.data.words}
     payload = {   # the same fields as content.json stories, plus where it came from
@@ -197,6 +200,7 @@ def run_story(job: Job, content: Content) -> None:
         "model": (os.environ.get("GEMINI_MODEL", "gemini-2.5-flash") if LAST_PROVIDER.get("story") == "cloud"
                   else model_name()), "plot_id": v["_plot_id"], "object": v["object"],
         "provider": LAST_PROVIDER.get("story", "local"),
+        "audio": has_audio,                          # false: text only (no voice model when it was written)
     }
     _save("story", payload, child_id=job.child_id, item_id=story_id)
 

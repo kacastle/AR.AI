@@ -199,6 +199,31 @@ class ApiTest(unittest.TestCase):
         self.assertIn("int_animals", ids)
 
 
+class TextOnlyStoryTest(unittest.TestCase):
+    """No voice model (audio_cache covers words and library stories): a model story is kept as text only."""
+
+    def test_model_story_without_voice_is_saved_without_audio(self):
+        from backend.llm import harness, jobs
+        with TestClient(app) as api:
+            group = api.post("/api/groups", json={"tutor_name": "T", "learners": [
+                {"name": "Ana", "picture": "cat", "profile": "low_emergent", "interests": ["int_toys"]}]}).json()
+        child = group["learners"][0]["id"]
+
+        def no_voice():
+            raise ModuleNotFoundError("No module named 'torch'")
+
+        fake_model = lambda kind, user, v, learner: harness.tp.mock_output(kind, v, learner)  # noqa: E731
+        with mock.patch.object(jobs, "ask_model", fake_model), mock.patch.object(jobs, "get_speaker", no_voice):
+            jobs.run(jobs.Job("story", child_id=child))
+        with sqlite3.connect(db.DB_PATH) as conn:
+            rows = conn.execute("SELECT payload FROM generated_items WHERE kind = 'story' AND child_id = ?",
+                                (child,)).fetchall()
+        self.assertEqual(len(rows), 1)
+        payload = json.loads(rows[0][0])
+        self.assertFalse(payload["audio"])
+        self.assertTrue(payload["paragraphs"])
+
+
 class CloudTest(unittest.TestCase):
     """LLM_PROVIDER=auto sends story jobs to Gemini when online with a key; the child's name never leaves."""
 
