@@ -31,7 +31,8 @@ from backend.db import ROOT
 AUDIO_DIR = ROOT / "audio_cache"
 RECORDINGS_DIR = Path(os.environ.get("RECORDINGS_DIR", ROOT / "content" / "recordings"))
 SLOW_GAP_MS = 250
-BLEND_MS = 60        # recorded syllables of a word overlap this much (picked by ear 2026-10-10)
+WORD_GAP_MS = 80     # pause between a word's recorded syllables (a 60 ms blend swallowed p/t/k bursts; 2026-10-10)
+EDGE_FADE_MS = 8     # fade at both ends of a recorded syllable, so joins do not click
 SENTENCE_GAP_MS = 300
 PARAGRAPH_GAP_MS = 500
 EDGE_KEEP_MS = 40    # silence kept at each end of a spoken piece before pieces are joined
@@ -48,12 +49,12 @@ class Job:
     gap_ms: Optional[int] = None
     part_keys: Optional[list[str]] = None    # a recording under one of these keys replaces that part
     words: Optional[list[str]] = None        # stories: save each word's start_ms and end_ms in {key}.json
-    blend_ms: Optional[int] = None           # words: recorded part_keys joined with this overlap, else the voice
+    word_gap_ms: Optional[int] = None        # words: recorded part_keys joined with this pause, else the voice
 
 
 def fingerprint(job: Job) -> str:
     """Changes when the clip's text or how it is joined changes, so edited content gets new audio."""
-    fields = [job.parts, job.gap_ms, job.part_keys, job.words] + ([job.blend_ms] if job.blend_ms is not None else [])
+    fields = [job.parts, job.gap_ms, job.part_keys, job.words] + (["word", job.word_gap_ms] if job.word_gap_ms is not None else [])
     data = json.dumps(fields, ensure_ascii=False)
     return hashlib.sha1(data.encode("utf-8")).hexdigest()[:16]
 
@@ -106,8 +107,8 @@ def plan(content) -> list[Job]:
         # A syllable item says one syllable: it uses that syllable's recording (syl_ma.wav for y_ma).
         if w.kind == "syllable":
             add(Job(w.id, [w.tts_text], part_keys=[syllable_key(w.syllables[0])]))
-        else:   # a word is its recorded syllables, blended (the voice only if one is not recorded)
-            add(Job(w.id, [w.tts_text], part_keys=[syllable_key(x) for x in w.syllables], blend_ms=BLEND_MS))
+        else:   # a word is its recorded syllables with short pauses (the voice only if one is not recorded)
+            add(Job(w.id, [w.tts_text], part_keys=[syllable_key(x) for x in w.syllables], word_gap_ms=WORD_GAP_MS))
         add(Job(slow_key(w.id), list(w.syllables), gap_ms=SLOW_GAP_MS,
                 part_keys=[syllable_key(s) for s in w.syllables]))
     for w in content.data.words:
@@ -188,14 +189,15 @@ def split_sentences(text: str) -> list[str]:
     return sentences
 
 
-def blend(clips: list[np.ndarray], rate: int, overlap_ms: int) -> np.ndarray:
-    """Clips joined with a linear crossfade of overlap_ms (shorter if a clip is too short)."""
-    out = clips[0]
-    for clip in clips[1:]:
-        n = min(int(rate * overlap_ms / 1000), len(out), len(clip))
+def fade_edges(samples: np.ndarray, rate: int, ms: int = EDGE_FADE_MS) -> np.ndarray:
+    """A short fade in and out, so joined recordings do not click. Length unchanged."""
+    n = min(int(rate * ms / 1000), len(samples) // 2)
+    out = samples.astype(np.float32).copy()
+    if n:
         ramp = np.linspace(0, 1, n, dtype=np.float32)
-        out = np.concatenate([out[:len(out) - n], out[len(out) - n:] * (1 - ramp) + clip[:n] * ramp, clip[n:]])
-    return out.astype(np.float32)
+        out[:n] *= ramp
+        out[len(out) - n:] *= ramp[::-1]
+    return out
 
 
 def join_clips(clips: list[np.ndarray], rate: int, gap_ms: int) -> tuple[np.ndarray, list[tuple[int, int]]]:
@@ -272,10 +274,10 @@ def build(job: Job, speaker, recordings_dir: Path = None) -> tuple[np.ndarray, i
             raise ValueError(f"{job.key}: {len(times)} word timings for {len(job.words)} words")
         return joined, rate, [{"text": t, "start_ms": a, "end_ms": b} for t, (a, b) in zip(job.words, times)]
 
-    if job.blend_ms is not None and job.part_keys:
+    if job.word_gap_ms is not None and job.part_keys:
         recorded = [_recording(recordings_dir, k, rate) for k in job.part_keys]
-        if all(r is not None for r in recorded):
-            return blend([trim(r, rate, keep_ms=10)[0] for r in recorded], rate, job.blend_ms), rate, None
+        if all(r is not None for r in recorded):   # recordings are used whole: trimming cut the p/t/k bursts
+            return join_clips([fade_edges(r, rate) for r in recorded], rate, job.word_gap_ms)[0], rate, None
         return speak(job.parts[0], speaker, job.key)[0], rate, None
     one_part_keys = [job.part_keys[0]] if job.gap_ms is None and job.part_keys else []
     for key in [job.key] + one_part_keys:
@@ -288,7 +290,7 @@ def build(job: Job, speaker, recordings_dir: Path = None) -> tuple[np.ndarray, i
     clips = []
     for part, key in zip(job.parts, keys):
         recorded = _recording(recordings_dir, key, rate)
-        clips.append(trim(recorded if recorded is not None else speaker.say(part), rate)[0])
+        clips.append(fade_edges(recorded, rate) if recorded is not None else trim(speaker.say(part), rate)[0])
     return join_clips(clips, rate, job.gap_ms)[0], rate, None
 
 

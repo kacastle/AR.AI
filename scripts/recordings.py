@@ -23,6 +23,7 @@ from backend.tts import audio  # noqa: E402
 
 RATE = 16000     # the rate of every clip in audio_cache/ (backend/tts/omni.py RATE)
 PEAK = 0.7
+MARGIN_MS = 100        # silence kept before and after each syllable of a long recording
 MIN_PIECE_PEAK = 0.06   # quieter pieces in a long recording are clicks or breaths
 
 
@@ -70,7 +71,9 @@ def split_on_pauses(samples: np.ndarray, rate: int, pause_ms: int = 500, thresho
         elif start is not None:
             quiet += 1
             if quiet * 10 >= pause_ms:
-                pieces.append(samples[start * win:(n - quiet + 1) * win])
+                # keep MARGIN_MS around the loud part: p, t and k start with a quiet burst
+                m = MARGIN_MS // 10
+                pieces.append(samples[max(0, (start - m) * win):min(len(samples), (n - quiet + 1 + m) * win)])
                 start, quiet = None, 0
     # Clicks and breaths between syllables are much quieter than speech (peak under 0.06 after to_clip).
     return [p for p in pieces if float(np.abs(p).max()) >= MIN_PIECE_PEAK]
@@ -91,7 +94,6 @@ def main():
             sys.exit(1)
         audio.RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
         for s, piece in zip(todo, pieces):
-            piece = audio.trim(piece, RATE)[0]
             audio.write_wav(audio.RECORDINGS_DIR / f"{audio.syllable_key(s)}.wav",
                             piece / max(float(np.abs(piece).max()), 1e-6) * PEAK, RATE)
         print(f"imported {len(pieces)} syllables from {path.name}")
