@@ -26,7 +26,7 @@ SEED = 0             # the same text sounds the same every run; a retry uses SEE
 # Voice settings. Changing any of these makes scripts/pregen_audio.py remake every clip.
 SPEED = 0.65         # about 2.6 words per second on a story: a normal talking pace (picked 2026-10-10)
 NUM_STEP = 16        # generation steps; 32 is the model's default, 16 is about twice as fast
-TRIES = 4            # the voice sometimes returns silence for a short text; try again with another seed
+TRIES = 8            # the voice sometimes returns silence for a short text ("uod" needed seed 6); try another seed
 
 INPUT_VERSION = 1
 
