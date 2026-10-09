@@ -8,6 +8,8 @@ python scripts/pregen_audio.py --short (copies them in, a few seconds).
 Usage: python scripts/recordings.py --list            what still needs recording (> todo.txt to save it)
        python scripts/recordings.py --import FOLDER   WAVs named like ma.wav or syl_ma.wav, any rate, mono or
                                                       stereo -> 16 kHz mono 16-bit, edge silence trimmed
+       python scripts/recordings.py --import-one FILE  one WAV with every missing syllable in --list order,
+                                                      about 1 s of silence between them; split at the pauses
 Phone recordings (m4a) must be exported as WAV first.
 """
 import sys
@@ -56,9 +58,41 @@ def to_clip(path: Path) -> np.ndarray:
     return samples / peak * PEAK
 
 
+def split_on_pauses(samples: np.ndarray, rate: int, pause_ms: int = 500, threshold: float = 0.03) -> list[np.ndarray]:
+    """Cut one long recording into pieces at every silence of at least pause_ms."""
+    win = rate // 100                                           # 10 ms frames
+    loud = [float(np.abs(samples[i:i + win]).max()) > threshold for i in range(0, len(samples), win)]
+    pieces, start, quiet = [], None, 0
+    for n, is_loud in enumerate(loud + [False] * (pause_ms // 10)):
+        if is_loud:
+            start, quiet = (n if start is None else start), 0
+        elif start is not None:
+            quiet += 1
+            if quiet * 10 >= pause_ms:
+                pieces.append(samples[start * win:(n - quiet + 1) * win])
+                start, quiet = None, 0
+    return pieces
+
+
 def main():
     content = load_content()
     known = syllables(content)
+    if "--import-one" in sys.argv:
+        # One WAV with every missing syllable in --list order, a pause of about 1 s between them.
+        path = Path(sys.argv[sys.argv.index("--import-one") + 1])
+        clip = to_clip(path)
+        pieces = split_on_pauses(clip, RATE)
+        todo = missing(content)
+        if len(pieces) != len(todo):
+            print(f"found {len(pieces)} syllables in {path.name}, expected {len(todo)} (the --list order); "
+                  "nothing saved. Leave a clear pause of about 1 s between syllables and no long pause inside one.")
+            sys.exit(1)
+        audio.RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
+        for s, piece in zip(todo, pieces):
+            piece = audio.trim(piece, RATE)[0]
+            audio.write_wav(audio.RECORDINGS_DIR / f"{audio.syllable_key(s)}.wav",
+                            piece / max(float(np.abs(piece).max()), 1e-6) * PEAK, RATE)
+        print(f"imported {len(pieces)} syllables from {path.name}")
     if "--import" in sys.argv:
         folder = Path(sys.argv[sys.argv.index("--import") + 1])
         audio.RECORDINGS_DIR.mkdir(parents=True, exist_ok=True)
