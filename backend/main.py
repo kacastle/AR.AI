@@ -13,6 +13,7 @@ from fastapi.responses import FileResponse
 from backend import db
 from backend.content import Content, Word, format_problems, load_content
 from backend.engine import review, rotation, scoring
+from backend.engine.feedback import feedback_for, mistake_code
 from backend.engine.selector import pick_next, skill_items, weakest_unlocked_skill
 from backend.engine.state import SkillState, new_state
 from backend.schemas import (
@@ -241,18 +242,21 @@ def answer(session_id: str, body: AnswerIn):
         item_id = turn["item_id"]
         expected = turn["answer"]
         correct = body.given == expected
+        mistake = mistake_code(turn["task_type"], expected, body.given)
         ladder = rules.hints.ladder
-        templates = rules.feedback_templates
         hint = None
         answer_tiles = None
 
+        def text(code: str, rotate: int = 0, with_hint: bool = True) -> Feedback:
+            return feedback_for(rules, code, name=child["name"], syllables=turn["syllables"],
+                                slots=len(expected), turn=rotate, with_hint=with_hint)
+
+        # Correction steps: hints from the ladder, then show the answer, then the rebuild ends the item.
         if correct:
             next_action = "next"
             n_correct = conn.execute("SELECT COUNT(*) FROM events WHERE child_id = ? AND correct = 1",
                                      (child["id"],)).fetchone()[0]
-            lines = templates["CORRECT"].message_fil
-            feedback = Feedback(message_fil=lines[n_correct % len(lines)].format(name=child["name"]),
-                                hint_fil=templates["CORRECT"].hint_fil)
+            feedback = text("CORRECT", rotate=n_correct)
         elif body.attempt <= len(ladder):
             next_action = "retry"
             kind = ladder[body.attempt - 1]
@@ -263,25 +267,29 @@ def answer(session_id: str, body: AnswerIn):
                 audio=f"/api/audio/{item_id}_slow.wav" if kind == "replay_by_syllable" else None,
                 highlight_slot={"highlight_slot": diff, "first_tile": 0}.get(kind),
             )
-            # Stub until the classifier lands: no mistake type, so no mistake feedback text.
-            feedback = Feedback(message_fil=None, hint_fil=None)
-        else:
+            feedback = text(mistake, rotate=body.attempt - 1)
+        elif body.attempt == len(ladder) + 1:
             next_action = "show_answer"
-            show = templates["SHOW_ANSWER"]
-            feedback = Feedback(message_fil=show.message_fil[0].format(name=child["name"]), hint_fil=show.hint_fil)
+            feedback = text("SHOW_ANSWER")
             answer_tiles = list(expected)
+        else:
+            # Wrong rebuild after the answer was shown: move on, no hint.
+            next_action = "next"
+            feedback = text(mistake, with_hint=False)
 
         conn.execute(
-            "INSERT INTO events (session_id, child_id, item_id, task_type, skill_id, given, correct, mistake_type, "
-            "hints_used, attempt, time_ms, support_level, next_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (session_id, child["id"], item_id, turn["task_type"], turn["skill_id"], json.dumps(body.given),
-             int(correct), None, body.hints_used, body.attempt, body.time_ms, turn["support_level"], next_action))
+            "INSERT INTO events (session_id, turn_number, child_id, item_id, task_type, skill_id, given, correct, "
+            "mistake_type, hints_used, attempt, time_ms, support_level, next_action) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (session_id, s["turn_number"], child["id"], item_id, turn["task_type"], turn["skill_id"],
+             json.dumps(body.given), int(correct), mistake, body.hints_used, body.attempt, body.time_ms,
+             turn["support_level"], next_action))
         if next_action == "next":
             # The item has ended: update the skill once.
             today = date.today()
-            first_try = body.attempt == 1
+            first_try = body.attempt == 1 and correct
             state = load_states(conn, child["id"]).get(turn["skill_id"]) or new_state(turn["skill_id"], rules)
-            result = scoring.item_result(rules, turn["support_level"], body.attempt, correct=True)
+            result = scoring.item_result(rules, turn["support_level"], body.attempt, correct=correct)
             state = scoring.apply_item(rules, state, result, first_try, today)
             if turn["is_review"]:
                 state = review.apply_review(state, first_try, rules, today)
@@ -290,7 +298,7 @@ def answer(session_id: str, body: AnswerIn):
                 "UPDATE sessions SET turn_number = turn_number + 1, current_child_id = NULL, current_item_id = NULL, "
                 "current_turn = NULL WHERE id = ?", (session_id,))
 
-    return Result(correct=correct, mistake_type=None, feedback=feedback, hint=hint,
+    return Result(correct=correct, mistake_type=mistake, feedback=feedback, hint=hint,
                   next_action=next_action, answer=answer_tiles)
 
 

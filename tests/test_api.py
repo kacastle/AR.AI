@@ -1,5 +1,7 @@
 import os
+import sqlite3
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -9,7 +11,10 @@ os.environ["DB_PATH"] = str(Path(_tmp) / "test.db")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
+from backend import db  # noqa: E402
 from backend.content import load_content  # noqa: E402
+from backend.engine.classifier import classify  # noqa: E402
+from backend.engine.feedback import feedback_for  # noqa: E402
 from backend.main import app  # noqa: E402
 
 CONTENT = load_content()
@@ -91,11 +96,15 @@ class ApiTest(unittest.TestCase):
         for attempt in (1, 2, 3):
             r = send(["x"], attempt)
             self.assertEqual(r["next_action"], "retry")
+            self.assertEqual(r["mistake_type"], classify(expected, ["x"]))
+            self.assertIsNotNone(r["feedback"]["message_fil"])
             kinds.append(r["hint"]["kind"])
         self.assertEqual(kinds, ["replay_by_syllable", "highlight_slot", "first_tile"])
         r = send(["x"], 4)
         self.assertEqual(r["next_action"], "show_answer")
         self.assertEqual(r["answer"], expected)
+        show = CONTENT.rules.feedback_templates["SHOW_ANSWER"]
+        self.assertEqual(r["feedback"], {"message_fil": show.message_fil[0], "hint_fil": show.hint_fil})
         r = send(expected, 5)
         self.assertTrue(r["correct"])
         self.assertEqual(r["next_action"], "next")
@@ -106,6 +115,81 @@ class ApiTest(unittest.TestCase):
         nxt = self.client.get(f"/api/sessions/{sid}/next").json()
         self.assertEqual(nxt["child_name"], "Ben")
         self.assertEqual(nxt["turn_number"], 2)
+
+    def start_turn(self):
+        _, session = self.make_session()
+        sid = session["id"]
+        turn = self.client.get(f"/api/sessions/{sid}/next").json()
+
+        def send(given, attempt):
+            return self.client.post(f"/api/sessions/{sid}/answer", json={
+                "child_id": turn["child_id"], "item_id": turn["item"]["id"], "given": given,
+                "hints_used": attempt - 1, "attempt": attempt, "time_ms": 3000}).json()
+        return sid, turn, CONTENT.words_by_id[turn["item"]["id"]], send
+
+    def events(self, sid):
+        with sqlite3.connect(db.DB_PATH) as conn:
+            conn.row_factory = sqlite3.Row
+            return conn.execute("SELECT * FROM events WHERE session_id = ? ORDER BY id", (sid,)).fetchall()
+
+    def test_wrong_answer_gets_mistake_type_and_template_feedback(self):
+        sid, turn, word, send = self.start_turn()
+        given = word.tiles[:-1]
+        r = send(given, 1)
+        code = classify(word.tiles, given)
+        self.assertEqual(r["mistake_type"], code)
+        want = feedback_for(CONTENT.rules, code, name="Ana", syllables=word.syllables, slots=len(word.tiles))
+        self.assertEqual(r["feedback"], {"message_fil": want.message_fil, "hint_fil": want.hint_fil})
+        self.assertNotIn("{", r["feedback"]["message_fil"] + (r["feedback"]["hint_fil"] or ""))
+        self.assertEqual(r["hint"]["kind"], "replay_by_syllable")
+        self.assertEqual(r["hint"]["audio"], f"/api/audio/{word.id}_slow.wav")
+
+    def test_wrong_rebuild_after_show_answer_ends_the_item(self):
+        sid, turn, word, send = self.start_turn()
+        for attempt in (1, 2, 3, 4):
+            send(["x"], attempt)
+        r = send(["x"], 5)
+        self.assertFalse(r["correct"])
+        self.assertEqual(r["next_action"], "next")
+        self.assertIsNone(r["hint"])
+        nxt = self.client.get(f"/api/sessions/{sid}/next").json()
+        self.assertEqual((nxt["child_name"], nxt["turn_number"]), ("Ben", 2))
+        with sqlite3.connect(db.DB_PATH) as conn:
+            attempts, wrong_streak, score = conn.execute(
+                "SELECT attempts, wrong_streak, score FROM skill_state WHERE child_id = ?",
+                (turn["child_id"],)).fetchone()
+        self.assertEqual((attempts, wrong_streak), (1, 1))
+        sc = CONTENT.rules.score
+        self.assertAlmostEqual(score, sc.start_score + sc.alpha * (sc.result_values["wrong"] - sc.start_score))
+
+    def test_each_answer_writes_one_event_with_turn_number(self):
+        sid, turn, word, send = self.start_turn()
+        send(word.tiles[:-1], 1)
+        send(word.tiles, 2)
+        nxt = self.client.get(f"/api/sessions/{sid}/next").json()
+        self.client.post(f"/api/sessions/{sid}/answer", json={
+            "child_id": nxt["child_id"], "item_id": nxt["item"]["id"],
+            "given": CONTENT.words_by_id[nxt["item"]["id"]].tiles, "hints_used": 0, "attempt": 1, "time_ms": 2000})
+        rows = self.events(sid)
+        self.assertEqual([(e["turn_number"], e["attempt"], e["correct"]) for e in rows],
+                         [(1, 1, 0), (1, 2, 1), (2, 1, 1)])
+        self.assertEqual(rows[0]["mistake_type"], classify(word.tiles, word.tiles[:-1]))
+        self.assertIsNone(rows[1]["mistake_type"])
+        self.assertEqual({e["session_id"] for e in rows}, {sid})
+
+    def test_turns_return_in_under_one_second(self):
+        _, session = self.make_session()
+        sid = session["id"]
+        for _ in range(6):
+            start = time.perf_counter()
+            turn = self.client.get(f"/api/sessions/{sid}/next").json()
+            self.assertLess(time.perf_counter() - start, 1.0)
+            for attempt, given in ((1, ["x"]), (2, CONTENT.words_by_id[turn["item"]["id"]].tiles)):
+                start = time.perf_counter()
+                self.client.post(f"/api/sessions/{sid}/answer", json={
+                    "child_id": turn["child_id"], "item_id": turn["item"]["id"], "given": given,
+                    "hints_used": attempt - 1, "attempt": attempt, "time_ms": 1000})
+                self.assertLess(time.perf_counter() - start, 1.0)
 
     def test_answer_for_wrong_item_is_rejected(self):
         _, session = self.make_session()

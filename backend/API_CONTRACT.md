@@ -123,20 +123,23 @@ What happens on each attempt:
 | 1 | `retry` | `replay_by_syllable` (`hint.audio` = slow audio) |
 | 2 | `retry` | `highlight_slot` (`hint.highlight_slot` = first wrong box, 0-based) |
 | 3 | `retry` | `first_tile` (`highlight_slot` = 0) |
-| 4+ | `show_answer` | `hint` is null; `answer` has the tiles. The learner must rebuild, then send attempt 5 |
+| 4 | `show_answer` | `hint` is null; `answer` has the tiles. The learner must rebuild, then send attempt 5 |
+| 5+ | `next` | `hint` is null. The item ends as wrong; call `/next` for the next learner |
 
 Correct at any attempt → `next_action: "next"`, then call `/next` for the next learner.
 
-Wrong, attempt 2:
+`mistake_type` is a code from `rules.json` → `mistake_types` on every wrong answer (null when correct). Sentence items (`sentence_builder`) get `SN_ORDER` or `SN_PUNCT`. `feedback` is the fixed template from `rules.json` → `feedback_templates` for that code, with the learner's name and the item's syllables filled in (rules.md section 8). A code without a template gets `"Subukan natin ulit, {name}!"` and a null `hint_fil`. Attempt 4 uses `SHOW_ANSWER`; attempt 5+ uses the mistake's `message_fil` only. Correct answers rotate the `CORRECT` lines.
+
+Wrong, attempt 2 (`given` `["a", "s", "u"]` for aso):
 ```json
-{"correct": false, "mistake_type": null,
- "feedback": {"message_fil": null, "hint_fil": null},
+{"correct": false, "mistake_type": "P_SUB_VOWEL",
+ "feedback": {"message_fil": "Magaling ang subok mo!", "hint_fil": "Pakinggan: a-so. Aling patinig ang tama?"},
  "hint": {"kind": "highlight_slot", "audio": null, "highlight_slot": 2},
  "next_action": "retry", "answer": null}
 ```
 Wrong, attempt 4:
 ```json
-{"correct": false, "mistake_type": null,
+{"correct": false, "mistake_type": "P_SUB_VOWEL",
  "feedback": {"message_fil": "Tingnan ang tamang sagot.", "hint_fil": "Ngayon, ikaw naman ang bumuo."},
  "hint": null, "next_action": "show_answer", "answer": ["a", "s", "o"]}
 ```
@@ -146,7 +149,7 @@ Correct:
  "feedback": {"message_fil": "Ang galing mo, Ana!", "hint_fil": null},
  "hint": null, "next_action": "next", "answer": null}
 ```
-**For now:** `mistake_type` is always null, and wrong attempts 1–3 have null `feedback`. Both fill in when the classifier is added. The shape does not change.
+Every answer writes one row to the `events` table, with `session_id` and `turn_number`. No turn calls the model.
 
 ## GET /api/sessions/{id}/summary
 One entry per present learner. `next_focus_skill` is a skill id from content.json, and `next_method` is a key of `rules.json` → `methods`. `group_note` is `""` when there is nothing to note.

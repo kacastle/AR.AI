@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT NOT NULL REFERENCES sessions(id),
+    turn_number INTEGER,
     child_id TEXT NOT NULL REFERENCES children(id),
     item_id TEXT NOT NULL,
     task_type TEXT NOT NULL,
@@ -67,6 +68,7 @@ CREATE TABLE IF NOT EXISTS events (
     next_action TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE INDEX IF NOT EXISTS events_child ON events (child_id, session_id);
 CREATE TABLE IF NOT EXISTS generated_items (
     id TEXT PRIMARY KEY,
     kind TEXT NOT NULL,
@@ -107,6 +109,7 @@ def connect() -> Iterator[sqlite3.Connection]:
 # Columns added after a table was first created: (table, column, type).
 ADDED_COLUMNS = [
     ("sessions", "current_turn", "TEXT"),
+    ("events", "turn_number", "INTEGER"),
 ]
 
 
