@@ -112,6 +112,7 @@ Questions:
 - Each question has exactly 3 short, different choices in Filipino. Never 4.
 - Copy the answer letter for letter from one of the choices.
 - For who, what, where, and feeling questions, the answer uses words that are written in the story. Do not ask about something the story does not say.
+- Write the questions after the story. For each question, first find the sentence in your story that has the answer, and copy the answer from that sentence. If no sentence has it, ask about something else.
 - For a feeling question, the answer is one of these feeling words, and the story says it: {feeling_words}. Do not guess a feeling that the story does not say.
 - For a where question, the answer is a place from the story and starts with "sa".
 - In a who question, the 3 choices are people: {name}, {other_names}, or {distractor_names}.

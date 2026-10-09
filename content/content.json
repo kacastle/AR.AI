@@ -4851,10 +4851,10 @@
       "characters": [
         "Nanay"
       ],
-      "outline_en": "It rains hard, so {name} cannot play outside. {name} is sad. But {name} has the {object}. {name} plays with the {object} inside the house. Nanay sees {name} playing and smiles. {name} is happy with the {object}.",
+      "outline_en": "It rains hard, so {name} cannot play outside with the {object}. {name} is sad. But {name} can play inside. {name} plays with the {object} inside the house. Nanay sees {name} playing and smiles. {name} is happy with the {object}.",
       "beats_en": [
-        "It rains hard, so {name} cannot play outside. {name} is sad.",
-        "But {name} has the {object}. {name} plays with the {object} inside the house.",
+        "It rains hard, so {name} cannot play outside with the {object}. {name} is sad.",
+        "But {name} can play inside. {name} plays with the {object} inside the house.",
         "Nanay sees {name} playing and smiles. {name} is happy with the {object}."
       ],
       "word_bank_fil": [
@@ -4957,11 +4957,11 @@
       "characters": [
         "Lola"
       ],
-      "outline_en": "It is Lola's birthday. {name} wants to give her a gift, so {name} draws a picture of Lola with the {object}. {name} colors the picture of Lola carefully, and it becomes beautiful. {name} gives the picture to Lola. Lola is very happy and hugs {name}.",
+      "outline_en": "It is Lola's birthday. {name} wants to give her a gift, so {name} draws a picture of Lola with the {object}. {name} colors the picture of Lola carefully, and it becomes beautiful. {name} gives the picture to Lola. Lola is very happy and hugs {name}. Then {name} puts the {object} away.",
       "beats_en": [
         "It is Lola's birthday. {name} wants to give her a gift, so {name} draws a picture of Lola with the {object}.",
         "{name} colors the picture of Lola carefully, and it becomes beautiful.",
-        "{name} gives the picture to Lola. Lola is very happy and hugs {name}."
+        "{name} gives the picture to Lola. Lola is very happy and hugs {name}. Then {name} puts the {object} away."
       ],
       "word_bank_fil": [
         "kaarawan",

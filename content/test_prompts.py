@@ -546,6 +546,13 @@ def example_case(level):
 def selftest():
     """The examples must pass (rules.md 10), and known-bad outputs must fail with the right label."""
     problems = []
+    # The story check wants the object in the first and the last paragraph, so every plot must have it
+    # in its first and last beat, and one beat per paragraph.
+    for pl in CONTENT["story_plots"]:
+        if "{object}" not in pl["beats_en"][0] or "{object}" not in pl["beats_en"][-1]:
+            problems.append(f"{pl['id']}: the object is not in the first and the last beat")
+        if len(pl["beats_en"]) != RULES["story_levels"][str(pl["level"])]["paragraphs"]:
+            problems.append(f"{pl['id']}: {len(pl['beats_en'])} beats, but the level has a different paragraph count")
     for level in (1, 2):
         ex, v, L = example_case(level)
         fails, _ = check_story(json.dumps(ex["output"], ensure_ascii=False), v, L)
