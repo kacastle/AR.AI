@@ -218,3 +218,15 @@
     opacity: 0.25;
   }
 }
+
+/* A short note for the tutor (diagnostic item, re-teach method, easier item). */
+.board__tutor-note {
+  margin: 0.25rem auto 0;
+  padding: 0.35rem 0.75rem;
+  max-width: 40rem;
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted, #f2f0ea);
+  color: var(--color-text-muted, #555);
+  font-size: 0.85rem;
+  text-align: center;
+}

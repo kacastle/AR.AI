@@ -107,7 +107,7 @@ export const t = {
   landing: {
     title: 'AR.Ai: Ang Matalinong Kaakabay sa Pagbasa',
     subtitle: 'Katuwang sa Pagbasa para sa DepEd ARAL Program',
-    badges: ['100% Offline & Private', 'Powered by Local AI (Ollama 3B)', 'Key Stage 1 (Grades 1-3) Ready'],
+    badges: ['100% Offline & Private', 'Powered by Local AI (Ollama, Gemma 4)', 'Key Stage 1 (Grades 1-3) Ready'],
     features: [
       {
         title: 'Maikling Babasahin (Adaptive Stories)',
@@ -138,5 +138,42 @@ export const t = {
   turnSwitch: {
     start: 'Magsimula',
     avatar: (name) => `Larawan ni ${name}`,
+  },
+  // For the tutor and parents. English for now: a Filipino speaker translates these (CLAUDE.md: no invented Tagalog).
+  tutorNotes: {
+    placement: () => 'Tutor: diagnostic item (one try, no hints) to find where this learner starts.',
+    reteach: (note) => `Tutor: re-teaching with a new approach. ${note ?? ''}`.trim(),
+    easy: () => 'Tutor: an easier item after a hard or slow answer.',
+  },
+  quizResult: {
+    title: 'Quiz result',
+    levelUp: (level) => `Next story: level ${level} (harder)`,
+    levelSame: (level) => `Next story: level ${level} (same)`,
+    levelDown: (level) => `Next story: level ${level} (easier)`,
+    writing: 'A new personal story is being written for the next session.',
+    nextLearner: 'Next learner',
+  },
+  profile: {
+    open: 'Progress',
+    title: (name) => `${name}'s progress`,
+    forParents: 'For the tutor and parents',
+    back: 'Back to summary',
+    interests: 'Interests',
+    level: 'Story level',
+    pace: 'Pace',
+    paces: { fast: 'fast', steady: 'steady', slow: 'takes time' },
+    diagnostic: 'Starting point',
+    diagnostics: { pending: 'diagnostic not finished', done: 'diagnostic done' },
+    now: 'Working on now',
+    mastered: 'Mastered',
+    strengths: 'Getting stronger',
+    needsWork: 'Needs more practice',
+    methods: 'Teaching approaches tried',
+    worked: 'worked',
+    notYet: 'did not work yet',
+    running: 'in progress',
+    sessions: 'Sessions (right on the first try)',
+    stars: (n, streak) => `${n} stars, ${streak} in a row`,
+    none: 'None yet',
   },
 }

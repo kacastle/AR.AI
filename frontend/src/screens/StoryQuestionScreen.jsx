@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import FeedbackBanner from '../components/FeedbackBanner.jsx'
 import SpeakerIcon from '../components/SpeakerIcon.jsx'
 import TurnSwitchScreen from './TurnSwitchScreen.jsx'
+import ReadAlongScreen from './ReadAlongScreen.jsx'
 import Confetti from '../components/Confetti.jsx'
 import LoadingOverlay from '../components/LoadingOverlay.jsx'
 import { playChime } from '../sfx.js'
@@ -24,6 +25,8 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
   const [result, setResult] = useState(null)
   const [busy, setBusy] = useState(false)
   const [burst, setBurst] = useState(0)
+  const [reading, setReading] = useState(false) // the learner reads their own story before its questions
+  const [quiz, setQuiz] = useState(null) // the learner's quiz result, after their last question
   const speaker = useAudio()
 
   const applyTurn = useCallback((next) => {
@@ -32,6 +35,7 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
     setPicked(null)
     setWrong([])
     setResult(null)
+    setQuiz(null)
     setStatus(next ? 'ready' : 'done')
   }, [])
 
@@ -72,10 +76,18 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
   if (turn.child_id !== activeChild) {
     const start = () => {
       setActiveChild(turn.child_id)
-      speaker.play(question.prompt_audio)
+      setReading(Boolean(turn.story_id))
     }
     const picture = learners.find((l) => l.id === turn.child_id)?.picture
     return <TurnSwitchScreen name={turn.child_name} picture={picture} onStart={start} />
+  }
+
+  if (reading) {
+    const doneReading = () => {
+      setReading(false)
+      speaker.play(question.prompt_audio)
+    }
+    return <ReadAlongScreen key={turn.story_id} storyId={turn.story_id} onDone={doneReading} />
   }
 
   const finished = result?.next_action === 'next'
@@ -91,6 +103,7 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
         attempt,
       })
       setResult(response)
+      if (response.quiz) setQuiz(response.quiz)
       if (response.correct) {
         setBurst((b) => b + 1)
         playChime()
@@ -170,6 +183,20 @@ export default function StoryQuestionScreen({ sessionId, learners, onDone }) {
             />
           ))}
       </div>
+
+      {finished && quiz && (
+        <section className="story__quiz" aria-live="polite">
+          <StarBadge filled={quiz.correct} total={quiz.total} text={t.progress.questions(quiz.correct, quiz.total)} />
+          <p className="story__quiz-level">
+            {quiz.story_level > quiz.story_level_before
+              ? t.quizResult.levelUp(quiz.story_level)
+              : quiz.story_level < quiz.story_level_before
+                ? t.quizResult.levelDown(quiz.story_level)
+                : t.quizResult.levelSame(quiz.story_level)}
+          </p>
+          <p className="story__quiz-note">{t.quizResult.writing}</p>
+        </section>
+      )}
 
       <footer className="screen__actions">
         {finished && (

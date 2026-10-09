@@ -444,3 +444,29 @@ export async function getPracticeSheet(childId) {
   if (!learner) throw apiError(404, `child '${childId}' not found`)
   return clone({ name: learner.name, date: localIso(new Date()).slice(0, 10), ...PRACTICE_SHEET })
 }
+
+// Offline stand-in for GET /api/children/{id}/profile (the real profile comes from backend/adapt.py).
+export async function getProfile(childId) {
+  await delay()
+  const learner = group.learners.find((l) => l.id === childId)
+  if (!learner) throw apiError(404, `children '${childId}' not found`)
+  const mine = events.filter((e) => e.child_id === childId && e.attempt === 1)
+  const right = mine.filter((e) => e.correct).length
+  return clone({
+    child_id: childId,
+    name: learner.name,
+    profile: learner.profile,
+    interests: [],
+    diagnostic: null,
+    story_level: 1,
+    pace: null,
+    current_skill: { id: 'sk_cvcv_1', name: 'CV-CV words', score: 0 },
+    mastered: [],
+    strengths: [],
+    needs_work: [],
+    methods: [],
+    stars: right,
+    streak: 0,
+    sessions: mine.length ? [{ session_id: MOCK_SESSION_ID, date: '', correct: right, total: mine.length }] : [],
+  })
+}

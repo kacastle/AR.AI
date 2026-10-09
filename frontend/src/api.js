@@ -13,15 +13,18 @@ export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localh
 
 const TIMEOUT_MS = 5000
 const GROUP_KEY = 'rtph.group_id'
+const groupKey = () => `${GROUP_KEY}.${GROUP_KEY_VERSION}`
 
 // Demo group created on the backend the first time (POST /api/groups); its id is kept in
-// localStorage so later visits reuse it.
+// localStorage so later visits reuse it. Interests theme each learner's stories and words;
+// `diagnostic` starts each learner with a short placement before practice.
+const GROUP_KEY_VERSION = 'v2' // new learner fields: a new demo group on the server
 const DEMO_GROUP = {
   tutor_name: 'Teacher Liza',
   learners: [
-    { name: 'Ana', picture: 'cat', profile: 'low_emergent' },
-    { name: 'Ben', picture: 'dog', profile: 'high_emergent' },
-    { name: 'Mila', picture: 'star', profile: 'low_emergent' },
+    { name: 'Ana', picture: 'cat', profile: 'low_emergent', interests: ['int_drawing', 'int_toys'], diagnostic: true },
+    { name: 'Ben', picture: 'dog', profile: 'high_emergent', interests: ['int_basketball', 'int_vehicles'], diagnostic: true },
+    { name: 'Mila', picture: 'star', profile: 'low_emergent', interests: ['int_food', 'int_space'], diagnostic: true },
   ],
 }
 
@@ -95,7 +98,7 @@ export const login = (body) =>
 export const getDemoGroup = () =>
   call(
     async () => {
-      const saved = localStorage.getItem(GROUP_KEY)
+      const saved = localStorage.getItem(groupKey())
       if (saved) {
         try {
           return await request('GET', `/api/groups/${saved}`)
@@ -104,19 +107,17 @@ export const getDemoGroup = () =>
         }
       }
       const group = await request('POST', '/api/groups', DEMO_GROUP)
-      localStorage.setItem(GROUP_KEY, group.id)
+      localStorage.setItem(groupKey(), group.id)
       return group
     },
     () => mock.getGroup(mock.MOCK_GROUP_ID),
   )
 
-// `learners` (the group's) gives names for the local story questions.
-export const createSession = (body, learners) =>
+export const createSession = (body) =>
   call(
     async () => {
       const session = await request('POST', '/api/sessions', body)
       realSession = true
-      mock.startStoryRound(session, learners)
       return session
     },
     () => mock.createSession(body),
@@ -158,6 +159,18 @@ export const getSummary = (sessionId) =>
 export const getPracticeSheet = (childId) =>
   call(() => request('GET', `/api/children/${childId}/sheet`), () => mock.getPracticeSheet(childId))
 
-// Not in API_CONTRACT.md yet: story questions always run locally (see mocks/api.js).
-export const getStoryTurn = (sessionId) => mock.getStoryTurn(sessionId)
-export const submitStoryAnswer = (sessionId, body) => mock.submitStoryAnswer(sessionId, body)
+// Story phase: each learner reads their own story (story_id), then answers its questions.
+// Returns null when every learner is done.
+export const getStoryTurn = (sessionId) =>
+  call(() => request('GET', `/api/sessions/${sessionId}/story_turn`), () => mock.getStoryTurn(sessionId))
+
+// body = { child_id, question_id, choice, attempt }. The last first answer returns `quiz` with the next story level.
+export const submitStoryAnswer = (sessionId, body) =>
+  call(
+    () => request('POST', `/api/sessions/${sessionId}/story_answer`, body),
+    () => mock.submitStoryAnswer(sessionId, body),
+  )
+
+// Learner profile for the tutor and parents (skills, level, pace, interests, approaches that worked).
+export const getProfile = (childId) =>
+  call(() => request('GET', `/api/children/${childId}/profile`), () => mock.getProfile(childId))

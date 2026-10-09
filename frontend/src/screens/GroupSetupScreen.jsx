@@ -41,7 +41,7 @@ export default function GroupSetupScreen({ onStart }) {
     try {
       // `present` keeps the group's order, which is the turn order.
       const ids = group.learners.filter((l) => present.has(l.id)).map((l) => l.id)
-      onStart(await createSession({ group_id: group.id, present: ids }, group.learners), group)
+      onStart(await createSession({ group_id: group.id, present: ids }), group)
     } catch {
       setError(true)
     }

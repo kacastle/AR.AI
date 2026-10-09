@@ -67,6 +67,8 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
     const nextBoard = buildBoard(next)
     clearTimeout(shakeTimer.current)
     setTurn(next)
+    // The server counts stars across sessions; the offline mock does not send them.
+    if (typeof next.stars === 'number') setStars((s) => ({ ...s, [next.child_id]: next.stars }))
     setBoard(nextBoard)
     setSlots(nextBoard.base)
     setModel(nextBoard.model)
@@ -166,9 +168,17 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
       })
       if (response.correct) {
         setResult(response)
-        setStars((s) => ({ ...s, [turn.child_id]: (s[turn.child_id] ?? 0) + 1 }))
+        setStars((s) => ({
+          ...s,
+          [turn.child_id]: typeof response.stars === 'number' ? response.stars : (s[turn.child_id] ?? 0) + 1,
+        }))
         setBurst((b) => b + 1)
         playChime()
+        return
+      }
+      if (response.next_action === 'next') {
+        // Wrong, but the item ends (a diagnostic item has one try; a wrong rebuild ends the item).
+        setResult(response)
         return
       }
       setAttempt((a) => a + 1)
@@ -203,8 +213,8 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
       <FeedbackBanner tone="incorrect" message={t.loadError} />
     ) : (
       <FeedbackBanner
-        tone="correct"
-        message={result.feedback.message_fil}
+        tone={result.correct ? 'correct' : 'incorrect'}
+        message={result.feedback.message_fil ?? t.tryAgain(turn.child_name)}
         hint={result.feedback.hint_fil}
       />
     ))
@@ -218,6 +228,10 @@ export default function TileBoardScreen({ sessionId, learners, isPhaseOver, onDo
           <StarBadge filled={stars[turn.child_id] ?? 0} text={t.progress.stars(stars[turn.child_id] ?? 0)} />
         </div>
       </header>
+
+      {t.tutorNotes[turn.mode] && (
+        <p className="board__tutor-note">{t.tutorNotes[turn.mode](turn.method_note)}</p>
+      )}
 
       <p className="board__instruction">{t.instructions[turn.task_type]}</p>
 

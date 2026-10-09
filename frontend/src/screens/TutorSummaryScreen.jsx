@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import Confetti from '../components/Confetti.jsx'
 import LearnerPicture from '../components/LearnerPicture.jsx'
 import LoadingOverlay from '../components/LoadingOverlay.jsx'
+import ProgressScreen from './ProgressScreen.jsx'
 import { SKILL_NAMES_FIL, getPracticeSheet, getSummary } from '../api.js'
 import { t } from '../strings.js'
 import './TutorSummaryScreen.css'
@@ -57,6 +58,7 @@ export default function TutorSummaryScreen({ sessionId, learners, onRestart }) {
   const [sheets, setSheets] = useState(null)
   const [preparing, setPreparing] = useState(false)
   const [error, setError] = useState(false)
+  const [progressFor, setProgressFor] = useState(null) // child id whose progress (profile) is open
 
   useEffect(() => {
     let cancelled = false
@@ -72,6 +74,16 @@ export default function TutorSummaryScreen({ sessionId, learners, onRestart }) {
   if (!summary) return <LoadingOverlay label={t.loadingSummary} />
 
   const byId = Object.fromEntries(learners.map((l) => [l.id, l]))
+
+  if (progressFor) {
+    return (
+      <ProgressScreen
+        childId={progressFor}
+        picture={byId[progressFor]?.picture}
+        onBack={() => setProgressFor(null)}
+      />
+    )
+  }
 
   // One sheet per present learner (GET /api/children/{id}/sheet); rendered, then printed.
   const printSheets = async () => {
@@ -105,6 +117,9 @@ export default function TutorSummaryScreen({ sessionId, learners, onRestart }) {
                     <strong>{t.summary.nextFocus}</strong>{' '}
                     {SKILL_NAMES_FIL[s.next_focus_skill] ?? s.next_focus_skill}
                   </p>
+                  <button type="button" className="action summary__progress" onClick={() => setProgressFor(s.child_id)}>
+                    {t.profile.open}
+                  </button>
                 </div>
               </li>
             )

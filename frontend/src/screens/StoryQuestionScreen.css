@@ -46,3 +46,27 @@
 .story__choice--shake {
   animation: tile-shake 420ms ease-in-out;
 }
+
+/* The learner's quiz result: stars, and the level of their next personal story. */
+.story__quiz {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.75rem auto 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--color-surface-muted, #f2f0ea);
+  text-align: center;
+}
+
+.story__quiz-level {
+  margin: 0;
+  font-weight: 700;
+}
+
+.story__quiz-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #555);
+}
