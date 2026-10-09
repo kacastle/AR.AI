@@ -23,7 +23,7 @@ Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL 
 
 ## Layout and how to run
 Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv active.
-- backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), records.py (skill states and session stats from the database), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state, feedback), llm/ (harness loads content/test_prompts.py; jobs; worker = background thread), tts/ (audio plan, clip building, MMS speaker). Each folder has an __init__.py.
+- backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), records.py (skill states and learner info from the database), summary.py (tutor summary), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state, feedback), llm/ (harness loads content/test_prompts.py; client, prompts, checks, fallbacks, jobs; worker = background thread), tts/ (audio plan, clip building, MMS speaker). Each folder has an __init__.py.
 - tests/ (repo root): API, content, audio, model-job and testbench tests (test_api.py, test_content.py, test_audio.py, test_llm.py, test_testbench.py); tests/conftest.py sets LLM_WORKER=0. The prompt test harness is content/test_prompts.py. backend/tests/: engine unit tests (classifier, scoring, selector, rotation, review) with a shared conftest.py. `python -m pytest` runs both.
 - scripts/: test_ollama.py, test_tts.py, simulate.py (3-learner session through the real API), pregen_audio.py, testbench.py + testbench/ (real frontend against the real backend), pull_models.sh. Still to come: seed_demo.py.
 - content/ (Person 3), frontend/ (Person 1).
@@ -59,7 +59,7 @@ hint.kind: replay_by_syllable, highlight_slot, first_tile.
 Other shapes (keep flat and simple, reuse content.json field names):
 - login: body {pin}, returns {ok} (demo stub: any PIN works)
 - groups: group with learners (name, picture, profile, interests); profile must be in rules.json placement.profiles; interests optional, up to 3 content.json interest ids
-- sessions: body {group_id, present[]}, returns session with read_along_story_id
+- sessions: body {group_id, present[]}, returns session with read_along_story_id and story_ids {child_id: story id} (approved model story -> filled template -> library story)
 - stories: {title, paragraphs, words[{text, start_ms, end_ms}], audio_url} (real word timings after pregen_audio.py); approved model stories (gs_ ids) too
 - phase: body {phase}, returns {phase, ends_at}
 - summary: learners[{child_id, summary, next_focus_skill, next_method}] and group_note (the model's summary once it is ready and current, else the English fallback template from prompts.md section 4)
@@ -95,7 +95,8 @@ The code uses rules.json feedback_templates for every code (confirmed): CORRECT 
 - P2-4 done: scoring, selector, rotation, review and placement with tests, wired into /next and /answer; simulate.py shows 3 learners changing skill and support level.
 - P2-5 done: classifier and template feedback in /answer, correction steps (attempt 5 ends the item), events.turn_number; gap_slot in /next.
 - P2-2 done: pregen_audio.py with MMS-TTS (model input built the MMS way, sentence by sentence, natural stories with word timings, recording overrides in content/recordings/, remakes clips whose text changed). Open: pick the voice settings (audio_cache/try_*.wav), and record syl_a/e/o/u (the model cannot say lone vowels).
-- P2-6 done: background model worker (backend/llm/) with gemma4:e4b: personal stories and practice words to /api/approvals, model summary in /summary; prompts and checks from content/test_prompts.py; retry once, then fallback.
+- P2-6 done: backend/llm/ client.py (Ollama, localhost only, pauses 30 s after a refused connection), prompts.py and checks.py (thin layers over content/test_prompts.py: no second copy), fallbacks.py (story order from rules.md 9), jobs.py, worker.py (background thread). Stories get audio before they reach /api/approvals and stay hidden until approved. Retry once on a failed check, never on a missing model. Target words stay optional (Kiefer's v0.3 rules), although the P2-6 spec asked for all of them.
+- P2-7 done: backend/summary.py (numbers incl. alert, prompt values, template with skill names, current model summary); /summary and /sheet work with Ollama off.
 - Testbench: scripts/testbench.py runs the real frontend against the real backend.
 - Not wired yet: placement endpoint and session flow, end_with_easy_item, SLOW rule, alerts, seed_demo.py, model feedback wording, audio for model stories.
 - Content issue for Person 3: sk_letters_2 has no words, so sk_cv_2 (which needs it mastered) can never unlock.

@@ -1,33 +1,35 @@
 """Model jobs, run by the background worker (never inside /next or /answer).
 
-- story:   a personal story for one learner (content/prompts.md section 1) -> approvals
-- words:   practice words for one learner (section 2) -> approvals; approved ones go on the sheet
-- summary: the tutor summary for one session (section 4) -> used by GET /summary while it is current
+- story:       a personal story for one learner (content/prompts.md section 1). Its audio is made before
+               it goes to GET /api/approvals; learners only see it after the tutor approves it.
+- words:       practice words for one learner (section 2) -> approvals; approved ones go on the sheet
+- summary:     the tutor summary for one session (section 4) -> GET /summary while it is current
+- story_audio: audio for a filled template story (no model call)
 
-Prompts, model call, case builders and checks come from content/test_prompts.py (harness.tp).
-A failed check is retried once; then nothing is saved and the library story / code template is used.
+A failed check is retried once; then nothing is saved and the fallback stays (backend/llm/fallbacks.py,
+the sheet's content words, summary.template()). When Ollama is off, every job just falls back.
 """
 import json
 import os
 import random
 from dataclasses import dataclass
-from datetime import date
 from typing import Optional
 
-from backend import db
+from backend import db, summary
 from backend.content import Content, Word, load_content
-from backend.engine.selector import weakest_unlocked_skill
-from backend.llm.harness import tp
-from backend.records import event_count, load_states, session_stats
+from backend.llm import checks, client, prompts
+from backend.records import event_count, learner_info
+from backend.tts import audio
 
 DEFAULT_MODEL = "gemma4:e4b"
 
 
 @dataclass(frozen=True)
 class Job:
-    kind: str                         # story, words or summary
+    kind: str                         # story, words, summary or story_audio
     child_id: Optional[str] = None
     session_id: Optional[str] = None
+    story_id: Optional[str] = None
 
 
 def model_name() -> str:
@@ -39,6 +41,7 @@ def log(message: str) -> None:
 
 
 _content: Optional[Content] = None
+_speaker = None
 
 
 def get_content() -> Content:
@@ -48,79 +51,44 @@ def get_content() -> Content:
     return _content
 
 
+def get_speaker():
+    """MMS-TTS, loaded once in the worker thread on first use. Replaced by a fake in tests."""
+    global _speaker
+    if _speaker is None:
+        from backend.tts.mms import Speaker   # torch; only when a story needs audio
+        _speaker = Speaker()
+    return _speaker
+
+
 # ---------- model call with checks ----------
 
-def ask_model(kind: str, prompt: str, v: dict, learner: Optional[dict]) -> str:
-    """One call to the local Ollama model. Replaced by a fake in tests."""
-    temperature, num_predict = tp.SETTINGS_BY_KIND[kind]
-    out, _, finish = tp.call_model(model_name(), prompt, temperature, num_predict,
-                                   system=tp.SYSTEM if kind == "story" else tp.GENERIC_SYSTEM,
-                                   backend="ollama", schema=v.get("_schema"))
-    return "" if finish == "length" else out     # cut off: treat as broken output
-
-
-def _check(kind: str, out: str, v: dict, learner: Optional[dict]):
-    if kind == "story":
-        return tp.check_story(out, v, learner)
-    if kind == "words":
-        return tp.check_words(out, v)
-    return tp.check_summary(out, v)
+def ask_model(kind: str, user: str, v: dict, learner: Optional[dict]) -> str:
+    """One call to the local model. Replaced by a fake in tests."""
+    system, _, _ = prompts.build(kind, v)
+    temperature, num_predict = prompts.SETTINGS[kind]
+    text, finish = client.chat(model_name(), system, user, temperature, num_predict, schema=v.get("_schema"))
+    return "" if finish == "length" else text     # cut off: treat as broken output
 
 
 def generate(kind: str, v: dict, learner: Optional[dict], label: str) -> Optional[dict]:
     """The checked model output, or None after one retry (the caller then keeps its fallback)."""
-    prompt, unfilled = tp.fill(tp.TEMPLATES[kind], {k: x for k, x in v.items() if not k.startswith("_")})
+    _, user, unfilled = prompts.build(kind, v)
     if unfilled:
         log(f"{label}: prompt has unfilled placeholders {unfilled}; skipped")
         return None
     for attempt in (1, 2):
         try:
-            out = ask_model(kind, prompt, v, learner)
-        except Exception as e:                     # Ollama not running, timeout, ...
-            log(f"{label}: model call failed ({e})")
-            continue
-        fails, parsed = _check(kind, out, v, learner)
+            out = ask_model(kind, user, v, learner)
+        except client.ModelError as e:              # the retry is for failed checks, not a missing model
+            log(f"{label}: {e}; using the fallback")
+            return None
+        fails, parsed = checks.check(kind, out, v, learner)
         if not fails:
             log(f"{label}: ok (attempt {attempt})")
             return parsed
         log(f"{label}: failed checks {fails} (attempt {attempt})")
     log(f"{label}: using the fallback")
     return None
-
-
-# ---------- inputs from the database ----------
-
-def learner_for(conn, content: Content, child_id: str) -> dict:
-    """The learner dict the harness case builders expect."""
-    child = conn.execute("SELECT * FROM children WHERE id = ?", (child_id,)).fetchone()
-    skill = weakest_unlocked_skill(content, load_states(conn, child_id), words_only=True)
-    levels = sorted(int(k) for k in content.rules.story_levels)
-    level = min(max(skill.level, levels[0]), levels[-1])
-    return {"child_id": child_id, "name": child["name"], "level": level,
-            "interests": json.loads(child["interests"]), "weakest": skill.id}
-
-
-def summary_values(conn, content: Content, session_id: str) -> dict:
-    """The summary prompt's values from the session's real events (prompts.md section 4 format)."""
-    rules, skills = content.rules, content.skills_by_id
-
-    def skill_text(skill_id):
-        return f"{skill_id} ({skills[skill_id].name_en})"
-
-    stats = session_stats(conn, content, session_id)
-    lines = []
-    for s in stats:
-        mistakes = ", ".join(f"{code} ({rules.mistake_types[code].description_en}) x{n}"
-                             for code, n in s.mistakes.most_common()) or "none"
-        lines.append(f"{s.child_id} | {s.name} | {s.correct} of {s.total} correct | "
-                     f"skills: {', '.join(skill_text(k) for k in s.skills) or 'none'} | "
-                     f"weakest: {skill_text(s.skill.id)} | mistakes: {mistakes} | support: {s.support} | alert: no")
-    mains = [s.main_mistake for s in stats if s.main_mistake]
-    return {"date": date.today().isoformat(), "present_count": len(stats), "learner_data": "\n".join(lines),
-            "method_list": ", ".join(rules.methods),
-            "skill_list": ", ".join(skill_text(s.id) for s in content.skills),
-            "_stats": {s.child_id: {"correct": s.correct, "total": s.total} for s in stats},
-            "_shared_mistake": len(set(mains)) < len(mains)}
 
 
 # ---------- saving ----------
@@ -142,6 +110,16 @@ def _save(kind: str, payload: dict, child_id: Optional[str] = None, session_id: 
     return item_id
 
 
+def make_story_audio(story_id: str, paragraphs: list[str]) -> None:
+    """audio_cache/{story_id}.wav read naturally, and {story_id}.json with each word's timing."""
+    job = audio.Job(story_id, list(paragraphs), gap_ms=audio.PARAGRAPH_GAP_MS,
+                    words=" ".join(paragraphs).split())
+    samples, rate, words = audio.build(job, get_speaker())
+    audio.AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    audio.timings_path(story_id).write_text(json.dumps({"words": words}, ensure_ascii=False), encoding="utf-8")
+    audio.write_wav(audio.wav_path(story_id), samples, rate)
+
+
 # ---------- jobs ----------
 
 def run_story(job: Job, content: Content) -> None:
@@ -150,12 +128,12 @@ def run_story(job: Job, content: Content) -> None:
         if _waiting(conn, "story", job.child_id):
             log(f"{label}: one is already waiting for the tutor; skipped")
             return
-        learner = learner_for(conn, content, job.child_id)
+        learner = learner_info(conn, content, job.child_id)
     if not learner["interests"]:
-        log(f"{label}: the learner has no interests; skipped (library stories are used)")
+        log(f"{label}: the learner has no interests; skipped (fallback stories are used)")
         return
     try:
-        v = tp.story_case(learner, random.Random())
+        v = prompts.story_case(learner, random.Random())
     except (IndexError, ValueError, KeyError) as e:   # no plot fits the learner's interest objects
         log(f"{label}: no story plot fits interests {learner['interests']} ({e!r}); skipped")
         return
@@ -163,12 +141,17 @@ def run_story(job: Job, content: Content) -> None:
     if parsed is None:
         return
     story_id = db.new_id("gs")
+    try:
+        make_story_audio(story_id, parsed["paragraphs"])
+    except Exception as e:                            # no voice model: the tutor never sees a silent story
+        log(f"{label}: audio failed ({e!r}); story dropped, fallback stories are used")
+        return
     text = " ".join(parsed["paragraphs"])
     words = {w.text: w.id for w in content.data.words}
     payload = {   # the same fields as content.json stories, plus where it came from
         "id": story_id, "title": parsed["title"], "level": learner["level"], "skill_ids": [learner["weakest"]],
-        "target_word_ids": [words[w] for w in v["_optional"] if w in words and w in tp.words_in(text)],
-        "interests": learner["interests"], "word_count": len(tp.words_in(text)),
+        "target_word_ids": [words[w] for w in v["_optional"] if w in words and w in text.split()],
+        "interests": learner["interests"], "word_count": len(text.split()),
         "paragraphs": parsed["paragraphs"], "questions": parsed["questions"],
         "source": "model", "reviewed": False, "approved_by_tutor": False,
         "model": model_name(), "plot_id": v["_plot_id"], "object": v["object"],
@@ -182,8 +165,8 @@ def run_words(job: Job, content: Content) -> None:
         if _waiting(conn, "words", job.child_id):
             log(f"{label}: a list is already waiting for the tutor; skipped")
             return
-        learner = learner_for(conn, content, job.child_id)
-    v = tp.words_case(learner, random.Random())
+        learner = learner_info(conn, content, job.child_id)
+    v = prompts.words_case(learner, random.Random())
     parsed = generate("words", v, learner, label)
     if parsed is None:
         return
@@ -197,7 +180,7 @@ def run_words(job: Job, content: Content) -> None:
 def run_summary(job: Job, content: Content) -> None:
     label = f"summary for {job.session_id}"
     with db.connect() as conn:
-        v = summary_values(conn, content, job.session_id)
+        v = summary.prompt_values(summary.compute(conn, content, job.session_id), content)
         events = event_count(conn, job.session_id)
     parsed = generate("summary", v, None, label)
     if parsed is None:
@@ -208,7 +191,17 @@ def run_summary(job: Job, content: Content) -> None:
           session_id=job.session_id, approval=False)
 
 
-RUNNERS = {"story": run_story, "words": run_words, "summary": run_summary}
+def run_story_audio(job: Job, content: Content) -> None:
+    if audio.wav_path(job.story_id).is_file():
+        return
+    with db.connect() as conn:
+        row = conn.execute("SELECT payload FROM generated_items WHERE id = ?", (job.story_id,)).fetchone()
+    if row:
+        make_story_audio(job.story_id, json.loads(row["payload"])["paragraphs"])
+        log(f"audio for {job.story_id}: ok")
+
+
+RUNNERS = {"story": run_story, "words": run_words, "summary": run_summary, "story_audio": run_story_audio}
 
 
 def run(job: Job, content: Optional[Content] = None) -> None:

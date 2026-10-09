@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import re
 from contextlib import asynccontextmanager
 from dataclasses import asdict
@@ -18,7 +19,9 @@ from backend.engine.selector import pick_next, skill_items, weakest_unlocked_ski
 from backend.engine.state import SkillState, new_state
 from backend.llm.jobs import Job
 from backend.llm.worker import worker
-from backend.records import event_count, load_states, session_stats
+from backend import summary
+from backend.llm.fallbacks import choose_story
+from backend.records import event_count, load_states
 from backend.schemas import (
     AnswerIn, ApprovalIn, ApprovalItem, Feedback, Group, GroupIn, Hint, Item, Learner,
     LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, Result, Session, SessionIn,
@@ -101,11 +104,8 @@ def group_out(conn, group_id: str) -> Group:
 
 def session_out(s) -> Session:
     return Session(id=s["id"], group_id=s["group_id"], present=json.loads(s["present"]),
-                   phase=s["phase"], read_along_story_id=s["read_along_story_id"])
-
-
-def method_name(method_id: str) -> str:
-    return method_id.replace("_", " ")
+                   phase=s["phase"], read_along_story_id=s["read_along_story_id"],
+                   story_ids=json.loads(s["story_ids"]))
 
 
 # ---------- endpoints ----------
@@ -161,10 +161,17 @@ def create_session(body: SessionIn):
         level = min(content.data.levels)
         story = next(s for s in content.data.stories if s.level == level)
         session_id = db.new_id("s")
-        conn.execute("INSERT INTO sessions (id, group_id, present, phase, read_along_story_id) VALUES (?, ?, ?, ?, ?)",
-                     (session_id, body.group_id, json.dumps(body.present), "tiles", story.id))
+        # Each learner's story turn: approved model story -> filled template -> library story (no model).
+        rnd = random.Random()
+        story_ids = {child_id: choose_story(conn, content, child_id, rnd) for child_id in body.present}
+        conn.execute("INSERT INTO sessions (id, group_id, present, phase, read_along_story_id, story_ids) "
+                     "VALUES (?, ?, ?, ?, ?, ?)", (session_id, body.group_id, json.dumps(body.present), "tiles",
+                                                   story.id, json.dumps(story_ids)))
         out = session_out(get_row(conn, "sessions", session_id))
-    # Model work for later in the session; it runs in the background and the tutor approves it.
+    # Background work: audio for filled templates now, and the model's next stories and words for the tutor.
+    for story_id in story_ids.values():
+        if story_id.startswith("ts_"):
+            worker.submit(Job("story_audio", story_id=story_id))
     for child_id in body.present:
         worker.submit(Job("story", child_id=child_id))
         worker.submit(Job("words", child_id=child_id))
@@ -173,7 +180,7 @@ def create_session(body: SessionIn):
 
 @app.get("/api/stories/{story_id}", response_model=StoryOut)
 def get_story(story_id: str):
-    story = content.stories_by_id.get(story_id) or approved_story(story_id)
+    story = content.stories_by_id.get(story_id) or generated_story(story_id)
     if story is None:
         raise HTTPException(404, f"story '{story_id}' not found")
     saved = tts_audio.load_timings(story.id)
@@ -313,52 +320,17 @@ def answer(session_id: str, body: AnswerIn):
 
 
 @app.get("/api/sessions/{session_id}/summary", response_model=SummaryOut)
-def summary(session_id: str):
+def get_summary(session_id: str):
     with db.connect() as conn:
         s = get_row(conn, "sessions", session_id)
-        stats = session_stats(conn, content, session_id)
+        stats = summary.compute(conn, content, session_id)
         events = event_count(conn, session_id)
-        row = conn.execute("SELECT payload FROM generated_items WHERE kind = 'summary' AND session_id = ? "
-                           "ORDER BY created_at DESC LIMIT 1", (session_id,)).fetchone()
-    model = model_summary(row, stats, events)
+        model = summary.current(conn, session_id, stats, events)
     if model is not None:
         return model
     if s["phase"] == "summary" and events:
         worker.submit(Job("summary", session_id=session_id))   # ready on a later call; never waited for
-    return template_summary(stats)
-
-
-def model_summary(row, stats, events: int):
-    """The model's summary if it was made from the events there are now, else None."""
-    if row is None:
-        return None
-    payload = json.loads(row["payload"])
-    if payload.get("event_count") != events:
-        return None
-    try:
-        out = SummaryOut(learners=payload["learners"], group_note=payload.get("group_note", ""))
-    except (KeyError, ValueError):
-        return None
-    return out if [x.child_id for x in out.learners] == [st.child_id for st in stats] else None
-
-
-def template_summary(stats) -> SummaryOut:
-    """prompts.md section 4 fallback template (code only)."""
-    rules = content.rules
-    main_mistakes = {}
-    for st in stats:
-        if st.main_mistake:
-            main_mistakes.setdefault(st.main_mistake, []).append(st.name)
-    learners = [LearnerSummary(
-        child_id=st.child_id,
-        summary=f"{st.name}: {st.correct} of {st.total} correct. Next: {st.skill.name_en} with {method_name(st.method)}.",
-        next_focus_skill=st.skill.id, next_method=st.method) for st in stats]
-    shared = [(code, names) for code, names in main_mistakes.items() if len(names) >= 2]
-    group_note = ""
-    if shared:
-        code, names = shared[0]
-        group_note = f"{' and '.join(names)} need more work on {rules.mistake_types[code].description_en.lower()}."
-    return SummaryOut(learners=learners, group_note=group_note)
+    return summary.template(stats, content)
 
 
 @app.get("/api/children/{child_id}/sheet", response_model=SheetOut)
@@ -409,12 +381,14 @@ def decide_approval(approval_id: str, body: ApprovalIn):
     return OkOut(ok=True)
 
 
-def approved_story(story_id: str):
-    """A model story the tutor approved, shaped like a content.json story; None if there is none."""
+def generated_story(story_id: str):
+    """A filled template story, or a model story the tutor approved, shaped like a content.json story.
+    None for anything else: a model story stays hidden from learners until it is approved."""
     with db.connect() as conn:
         row = conn.execute(
-            "SELECT g.payload FROM generated_items g JOIN approvals a ON a.generated_item_id = g.id "
-            "WHERE g.id = ? AND g.kind = 'story' AND a.status = 'approved'", (story_id,)).fetchone()
+            "SELECT g.payload FROM generated_items g LEFT JOIN approvals a ON a.generated_item_id = g.id "
+            "WHERE g.id = ? AND (g.kind = 'template_story' OR (g.kind = 'story' AND a.status = 'approved'))",
+            (story_id,)).fetchone()
     return SimpleNamespace(**json.loads(row["payload"])) if row else None
 
 

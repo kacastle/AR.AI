@@ -54,6 +54,7 @@ class Session(BaseModel):
     present: list[str]
     phase: Phase
     read_along_story_id: str
+    story_ids: dict[str, str]      # child_id -> the story that learner reads in the story turn
 
 
 class StoryWord(BaseModel):

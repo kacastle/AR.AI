@@ -56,7 +56,8 @@ class ApiTest(unittest.TestCase):
 
     def test_session_and_story(self):
         _, session = self.make_session()
-        self.assertEqual(set(session), {"id", "group_id", "present", "phase", "read_along_story_id"})
+        self.assertEqual(set(session), {"id", "group_id", "present", "phase", "read_along_story_id", "story_ids"})
+        self.assertEqual(set(session["story_ids"]), set(session["present"]))
         story = self.client.get(f"/api/stories/{session['read_along_story_id']}").json()
         self.assertEqual(set(story), {"title", "paragraphs", "words", "audio_url"})
         self.assertEqual(story["title"], CONTENT.stories_by_id[session["read_along_story_id"]].title)

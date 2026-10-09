@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     current_child_id TEXT,
     current_item_id TEXT,
     current_turn TEXT,
+    story_ids TEXT NOT NULL DEFAULT '{}',
     started_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS events (
@@ -110,6 +111,7 @@ def connect() -> Iterator[sqlite3.Connection]:
 ADDED_COLUMNS = [
     ("sessions", "current_turn", "TEXT"),
     ("events", "turn_number", "INTEGER"),
+    ("sessions", "story_ids", "TEXT NOT NULL DEFAULT '{}'"),
 ]
 
 

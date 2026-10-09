@@ -46,7 +46,8 @@ Response: the group (same shape as GET below).
 
 ## POST /api/sessions
 `present` = the learner ids at the session, in turn order. Turns rotate in this order.
-Creating a session also asks the background model for a personal story and practice words for each present learner. That never delays a request; results show up in `GET /api/approvals` a few minutes later.
+`read_along_story_id` is the group's read-along story. `story_ids` gives each present learner the story for his or her story turn (rules.md section 9), chosen without the model in this order: an approved model story for that learner not read yet (`gs_…`) → a filled template from `content.json` `story_templates` at the learner's level, not used in the last 2 sessions (`ts_…`) → a library story at the learner's level (`st_…`). Fetch each with `GET /api/stories/{id}`.
+Creating a session also asks the background model for the next personal story and practice words for each present learner. That never delays a request; results show up in `GET /api/approvals` a few minutes later.
 
 Request
 ```json
@@ -55,12 +56,13 @@ Request
 Response
 ```json
 {"id": "s_97aadbd0", "group_id": "g_e2c4a7a8", "present": ["c_78552429", "c_937d2ee6", "c_7f05adfd"],
- "phase": "tiles", "read_along_story_id": "st_l1_001"}
+ "phase": "tiles", "read_along_story_id": "st_l1_001",
+ "story_ids": {"c_78552429": "ts_69c7cdc1", "c_937d2ee6": "gs_84e95f95", "c_7f05adfd": "st_l1_002"}}
 ```
 
 ## GET /api/stories/{id}
 `words` lists every word in reading order, with punctuation attached, for highlighting.
-`id` can be a `content.json` story id or the id of a model story the tutor approved (`gs_…`, from `GET /api/approvals`). A model story that is waiting or rejected returns `404`. Model stories have no audio yet (`audio_url` returns `404`).
+`id` can be a `content.json` story id (`st_…`), a filled template story (`ts_…`) or a model story the tutor approved (`gs_…`); the session's `story_ids` lists them. A model story that is waiting or rejected returns `404`: learners never see it before the tutor approves it. Model stories have their audio before they reach the tutor; a template story's audio is made in the background right after the session starts (`audio_url` is `404` for the first few seconds, and the timings are estimates until then).
 `words` is every word in reading order. Once `scripts/pregen_audio.py` has run, `start_ms`/`end_ms` are the real positions of each word in `audio_url` (the story is read naturally, paragraph by paragraph with a short pause between; the timings come from the voice model), so tapping a word can play just that part. Before that they are estimates and `audio_url` returns 404.
 
 ```json
@@ -159,7 +161,8 @@ Every answer writes one row to the `events` table, with `session_id` and `turn_n
 
 ## GET /api/sessions/{id}/summary
 One entry per present learner. `next_focus_skill` is a skill id from content.json, and `next_method` is a key of `rules.json` → `methods`. `group_note` is `""` when there is nothing to note.
-Moving the session to phase `summary` asks the background model for the summary. Until it is ready, and whenever answers were added after it was written, this returns the code template below (never waits for the model). Call it again a little later to get the model's wording; the shape is the same.
+Code computes every number (items correct of total, skills practiced, weakest skill, main mistakes, support level, alert). Moving the session to phase `summary` asks the background model to put them into words; its output must pass the checks (present child ids, real skill ids and methods, the same numbers, 25 words or fewer, no blocklist words), with one retry. Until it is ready, if it failed twice, if Ollama is off, and whenever answers were added after it was written, this returns the code template below (never waits for the model). Call it again a little later to get the model's wording; the shape is the same.
+In the template, a learner with an alert (`rules.json` → `alert`: a skill below 0.60 after 10+ attempts or for 14 days) gets an extra sentence, for example `"Alert: Vowel sounds is still below 0.60."`.
 
 ```json
 {"learners": [
@@ -185,7 +188,7 @@ Printable practice sheet. No scores.
 
 ## GET /api/approvals
 Model items waiting for the tutor, oldest first. Every item passed the checks in `content/test_prompts.py` (a failed one is retried once, then dropped). `kind`:
-- `story`: a personal story. `payload` has the same fields as content.json `stories` (`id` is `gs_…`, `source` is `"model"`), plus `model`, `plot_id` and `object`. Once approved, `GET /api/stories/{payload.id}` serves it and `approved_by_tutor` becomes `true`.
+- `story`: a personal story, with its audio already made (`GET /api/audio/{payload.id}.wav`, so the tutor can listen before approving). `payload` has the same fields as content.json `stories` (`id` is `gs_…`, `source` is `"model"`), plus `model`, `plot_id` and `object`. Once approved, `GET /api/stories/{payload.id}` serves it, `approved_by_tutor` becomes `true`, and the learner gets it in the next session's `story_ids`.
 - `words`: practice words. `payload` = `{"skill_id", "words": [{"text", "word_id", "syllables", "meaning_en"}], "model"}`; only content.json words. Once approved, they go on the learner's practice sheet while the learner is on that skill.
 
 A learner gets no new story (or word list) while one is still waiting for the tutor.
