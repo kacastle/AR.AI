@@ -58,7 +58,7 @@ Response
 
 ## GET /api/stories/{id}
 `words` lists every word in reading order, with punctuation attached, for highlighting.
-**Note:** `start_ms`/`end_ms` are estimates for now. They become real timings once `scripts/pregen_audio.py` makes the audio. `audio_url` returns 404 until then.
+`words` is every word in reading order. Once `scripts/pregen_audio.py` has run, `start_ms`/`end_ms` are the real positions of each word in `audio_url` (the story is read naturally, paragraph by paragraph with a short pause between; the timings come from the voice model), so tapping a word can play just that part. Before that they are estimates and `audio_url` returns 404.
 
 ```json
 {"title": "Ang Bahay ni Ana",
@@ -195,4 +195,14 @@ Response
 ```
 
 ## GET /api/audio/{key}.wav
-Returns `audio/wav`. Keys: a word id (`w_aso`), its slow version (`w_aso_slow`), or a story id (`st_l1_001`). Returns 404 until the audio is generated.
+Returns `audio/wav` (16 kHz mono), made by `python scripts/pregen_audio.py`. 404 if the clip was not generated, 400 for a bad key. Keys:
+
+| Key | Audio |
+|---|---|
+| `w_aso` (any word or syllable item id) | the item, `prompt_audio` |
+| `w_aso_slow` | the item syllable by syllable with short gaps (`hint.audio` for `replay_by_syllable`) |
+| `syl_so` | one syllable tile |
+| sentence id, and `{id}_slow` | the sentence, and word by word |
+| `st_l1_001` (story id) | the whole story read naturally; matches the story's `words` timings |
+| `st_l1_001_p1` | one story paragraph, numbered from 1 |
+| `fb_CORRECT_2`, `fb_SHOW_ANSWER_hint` | a fixed feedback line (`message_fil[i]` or `hint_fil`). Lines with `{name}` or syllables in them have no audio |

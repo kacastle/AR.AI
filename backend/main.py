@@ -21,8 +21,8 @@ from backend.schemas import (
     LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, Result, Session, SessionIn,
     SheetOut, SheetWord, StoryOut, StoryWord, SummaryOut,
 )
+from backend.tts import audio as tts_audio
 
-AUDIO_DIR = db.ROOT / "audio_cache"
 AUDIO_KEY = re.compile(r"^[A-Za-z0-9_-]+$")
 DEMO_FAST = os.environ.get("DEMO_FAST") == "1"
 
@@ -173,12 +173,16 @@ def get_story(story_id: str):
     story = content.stories_by_id.get(story_id)
     if story is None:
         raise HTTPException(404, f"story '{story_id}' not found")
-    # Estimated timings until scripts/pregen_audio.py writes real ones.
-    words, t = [], 0
-    for text in " ".join(story.paragraphs).split():
-        length = 150 + 80 * len(text)
-        words.append(StoryWord(text=text, start_ms=t, end_ms=t + length))
-        t += length + 150
+    saved = tts_audio.load_timings(story.id)
+    if saved is not None:
+        words = [StoryWord(**w) for w in saved]
+    else:
+        # Estimated timings until scripts/pregen_audio.py writes real ones.
+        words, t = [], 0
+        for text in tts_audio.story_words(story):
+            length = 150 + 80 * len(text)
+            words.append(StoryWord(text=text, start_ms=t, end_ms=t + length))
+            t += length + 150
     return StoryOut(title=story.title, paragraphs=story.paragraphs, words=words,
                     audio_url=f"/api/audio/{story.id}.wav")
 
@@ -375,7 +379,7 @@ def decide_approval(approval_id: str, body: ApprovalIn):
 def audio(key: str):
     if not AUDIO_KEY.match(key):
         raise HTTPException(400, "bad audio key")
-    path = AUDIO_DIR / f"{key}.wav"
+    path = tts_audio.wav_path(key)
     if not path.is_file():
         raise HTTPException(404, f"audio '{key}' not generated yet")
     return FileResponse(path, media_type="audio/wav")
