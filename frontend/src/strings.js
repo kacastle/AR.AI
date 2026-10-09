@@ -106,7 +106,7 @@ export const t = {
   },
   landing: {
     title: 'AR.Ai: Ang Matalinong Kaakabay sa Pagbasa',
-    subtitle: 'Ang Matalinong Kaagapay sa Pagbasa para sa DepEd ARAL Program',
+    subtitle: 'Katuwang sa Pagbasa para sa DepEd ARAL Program',
     badges: ['100% Offline & Private', 'Powered by Local AI (Ollama 3B)', 'Key Stage 1 (Grades 1-3) Ready'],
     features: [
       {
