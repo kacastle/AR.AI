@@ -161,14 +161,17 @@
   },
   "story_levels": {
     "1": {
-      "min_words": 20,
-      "max_words": 40,
+      "min_words": 30,
+      "max_words": 55,
       "max_words_per_sentence": 8,
-      "min_sentences": 4,
-      "max_sentences": 8,
-      "paragraphs": 2,
+      "min_sentences": 8,
+      "max_sentences": 10,
+      "paragraphs": 3,
       "sentences_per_paragraph": 3,
-      "target_words_per_sentence": [4, 6],
+      "target_words_per_sentence": [
+        4,
+        6
+      ],
       "question_types": [
         "who",
         "where",
@@ -184,7 +187,10 @@
       "max_sentences": 10,
       "paragraphs": 3,
       "sentences_per_paragraph": 3,
-      "target_words_per_sentence": [6, 8],
+      "target_words_per_sentence": [
+        6,
+        8
+      ],
       "question_types": [
         "sequence",
         "feeling",
@@ -192,14 +198,37 @@
         "who",
         "where"
       ],
-      "required_question_types": ["sequence", "feeling"]
+      "required_question_types": [
+        "sequence",
+        "feeling"
+      ]
     }
   },
   "story_style": {
-    "connectors_fil": ["Pagkatapos", "Kaya", "Pero", "Nang", "Doon", "Agad", "Sa wakas"],
-    "pronouns_fil": ["siya", "niya", "sila", "nila"],
+    "connectors_fil": [
+      "Pagkatapos",
+      "Kaya",
+      "Pero",
+      "Nang",
+      "Doon",
+      "Agad",
+      "Sa wakas"
+    ],
+    "pronouns_fil": [
+      "siya",
+      "niya",
+      "sila",
+      "nila"
+    ],
     "questions_per_story": 3,
-    "choices_per_question": 3
+    "choices_per_question": 3,
+    "feeling_words_fil": [
+      "masaya",
+      "tuwang-tuwa",
+      "natuwa",
+      "nalungkot",
+      "nagalit"
+    ]
   },
   "mistake_types": {
     "P_SUB_VOWEL": {
@@ -499,6 +528,23 @@
       "knife",
       "ghost",
       "monster"
+    ],
+    "judgmental_note": "Words that judge the learner. Any match rejects a feedback or summary output.",
+    "judgmental_en": [
+      "slow",
+      "weak",
+      "bad",
+      "lazy",
+      "stupid",
+      "dumb"
+    ],
+    "judgmental_fil": [
+      "mabagal",
+      "tamad",
+      "bobo",
+      "tanga",
+      "mahina",
+      "pangit"
     ]
   },
   "personalization": {

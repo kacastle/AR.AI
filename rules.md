@@ -146,11 +146,13 @@ Each learner gets one personal story in each session, during his or her story tu
 
 **Story shape (so the story flows when read aloud)**
 
-- Each plot in `story_plots` has `beats_en`: one beat for each paragraph (Level 1: 2 beats, Level 2: 3 beats). The beats go beginning → problem or turn → happy ending, and each beat leads to the next one ("so", "but", "then").
+- Each plot in `story_plots` has `beats_en`: one beat for each paragraph (3 beats at both levels; Level 1 has shorter sentences). Level 1 had 2 beats until v0.3; the review found those stories too abrupt. The beats go beginning → problem or turn → happy ending, and each beat leads to the next one ("so", "but", "then").
 - The `{object}` matters in the first and the last beat. Do not write a plot in which the object appears once and is then forgotten.
 - Each plot has `word_bank_fil`: correct Filipino words for that plot (for example `tanghalian`, not "lunch"; `gumuhit`, not "nag-drawing"). Small models invent verb forms when they do not get these words.
 - The numbers are in `rules.json` → `story_levels.<level>`: `paragraphs`, `sentences_per_paragraph`, `target_words_per_sentence`, `min_sentences`/`max_sentences`, and `required_question_types`. Linking words are in `story_style.connectors_fil`.
 - A new plot needs `id`, `level`, `characters`, `beats_en`, `word_bank_fil`, and `outline_en` (= the beats joined).
+- `fits_objects`: the interest objects that make sense in this plot (you play with a ball at the park, not with shoes; you draw with crayons, not in the rain). Code chooses a plot that fits one of the learner's interest objects, then one of those objects. A new object must be added to the `fits_objects` of the plots it fits, or code never uses it.
+- Never use `laruang` + an animal (laruang pusa, laruang aso...): it does not read as a toy, and "laruang pusa" can read as an innuendo (Filipino speaker's review, r4).
 
 **Fallback order:** an approved model story for that learner → a filled template from `story_templates` → a library story. Templates need no model, so personalization always works.
 
@@ -171,6 +173,7 @@ Each learner gets one personal story in each session, during his or her story tu
 
 - All Filipino lines in `feedback_templates` are drafts. A Filipino speaker must check them.
 - `safety.blocklist` is a starter list. Person 3 extends it.
+- `safety.judgmental_en` and `safety.judgmental_fil` are words that judge the learner (slow, mabagal, tamad...). Any match rejects a feedback or tutor summary output.
 - Each `story_examples.<level>.output` in `content.json` must pass `check_story` in `test_prompts.py`. The model copies the length and shape of the example, so an example that breaks the rules teaches the model to break them.
 - The v0.2 examples, plot beats, and word banks are drafts. A Filipino speaker must check them.
 - If `rules.json` changes, restart the backend. Do not edit numbers in the code.
