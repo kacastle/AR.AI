@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Header from './components/Header.jsx'
 import TutorBar from './components/TutorBar.jsx'
+import LandingPage from './screens/LandingPage.jsx'
 import TutorLoginScreen from './screens/TutorLoginScreen.jsx'
 import GroupSetupScreen from './screens/GroupSetupScreen.jsx'
 import ReadAlongScreen from './screens/ReadAlongScreen.jsx'
@@ -16,7 +17,7 @@ const STEPS = ['readAlong', 'tiles', 'stories', 'summary']
 const API_PHASES = new Set(['tiles', 'stories', 'summary'])
 
 export default function App() {
-  const [step, setStep] = useState('login')
+  const [step, setStep] = useState('landing')
   const [group, setGroup] = useState(null)
   const [session, setSession] = useState(null)
   const [endsAt, setEndsAt] = useState(null)
@@ -46,6 +47,7 @@ export default function App() {
   }
 
   const screens = {
+    landing: <LandingPage onStart={() => setStep('login')} />,
     login: <TutorLoginScreen onDone={() => setStep('group')} />,
     group: <GroupSetupScreen onStart={startSession} />,
     readAlong: session && <ReadAlongScreen storyId={session.read_along_story_id} onDone={advance} />,
@@ -60,11 +62,11 @@ export default function App() {
 
   const showBar = step in t.phases
   return (
-    <div className={`app${showBar ? ' app--with-bar' : ''}`}>
-      <Header />
+    <div className={`app${showBar ? ' app--with-bar' : ''}${step === 'landing' ? ' app--landing' : ''}`}>
+      {step !== 'landing' && <Header />}
       {showBar && <TutorBar key={`bar-${step}`} label={t.phases[step]} endsAt={endsAt} onSkip={advance} />}
       <div key={step}>{screens[step]}</div>
-      <ApiModeBadge />
+      {step !== 'landing' && <ApiModeBadge />}
     </div>
   )
 }

@@ -38,7 +38,7 @@ export default function TutorLoginScreen({ onDone }) {
   )
 
   return (
-    <main className="screen login">
+    <main className="screen login slide-in">
       <h1 className="screen__title">{t.login.title}</h1>
       <p className="screen__subtitle">{t.login.prompt}</p>
       <div className="pin__dots" role="img" aria-label={t.login.filled(pin.length, PIN_LENGTH)}>

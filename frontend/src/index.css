@@ -84,6 +84,10 @@ body {
   }
 }
 
+.app--landing {
+  --header-h: 0px;
+}
+
 .app--with-bar {
   --bar-h: 52px;
 }

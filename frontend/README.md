@@ -47,7 +47,7 @@ src/
 
 ## Session flow (App.jsx)
 
-Login (any PIN, demo stub) → Group setup (attendance; `present` keeps group order) → Read-along
+Landing page (`LandingPage.jsx`, the start screen; no header there) → Login (any PIN, demo stub) → Group setup (attendance; `present` keeps group order) → Read-along
 (`read_along_story_id`) → tiles phase → stories phase → Tutor summary. Each phase calls
 `POST /api/sessions/{id}/phase`; the tutor bar shows time left from `ends_at` and has "Laktawan" to skip
 ahead for a fast demo. The tiles phase ends at the first finished turn after `ends_at`.

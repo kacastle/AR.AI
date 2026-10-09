@@ -104,6 +104,26 @@ export const t = {
     sentence: 'Basahin at isulat ang pangungusap.',
     parentNote: 'Para sa magulang o kasama sa bahay:',
   },
+  landing: {
+    title: 'AR.Ai: Educational Technology Solutions',
+    subtitle: 'Ang Matalinong Kaagapay sa Pagbasa para sa DepEd ARAL Program',
+    badges: ['100% Offline & Private', 'Powered by Local AI (Ollama 3B)', 'Key Stage 1 (Grades 1-3) Ready'],
+    features: [
+      {
+        title: 'Mababang Basahin (Adaptive Stories)',
+        text: 'Mga kuwentong Filipino na ginagawa mismo sa device, ayon sa hilig ng bawat bata.',
+      },
+      {
+        title: 'Tile Board Practice',
+        text: 'Pagbuo ng salita gamit ang mga tile ng titik at pantig, ayon sa Marungko method.',
+      },
+      {
+        title: 'Buod at Printable Worksheets',
+        text: 'Awtomatikong buod para sa tutor at worksheet na maiuuwi para sa pagsasanay sa bahay.',
+      },
+    ],
+    cta: 'Magsimula / Pumasok bilang Tutor',
+  },
   header: {
     privacy: '100% Offline | Ligtas ang Datos',
     logoAlt: 'AR.AI',
