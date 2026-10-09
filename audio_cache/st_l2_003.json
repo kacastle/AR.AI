@@ -1,0 +1,269 @@
+{
+ "words": [
+  {
+   "text": "Si",
+   "start_ms": 0,
+   "end_ms": 153
+  },
+  {
+   "text": "Mang",
+   "start_ms": 153,
+   "end_ms": 458
+  },
+  {
+   "text": "Tonyo",
+   "start_ms": 458,
+   "end_ms": 840
+  },
+  {
+   "text": "ay",
+   "start_ms": 840,
+   "end_ms": 993
+  },
+  {
+   "text": "isang",
+   "start_ms": 993,
+   "end_ms": 1375
+  },
+  {
+   "text": "magsasaka.",
+   "start_ms": 1375,
+   "end_ms": 2063
+  },
+  {
+   "text": "May",
+   "start_ms": 2363,
+   "end_ms": 2597
+  },
+  {
+   "text": "kalabaw",
+   "start_ms": 2597,
+   "end_ms": 3143
+  },
+  {
+   "text": "siya",
+   "start_ms": 3143,
+   "end_ms": 3454
+  },
+  {
+   "text": "na",
+   "start_ms": 3454,
+   "end_ms": 3610
+  },
+  {
+   "text": "si",
+   "start_ms": 3610,
+   "end_ms": 3766
+  },
+  {
+   "text": "Kalog.",
+   "start_ms": 3766,
+   "end_ms": 4156
+  },
+  {
+   "text": "Tuwing",
+   "start_ms": 4455,
+   "end_ms": 4906
+  },
+  {
+   "text": "umaga,",
+   "start_ms": 4906,
+   "end_ms": 5282
+  },
+  {
+   "text": "tumutulong",
+   "start_ms": 5282,
+   "end_ms": 6034
+  },
+  {
+   "text": "si",
+   "start_ms": 6034,
+   "end_ms": 6185
+  },
+  {
+   "text": "Kalog",
+   "start_ms": 6185,
+   "end_ms": 6561
+  },
+  {
+   "text": "sa",
+   "start_ms": 6561,
+   "end_ms": 6711
+  },
+  {
+   "text": "bukid.",
+   "start_ms": 6711,
+   "end_ms": 7087
+  },
+  {
+   "text": "Isang",
+   "start_ms": 7588,
+   "end_ms": 8004
+  },
+  {
+   "text": "araw,",
+   "start_ms": 8004,
+   "end_ms": 8337
+  },
+  {
+   "text": "umulan",
+   "start_ms": 8337,
+   "end_ms": 8836
+  },
+  {
+   "text": "nang",
+   "start_ms": 8836,
+   "end_ms": 9169
+  },
+  {
+   "text": "malakas.",
+   "start_ms": 9169,
+   "end_ms": 9752
+  },
+  {
+   "text": "Basang-basa",
+   "start_ms": 10052,
+   "end_ms": 10814
+  },
+  {
+   "text": "si",
+   "start_ms": 10814,
+   "end_ms": 10966
+  },
+  {
+   "text": "Kalog.",
+   "start_ms": 10966,
+   "end_ms": 11347
+  },
+  {
+   "text": "Dinala",
+   "start_ms": 11646,
+   "end_ms": 12077
+  },
+  {
+   "text": "siya",
+   "start_ms": 12077,
+   "end_ms": 12364
+  },
+  {
+   "text": "ni",
+   "start_ms": 12364,
+   "end_ms": 12508
+  },
+  {
+   "text": "Mang",
+   "start_ms": 12508,
+   "end_ms": 12795
+  },
+  {
+   "text": "Tonyo",
+   "start_ms": 12795,
+   "end_ms": 13154
+  },
+  {
+   "text": "sa",
+   "start_ms": 13154,
+   "end_ms": 13298
+  },
+  {
+   "text": "ilalim",
+   "start_ms": 13298,
+   "end_ms": 13729
+  },
+  {
+   "text": "ng",
+   "start_ms": 13729,
+   "end_ms": 13872
+  },
+  {
+   "text": "malaking",
+   "start_ms": 13872,
+   "end_ms": 14447
+  },
+  {
+   "text": "puno.",
+   "start_ms": 14447,
+   "end_ms": 14734
+  },
+  {
+   "text": "Nang",
+   "start_ms": 15234,
+   "end_ms": 15566
+  },
+  {
+   "text": "tumigil",
+   "start_ms": 15566,
+   "end_ms": 16146
+  },
+  {
+   "text": "ang",
+   "start_ms": 16146,
+   "end_ms": 16394
+  },
+  {
+   "text": "ulan,",
+   "start_ms": 16394,
+   "end_ms": 16726
+  },
+  {
+   "text": "bumalik",
+   "start_ms": 16726,
+   "end_ms": 17306
+  },
+  {
+   "text": "sila",
+   "start_ms": 17306,
+   "end_ms": 17638
+  },
+  {
+   "text": "sa",
+   "start_ms": 17638,
+   "end_ms": 17804
+  },
+  {
+   "text": "bukid.",
+   "start_ms": 17804,
+   "end_ms": 18218
+  },
+  {
+   "text": "\"Mabuti",
+   "start_ms": 18518,
+   "end_ms": 19033
+  },
+  {
+   "text": "at",
+   "start_ms": 19033,
+   "end_ms": 19204
+  },
+  {
+   "text": "ligtas",
+   "start_ms": 19204,
+   "end_ms": 19719
+  },
+  {
+   "text": "tayo,\"",
+   "start_ms": 19719,
+   "end_ms": 20062
+  },
+  {
+   "text": "sabi",
+   "start_ms": 20062,
+   "end_ms": 20405
+  },
+  {
+   "text": "ni",
+   "start_ms": 20405,
+   "end_ms": 20577
+  },
+  {
+   "text": "Mang",
+   "start_ms": 20577,
+   "end_ms": 20920
+  },
+  {
+   "text": "Tonyo.",
+   "start_ms": 20920,
+   "end_ms": 21349
+  }
+ ]
+}
