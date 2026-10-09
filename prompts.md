@@ -59,7 +59,7 @@ Code chooses the plot, the object, and the example. The model only writes the pl
 | `{other_names}` | The plot's `characters` (for example "Nanay") |
 | `{level}` | Learner's current level |
 | `{min_words}`, `{max_words}`, `{max_words_per_sentence}`, `{question_types}` | `rules.json` → `story_levels.<level>` |
-| `{min_sentences}`, `{max_sentences}` | Level 1: 4–6; Level 2: 8–10 |
+| `{min_sentences}`, `{max_sentences}` | Level 1: 4–8; Level 2: 8–10 |
 | `{optional_words}` | 2 words from the learner's weakest skill. Optional: the model uses one only if it fits. |
 | `{example_plot}`, `{example_story}` | `content.json` → `story_examples.<level>` |
 
@@ -85,8 +85,10 @@ Rules:
 - Every sentence must make sense in real life. Use only common words that a Grade 1 child knows.
 - Use the name {name} at least 2 times and the word "{object}" at least 1 time.
 - Kind, safe, and a happy ending. No violence, fear, or sadness at the end.
+- Write the story only once. Do not repeat or retell it.
+- Use the past tense for things that happened (for example: dinala, naglaro, ngumiti, umuwi).
 - Then write exactly 3 questions about the story, of these types: {question_types}.
-- Each question has 3 short choices. Exactly one choice is correct, and the correct answer is written in the story.
+- Each question has exactly 3 short, different choices in Filipino. Exactly one choice is correct, and the correct answer is written in the story.
 
 Example of a plot and its story:
 Plot: {example_plot}

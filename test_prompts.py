@@ -86,6 +86,7 @@ GENERIC_SYSTEM = "Follow every rule. Output only valid JSON. No other text."
 def clean_output(text):
     """Remove thinking blocks and code fences; keep the outer JSON object."""
     text = re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
+    text = text.replace("\u2581", " ")              # tokenizer artifact (looks like ▁)
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text.strip())
     i, j = text.find("{"), text.rfind("}")
     return text[i:j + 1] if i != -1 and j > i else text
@@ -181,16 +182,19 @@ def check_story(out, v, learner):
     qs = d.get("questions", [])
     if len(qs) != 3:
         fails.append(f"questions_{len(qs)}")
+    particles = {"sa", "kay", "ang", "si", "ni", "ng", "na", "ay", "mga", "at", "nang"}
     for q in qs:
         ch = [str(x) for x in q.get("choices", [])]
         ans = str(q.get("answer", ""))
-        if ans not in ch or len(set(ch)) != 3:
-            fails.append("bad_question")
-        if q.get("type") not in lv["question_types"]:
+        qtype = str(q.get("type", "")).lower().strip()
+        if len(ch) != 3 or len(set(c.lower() for c in ch)) != 3 or ans not in ch:
+            fails.append("bad_choices")
+        if qtype not in lv["question_types"]:
             fails.append("bad_question_type")
-        if q.get("type") in ("who", "what", "where"):
-            core = re.sub(r"^(sa|kay|ang|si|ni)\s+", "", ans.lower()).strip(" .!?")
-            if core and core not in low:
+        if qtype in ("who", "what", "where"):
+            content = [w for w in words_in(ans.lower()) if w not in particles]
+            found = [w for w in content if w in low]
+            if content and len(found) * 2 < len(content):      # less than half of the answer words
                 fails.append("answer_not_in_story")
     bl = blocklisted(json.dumps(d, ensure_ascii=False))
     if bl:
@@ -265,7 +269,7 @@ def story_case(learner, rnd):
     skill_words = [w["text"] for w in WORDS if learner["weakest"] in w["skill_ids"]]
     optional = rnd.sample(skill_words, 2)
     ex = CONTENT["story_examples"][str(learner["level"])]
-    lo, hi = (4, 6) if learner["level"] == 1 else (8, 10)
+    lo, hi = (4, 8) if learner["level"] == 1 else (8, 10)
     v = {
         "name": learner["name"], "object": obj, "plot": plot_text,
         "other_names": ", ".join(plot["characters"]), "level": learner["level"],
@@ -361,14 +365,20 @@ def main():
                  "feedback": lambda: feedback_case(learner, rnd), "summary": lambda: summary_case(rnd)}[kind]()
             prompt, unfilled = fill(TEMPLATES[kind], {k: x for k, x in v.items() if not k.startswith("_")})
             temp, num = SETTINGS_BY_KIND[kind]
-            try:
-                out, secs = call_model(a.model, prompt, temp, num,
-                                       mock=mock_output(kind, v, learner) if a.mock else None,
-                                       system=SYSTEM if kind == "story" else GENERIC_SYSTEM,
-                                       backend=a.backend, base_url=a.base_url)
-            except Exception as e:
-                rows.append([kind, a.model, i + 1, learner["name"], "ERROR", str(e), "", ""])
-                print(f"{kind} #{i+1}: ERROR {e}")
+            out = None
+            for attempt in range(2):                     # retry once on a server error
+                try:
+                    out, secs = call_model(a.model, prompt, temp, num,
+                                           mock=mock_output(kind, v, learner) if a.mock else None,
+                                           system=SYSTEM if kind == "story" else GENERIC_SYSTEM,
+                                           backend=a.backend, base_url=a.base_url)
+                    break
+                except Exception as e:
+                    err = e
+                    time.sleep(3)
+            if out is None:
+                rows.append([kind, a.model, i + 1, learner["name"], "ERROR", str(err), "", ""])
+                print(f"{kind} #{i+1}: ERROR {err}")
                 continue
             checker = {"story": lambda: check_story(out, v, learner), "words": lambda: check_words(out, v),
                        "feedback": lambda: check_feedback(out, v), "summary": lambda: check_summary(out, v)}[kind]
