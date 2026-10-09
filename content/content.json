@@ -1472,7 +1472,8 @@
         "n"
       ],
       "skill_ids": [
-        "sk_cvc_final"
+        "sk_cvc_final",
+        "sk_letters_2"
       ],
       "level": 1,
       "tts_text": "dahon",
@@ -1499,7 +1500,8 @@
         "s"
       ],
       "skill_ids": [
-        "sk_cvc_final"
+        "sk_cvc_final",
+        "sk_letters_2"
       ],
       "level": 1,
       "tts_text": "lapis",
@@ -1579,7 +1581,8 @@
         "s"
       ],
       "skill_ids": [
-        "sk_cvc_final"
+        "sk_cvc_final",
+        "sk_letters_2"
       ],
       "level": 1,
       "tts_text": "gatas",
@@ -1606,7 +1609,8 @@
         "l"
       ],
       "skill_ids": [
-        "sk_cvc_final"
+        "sk_cvc_final",
+        "sk_letters_2"
       ],
       "level": 1,
       "tts_text": "papel",
@@ -1718,7 +1722,8 @@
         "o"
       ],
       "skill_ids": [
-        "sk_cvc_mid"
+        "sk_cvc_mid",
+        "sk_letters_2"
       ],
       "level": 2,
       "tts_text": "pinto",
@@ -4472,7 +4477,11 @@
         "tuta",
         "bibe"
       ],
-      "objects": []
+      "objects": [
+        "aso",
+        "pusa",
+        "ibon"
+      ]
     },
     {
       "id": "int_basketball",
@@ -4913,7 +4922,8 @@
         "laruang tren",
         "laruang roket",
         "aklat",
-        "bag"
+        "bag",
+        "larawan ng pamilya"
       ]
     },
     {
@@ -5014,7 +5024,167 @@
         "laruang dyip",
         "laruang trak",
         "laruang tren",
-        "laruang roket"
+        "laruang roket",
+        "gitara",
+        "tambol"
+      ]
+    },
+    {
+      "id": "plot_l1_pet",
+      "level": 1,
+      "characters": [
+        "Ate"
+      ],
+      "outline_en": "In the morning, {name} gives water to the {object}. The {object} is happy. Ate and {name} play with it in the yard. They run and laugh together. In the afternoon, the {object} sleeps near {name}. {name} smiles.",
+      "beats_en": [
+        "In the morning, {name} gives water to the {object}. The {object} is happy.",
+        "Ate and {name} play with it in the yard. They run and laugh together.",
+        "In the afternoon, the {object} sleeps near {name}. {name} smiles."
+      ],
+      "word_bank_fil": [
+        "naglaro",
+        "bakuran",
+        "masaya",
+        "ngumiti",
+        "sabay"
+      ],
+      "fits_objects": [
+        "aso",
+        "pusa",
+        "ibon"
+      ]
+    },
+    {
+      "id": "plot_l1_snack",
+      "level": 1,
+      "characters": [
+        "Kuya"
+      ],
+      "outline_en": "{name} has a {object} for a snack. Kuya comes home hungry. {name} sees that Kuya has no snack, so {name} shares it with Kuya. They eat the {object} together. Kuya thanks {name}, and they are happy.",
+      "beats_en": [
+        "{name} has a {object} for a snack. Kuya comes home hungry.",
+        "{name} sees that Kuya has no snack, so {name} shares it with Kuya.",
+        "They eat the {object} together. Kuya thanks {name}, and they are happy."
+      ],
+      "word_bank_fil": [
+        "nakita",
+        "ibinahagi",
+        "sabay",
+        "salamat",
+        "masaya"
+      ],
+      "fits_objects": [
+        "tinapay",
+        "mangga",
+        "saging"
+      ]
+    },
+    {
+      "id": "plot_l1_garden",
+      "level": 1,
+      "characters": [
+        "Lolo"
+      ],
+      "outline_en": "{name} helps Lolo in the garden. They look at the {object} near the tree. The sun is hot, so {name} gives water to the plants. Lolo smiles. The next day, the {object} looks beautiful. {name} is happy.",
+      "beats_en": [
+        "{name} helps Lolo in the garden. They look at the {object} near the tree.",
+        "The sun is hot, so {name} gives water to the plants. Lolo smiles.",
+        "The next day, the {object} looks beautiful. {name} is happy."
+      ],
+      "word_bank_fil": [
+        "tumulong",
+        "puno",
+        "ngumiti",
+        "maganda",
+        "masaya"
+      ],
+      "fits_objects": [
+        "bulaklak",
+        "dahon",
+        "mais"
+      ]
+    },
+    {
+      "id": "plot_l2_pet",
+      "level": 2,
+      "characters": [
+        "Tatay"
+      ],
+      "outline_en": "One morning, {name} cannot find the {object}. {name} looks in the yard and under the table. Tatay helps {name} look. They hear a sound near the box in the house. The {object} is sleeping in the box! {name} hugs the {object}, and Tatay smiles.",
+      "beats_en": [
+        "One morning, {name} cannot find the {object}. {name} looks in the yard and under the table.",
+        "Tatay helps {name} look. They hear a sound near the box in the house.",
+        "The {object} is sleeping in the box! {name} hugs the {object}, and Tatay smiles."
+      ],
+      "word_bank_fil": [
+        "nawala",
+        "bakuran",
+        "mesa",
+        "kahon",
+        "nakita",
+        "niyakap",
+        "ngumiti"
+      ],
+      "fits_objects": [
+        "aso",
+        "pusa",
+        "ibon"
+      ]
+    },
+    {
+      "id": "plot_l2_harvest",
+      "level": 2,
+      "characters": [
+        "Lolo"
+      ],
+      "outline_en": "{name} goes to the farm with Lolo to see the {object}. The sun is bright. Lolo shows {name} how to pick carefully. {name} puts everything in the basket. At home, they share the {object} with the family. {name} is very happy.",
+      "beats_en": [
+        "{name} goes to the farm with Lolo to see the {object}. The sun is bright.",
+        "Lolo shows {name} how to pick carefully. {name} puts everything in the basket.",
+        "At home, they share the {object} with the family. {name} is very happy."
+      ],
+      "word_bank_fil": [
+        "bukid",
+        "maingat",
+        "basket",
+        "ibinahagi",
+        "tuwang-tuwa"
+      ],
+      "fits_objects": [
+        "mais",
+        "mangga",
+        "saging",
+        "bulaklak",
+        "dahon"
+      ]
+    },
+    {
+      "id": "plot_l2_show",
+      "level": 2,
+      "characters": [
+        "Ate"
+      ],
+      "outline_en": "{name} brings the {object} to school to show the class. Ate walks with {name}. On the way, it starts to rain, so {name} carefully keeps everything in the bag. At school, {name} shows the {object} to the class. Everyone smiles, and {name} is happy.",
+      "beats_en": [
+        "{name} brings the {object} to school to show the class. Ate walks with {name}.",
+        "On the way, it starts to rain, so {name} carefully keeps everything in the bag.",
+        "At school, {name} shows the {object} to the class. Everyone smiles, and {name} is happy."
+      ],
+      "word_bank_fil": [
+        "maingat",
+        "bag",
+        "umuulan",
+        "ngumiti",
+        "masaya"
+      ],
+      "fits_objects": [
+        "aklat",
+        "bag",
+        "lapis",
+        "krayola",
+        "papel",
+        "larawan ng pamilya",
+        "tinapay"
       ]
     }
   ],

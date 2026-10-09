@@ -57,6 +57,7 @@ Code chooses the plot, the object, the question types, and the example. The mode
 | Variable | Source |
 |---|---|
 | `{name}` | Learner's **first name only** |
+| `{interest}` | The English label (lower case) of the learner's interest the object comes from. |
 | `{object}` | One item from `objects` of one of the learner's interests (`content.json` → `interests`). Rotate between sessions. |
 | `{beats}` | `content.json` → `story_plots[].beats_en` at the learner's level, numbered "Paragraph 1: …", with `{name}` and `{object}` filled. Not the same plot as in the last 2 sessions. |
 | `{word_bank}` | The plot's `word_bank_fil` |
@@ -85,7 +86,8 @@ Follow every rule. Output only valid JSON. No other text.
 Write a short story in simple, natural Filipino (Tagalog) for a child aged 6 to 8.
 The story is read aloud, so it must flow: each sentence follows from the sentence before it.
 
-Main character: {name}. Object: {object}. Other characters (only these): {other_names}.
+Main character: {name}, a child who loves {interest}. Object: {object}. Other characters (only these): {other_names}.
+Make the story feel like it is about {interest}: the object and the actions should fit it.
 Plot. Write one paragraph for each part. Do not add other events, places, or characters.
 {beats}
 
@@ -313,7 +315,7 @@ The lesson player teaches a skill before the learner practises it, and again whe
 
 ```
 Write a very short story in simple, natural Filipino (Tagalog) that helps a child aged 6 to 8 learn to read some words.
-Main character: {name}. The child loves this object: {object}.
+Main character: {name}, a child who loves {interest}. The child loves this object: {object}.
 The words to learn: {lesson_words}. They are {pattern_description}.
 Rules:
 - Exactly 3 sentences. Each sentence has 4 to 8 words.

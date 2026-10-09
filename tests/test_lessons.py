@@ -67,7 +67,7 @@ class LessonTest(unittest.TestCase):
         got = self.client.get("/api/interests").json()
         ids = {i["id"] for i in got}
         self.assertIn("int_toys", ids)
-        self.assertNotIn("int_animals", ids)                      # no objects to write stories about
+        self.assertIn("int_animals", ids)                         # objects from its own words (aso, pusa, ibon)
         self.assertEqual(set(got[0]), {"id", "label_fil", "label_en", "icon"})
 
     def test_a_new_skill_is_taught_before_its_first_item_only(self):

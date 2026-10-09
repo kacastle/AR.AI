@@ -300,7 +300,7 @@ class ApiTest(unittest.TestCase):
         self.assertIn(first["next_method"], CONTENT.rules.methods)
 
         sheet = self.client.get(f"/api/children/{group['learners'][0]['id']}/sheet").json()
-        self.assertEqual(set(sheet), {"name", "date", "words", "sentence", "home_line_fil"})
+        self.assertEqual(set(sheet), {"name", "date", "words", "sentence", "home_line_fil", "parent_note"})
         self.assertEqual(len(sheet["words"]), CONTENT.rules.practice_sheet.words)
         self.assertEqual(sheet["home_line_fil"], CONTENT.rules.practice_sheet.home_line_fil)
 

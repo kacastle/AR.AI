@@ -505,6 +505,11 @@
     ]
   },
   "practice_sheet": {
+    "level_labels_fil": {
+      "1": "Antas 1",
+      "2": "Antas 2"
+    },
+    "level_labels_note": "Draft wording for the parent footnote on the printed sheet: Kiefer must confirm.",
     "words": 5,
     "sentences": 1,
     "show_scores": false,
@@ -698,8 +703,11 @@
     "styles": [
       "visual",
       "steps",
-      "story"
+      "story",
+      "letters"
     ],
+    "letters_note": "letters: one card per letter of a letter_sound skill (its sound and a word that starts with it). The first lesson of a letter_sound skill uses it, and every learner sees the vowel lesson (sk_vowels) once, even after a passed diagnostic.",
+    "intro_skill": "sk_vowels",
     "check_items": 3,
     "worked_at": 0.67
   }

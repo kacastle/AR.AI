@@ -21,11 +21,11 @@ from backend.engine.state import SkillState, new_state
 from backend.llm.jobs import Job
 from backend.llm.worker import worker
 from backend import summary
-from backend.llm.fallbacks import choose_story
+from backend.llm.fallbacks import choose_story, read_along_story, split_sentences
 from backend.records import event_count, learner_info, load_states
 from backend.schemas import (
     AnswerIn, ApprovalIn, ApprovalItem, Feedback, Group, GroupIn, Hint, Item, Learner,
-    LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, ProfileOut, QuizResult, InterestInfo, Result, Session,
+    LearnerListItem, LearnerSummary, LoginIn, NextTurn, OkOut, ParentNote, PhaseIn, PhaseOut, ProfileOut, QuizResult, InterestInfo, Result, Session,
     SessionIn, SheetOut, SheetWord, StoryAnswerIn, StoryAnswerOut, StoryOut, StoryQuestion, StoryTurn,
     StoryTurnQuestion, StoryWord, SummaryOut,
 )
@@ -102,18 +102,39 @@ def interest_words(child) -> list[str]:
     return [w for i in content.data.interests if i.id in mine for w in i.words]
 
 
+PUNCT = '\'.,!?"\''
+
+
+def story_words(conn, session_id: str, child_id: str) -> list[str]:
+    """Words of the story this learner reads in this session (chosen at their level), so the tile items practise
+    the same reading material: its target words first, then every other content word in the story."""
+    row = conn.execute("SELECT story_ids FROM sessions WHERE id = ?", (session_id,)).fetchone()
+    story_id = json.loads(row["story_ids"]).get(child_id) if row else None
+    story = (content.stories_by_id.get(story_id) or generated_story(story_id)) if story_id else None
+    if story is None:
+        return []
+    targets = [content.words_by_id[w].text for w in (getattr(story, "target_word_ids", None) or [])
+               if w in content.words_by_id]
+    tokens = {t.strip(PUNCT) for t in " ".join(story.paragraphs).lower().split()}
+    return targets + [w.text for w in content.data.words if w.kind == "word" and w.text.lower() in tokens]
+
+
 def pick_for(conn, session_id: str, child) -> dict:
     """The learner's next turn: a diagnostic item first (rules.json placement), else practice with a running
     re-teach method, an easy item after wrong or slow answers, or the normal choice. Returns the stored turn."""
     rules = content.rules
     child_id = child["id"]
     used = used_items(conn, session_id, child_id)
-    prefer = interest_words(child)
+    prefer = interest_words(child) + story_words(conn, session_id, child_id)
     skill_id = adapt.placement_skill(conn, content, child)
     if skill_id is not None:
         skill = next(sk for sk in content.data.skills if sk.id == skill_id)
-        state = replace(new_state(skill.id, rules), support_level="alone")     # no help: see what the child knows
-        item = choose_item(skill_items(content, skill), used, "easy", prefer)
+        # Which diagnostic item of this skill (0, 1, ...): rotates the task type, so the items look different.
+        done = conn.execute("SELECT COUNT(*) FROM events WHERE child_id = ? AND skill_id = ? AND placement = 1 "
+                            "AND attempt = 1", (child_id, skill.id)).fetchone()[0]
+        state = replace(new_state(skill.id, rules), support_level="alone", attempts=done)   # no help
+        # A different easy item per learner (seeded by the learner, so a reload shows the same one).
+        item = choose_item(skill_items(content, skill), used, "easy", prefer, rng=random.Random(f"{child_id}:{done}"))
         pick = build_pick(content, skill, state, item, "easy", False, False, random.Random())
         return {**asdict(pick), "mode": "placement", "method": None, "lesson": None}
     results = first_try_results(conn, child_id)
@@ -127,7 +148,12 @@ def pick_for(conn, session_id: str, child) -> dict:
             "method_run_id": run["id"] if run is not None else None}
     # Teach first: a lesson before the first item of a skill, and another way when a re-teach method starts.
     reason = lessons.due(conn, child_id, turn, states)
-    lesson = lessons.build(conn, content, child, pick.skill_id, pick.item_id, reason, prefer) if reason else None
+    if lessons.intro_due(conn, rules, child_id, turn):
+        # Every learner starts with the vowels (a, e, i, o, u), even when the diagnostic passed them.
+        intro = rules.lessons["intro_skill"]
+        lesson = lessons.build(conn, content, child, intro, pick.item_id, "new", prefer)
+    else:
+        lesson = lessons.build(conn, content, child, pick.skill_id, pick.item_id, reason, prefer) if reason else None
     if lesson is not None:
         lessons.record(conn, child_id, session_id, lesson, turn["method_run_id"])
     turn["lesson"] = lesson
@@ -168,8 +194,30 @@ def login(body: LoginIn):
     return OkOut(ok=True)
 
 
+@app.get("/api/learners", response_model=list[LearnerListItem])
+def list_learners():
+    """Every learner on this laptop, latest activity first: the tutor picks returning learners here. Their
+    skills, diagnostic and story level stay (all learner data is keyed by the learner id)."""
+    skills = {s.id: s for s in content.data.skills}
+    out = []
+    with db.connect() as conn:
+        for c in conn.execute("SELECT * FROM children ORDER BY rowid DESC").fetchall():
+            states = load_states(conn, c["id"])
+            last = conn.execute("SELECT MAX(substr(created_at, 1, 10)) FROM events WHERE child_id = ?",
+                                (c["id"],)).fetchone()[0]
+            out.append(LearnerListItem(
+                id=c["id"], name=c["name"], picture=c["picture"], interests=json.loads(c["interests"]),
+                placement=c["placement"], story_level=learner_info(conn, content, c["id"])["level"],
+                current_skill_fil=skills[weakest_unlocked_skill(content, states).id].name_fil,
+                mastered_count=sum(1 for s in states.values() if s.mastered), last_session=last))
+    out.sort(key=lambda x: x.last_session or "", reverse=True)
+    return out
+
+
 @app.post("/api/groups", response_model=Group)
 def create_group(body: GroupIn):
+    if not body.learners and not body.existing_child_ids:
+        raise HTTPException(422, "a group needs learners or existing_child_ids")
     profiles = content.rules.placement.profiles
     known = {i.id for i in content.data.interests}
     most = content.rules.personalization["max_interests_per_learner"]
@@ -180,14 +228,24 @@ def create_group(body: GroupIn):
         if unknown or len(learner.interests) > most:
             raise HTTPException(422, f"interests: up to {most} ids from content.json interests (unknown: {unknown})")
     with db.connect() as conn:
+        known_kids = {r["id"] for r in conn.execute("SELECT id FROM children")}
+        missing = [c for c in body.existing_child_ids if c not in known_kids]
+        if missing:
+            raise HTTPException(422, f"unknown learners: {missing}")
         group_id = db.new_id("g")
         conn.execute("INSERT INTO groups (id, tutor_name) VALUES (?, ?)", (group_id, body.tutor_name))
+        for child_id in body.existing_child_ids:      # returning learners join the new group, with all progress
+            conn.execute("UPDATE children SET group_id = ? WHERE id = ?", (group_id, child_id))
         for learner in body.learners:
             conn.execute("INSERT INTO children (id, group_id, name, picture, profile, interests, placement) "
                          "VALUES (?, ?, ?, ?, ?, ?, ?)", (db.new_id("c"), group_id, learner.name, learner.picture,
                                                           learner.profile, json.dumps(learner.interests),
                                                           "pending" if learner.diagnostic else None))
-        return group_out(conn, group_id)
+        out = group_out(conn, group_id)
+    # A personal story from the interests right away, so the first story turn can already be the learner's own.
+    for learner in out.learners:
+        worker.submit(Job("story", child_id=learner.id))
+    return out
 
 
 @app.get("/api/groups/{group_id}", response_model=Group)
@@ -206,24 +264,25 @@ def create_session(body: SessionIn):
         missing = [c for c in body.present if c not in kids]
         if missing:
             raise HTTPException(422, f"not in this group: {missing}")
-        level = min(content.data.levels)
-        story = next(s for s in content.data.stories if s.level == level)
         session_id = db.new_id("s")
-        # Each learner's story turn: approved model story -> filled template -> library story (no model).
         rnd = random.Random()
+        # The group read-along: a library story at the group's lowest level that fits their interests.
+        read_along = read_along_story(content, [learner_info(conn, content, c) for c in body.present], rnd)
+        # Each learner's story turn: approved model story -> filled template -> library story (no model).
         story_ids = {child_id: choose_story(conn, content, child_id, rnd) for child_id in body.present}
         conn.execute("INSERT INTO sessions (id, group_id, present, phase, read_along_story_id, story_ids) "
                      "VALUES (?, ?, ?, ?, ?, ?)", (session_id, body.group_id, json.dumps(body.present), "tiles",
-                                                   story.id, json.dumps(story_ids)))
+                                                   read_along, json.dumps(story_ids)))
         out = session_out(get_row(conn, "sessions", session_id))
-    # Background work: audio for filled templates now, practice words for the sheet. Personal stories for
-    # the next session are written at the end of this one (prompts.md section 0), after the summary.
+    # Background work: audio for filled templates now, practice words for the sheet, and a personal story from
+    # the learner's interests (ready for this session's story turn if the model is quick, else the next one).
     for story_id in story_ids.values():
         if story_id.startswith("ts_"):
             worker.submit(Job("story_audio", story_id=story_id))
     for child_id in body.present:
         worker.submit(Job("lesson", child_id=child_id))      # a story lesson for the skill each one learns now
         worker.submit(Job("words", child_id=child_id))
+        worker.submit(Job("story", child_id=child_id))
     return out
 
 
@@ -331,6 +390,7 @@ def story_answer(session_id: str, body: StoryAnswerIn):
                         else -1 if right <= quiz_rules["easier_at_most_correct"] else 0)
                 after = min(max(before + step, levels[0]), levels[-1])
                 conn.execute("UPDATE children SET story_level = ? WHERE id = ?", (after, child["id"]))
+                adapt.snapshot(conn, content, child["id"], session_id)
                 quiz = QuizResult(correct=right, total=len(questions), story_level_before=before, story_level=after)
     if quiz:
         worker.submit(Job("story", child_id=body.child_id))     # the adapted story, written right after the quiz
@@ -488,6 +548,8 @@ def answer(session_id: str, body: AnswerIn):
             conn.execute(
                 "UPDATE sessions SET turn_number = turn_number + 1, current_child_id = NULL, current_item_id = NULL, "
                 "current_turn = NULL WHERE id = ?", (session_id,))
+        if next_action == "next" or placement:
+            adapt.snapshot(conn, content, child["id"], session_id)     # saved progress for the graph
         stars, streak = adapt.stars(conn, child["id"]), adapt.streak(conn, child["id"])
 
     if method_started:
@@ -514,25 +576,59 @@ def get_summary(session_id: str):
 
 @app.get("/api/children/{child_id}/sheet", response_model=SheetOut)
 def sheet(child_id: str):
+    """The take-home sheet at the learner's level: words of the current skill (interest words first, rotated) and
+    one sentence from reading material at the learner's story level that uses words they know, never the same
+    sentence twice in a row. A footnote tells the parents the learner's level."""
     ps = content.rules.practice_sheet
+    rnd = random.Random()
     with db.connect() as conn:
         child = get_row(conn, "children", child_id)
-        skill = weakest_unlocked_skill(content, load_states(conn, child_id), words_only=True)
+        states = load_states(conn, child_id)
+        skill = weakest_unlocked_skill(content, states, words_only=True)
+        level = learner_info(conn, content, child_id)["level"]
         approved = conn.execute(
             "SELECT g.payload FROM generated_items g JOIN approvals a ON a.generated_item_id = g.id "
             "WHERE g.kind = 'words' AND g.child_id = ? AND a.status = 'approved' "
             "ORDER BY a.decided_at DESC, g.created_at DESC LIMIT 1", (child_id,)).fetchone()
-    words = [i for i in skill_items(content, skill) if isinstance(i, Word)][:ps.words]
-    if approved:
-        chosen = json.loads(approved["payload"])
-        # Practice words the tutor approved, while the learner is still on that skill.
-        picked = [content.words_by_id[w["word_id"]] for w in chosen["words"] if w["word_id"] in content.words_by_id]
-        if chosen.get("skill_id") == skill.id and picked:
-            words = picked[:ps.words]
-    sentence = next((sn for sn in content.sentences if sn.level == skill.level), content.sentences[0])
+        liked = set(interest_words(child))
+        pool = [i for i in skill_items(content, skill) if isinstance(i, Word)]
+        rnd.shuffle(pool)
+        words = sorted(pool, key=lambda w: w.text not in liked)[:ps.words]
+        if approved:
+            chosen = json.loads(approved["payload"])
+            # Practice words the tutor approved, while the learner is still on that skill.
+            picked = [content.words_by_id[w["word_id"]] for w in chosen["words"]
+                      if w["word_id"] in content.words_by_id]
+            if chosen.get("skill_id") == skill.id and picked:
+                words = picked[:ps.words]
+        sentence = sheet_sentence(states, level, [w.text for w in words], child["last_sheet_sentence"], rnd)
+        conn.execute("UPDATE children SET last_sheet_sentence = ? WHERE id = ?", (sentence, child_id))
+    mastered = sum(1 for s in content.data.skills if s.id in states and states[s.id].mastered)
+    note = ParentNote(story_level=level, level_label_fil=ps.level_labels_fil[str(level)],
+                      current_skill_fil=skill.name_fil, mastered_count=mastered,
+                      total_skills=len(content.data.skills))
     return SheetOut(name=child["name"], date=date.today().isoformat(),
                     words=[SheetWord(text=w.text, syllables=w.syllables) for w in words],
-                    sentence=sentence.text, home_line_fil=ps.home_line_fil)
+                    sentence=sentence, home_line_fil=ps.home_line_fil, parent_note=note)
+
+
+def sheet_sentence(states, level: int, sheet_words: list[str], last: Optional[str], rnd: random.Random) -> str:
+    """A content sentence at the level, or a sentence of a library story at the level (content text only).
+    The best fit uses the sheet's words and words of mastered skills; the last sheet's sentence is skipped."""
+    pool = [sn.text for sn in content.sentences if sn.level == level]
+    pool += [sn for st in content.data.stories if st.level == level for p in st.paragraphs for sn in split_sentences(p)]
+    pool = list(dict.fromkeys(pool)) or [content.sentences[0].text]
+    known = {w.text.lower() for w in content.data.words if w.kind == "word"
+             and any(s in states and states[s].mastered for s in w.skill_ids)}
+    want = {w.lower() for w in sheet_words}
+
+    def fit(text):
+        tokens = {t.strip(PUNCT).lower() for t in text.split()}
+        return 2 * len(tokens & want) + len(tokens & known)
+
+    fresh = [s for s in pool if s != last] or pool
+    best = max(fit(s) for s in fresh)
+    return rnd.choice([s for s in fresh if fit(s) >= best - 1])
 
 
 @app.get("/api/approvals", response_model=list[ApprovalItem])

@@ -4,6 +4,8 @@ learner is stuck (a re-teach method starts). Numbers and styles come from rules.
 Explanation styles:
 - visual: one example word as tiles, the skill's letters lit up, its syllables underneath
 - steps:  the example word built syllable by syllable (ba -> ba + hay -> bahay)
+- letters: letter_sound skills: one card per letter (its sound and a word that starts with it). Every learner
+          sees the vowel lesson once (rules.json lessons.intro_skill), even when the diagnostic passed vowels.
 - story:  a very short story with the learner's name and interest that uses words of the skill. Written by the
           model in the background (prompts.md section 7, kind "lesson"), approved like the personal story;
           until one is ready, a content.json sentence of the skill.
@@ -18,6 +20,7 @@ from typing import Optional
 
 from backend.content import Content, Sentence, Word
 from backend.engine.selector import skill_items
+from backend.tts.audio import AUDIO_DIR
 
 TILE = re.compile(r"ng|.")
 VOWELS = set("aeiou")
@@ -42,6 +45,31 @@ def due(conn, child_id: str, turn: dict, states: dict) -> Optional[str]:
     return None
 
 
+def intro_due(conn, rules, child_id: str, turn: dict) -> bool:
+    """True when the learner never saw the intro lesson (the vowels): before their first practice item."""
+    skill_id = rules.lessons.get("intro_skill")
+    if not skill_id or turn.get("mode") == "placement":
+        return False
+    return conn.execute("SELECT 1 FROM lesson_views WHERE child_id = ? AND skill_id = ?",
+                        (child_id, skill_id)).fetchone() is None
+
+
+def _letters(content: Content, skill, prefer: list[str]) -> list[dict]:
+    """One card per letter: its sound and a word that starts with it (interest words, then the skill's own)."""
+    liked = set(prefer)
+    words = [w for w in content.data.words if w.kind == "word"]
+    cards = []
+    for letter in skill.letters:
+        starts = sorted((w for w in words if w.tiles and w.tiles[0] == letter),
+                        key=lambda w: (w.text not in liked, skill.id not in w.skill_ids, len(w.syllables)))
+        word = starts[0] if starts else None
+        key = f"syl_{letter}" if (AUDIO_DIR / f"syl_{letter}.wav").is_file() else f"syl_{letter}a"
+        cards.append({"letter": letter, "audio": f"/api/audio/{key}.wav", "word": word.text if word else "",
+                      "word_audio": f"/api/audio/{word.id}.wav" if word else None,
+                      "syllables": list(word.syllables) if word else []})
+    return cards
+
+
 def _story(conn, content: Content, child_id: str, skill) -> Optional[dict]:
     """The learner's newest approved model lesson story for the skill, else a content.json sentence of it."""
     rows = conn.execute(
@@ -60,8 +88,12 @@ def _story(conn, content: Content, child_id: str, skill) -> Optional[dict]:
     return None
 
 
-def choose_style(conn, rules, child_id: str, skill_id: str, reason: str, story_ok: bool) -> str:
-    styles = [s for s in rules.lessons["styles"] if s != "story" or story_ok]
+def choose_style(conn, rules, child_id: str, skill_id: str, reason: str, story_ok: bool,
+                 letters_ok: bool = False) -> str:
+    """letters_ok: a letter_sound skill. Its first lesson always shows the letters."""
+    styles = [s for s in rules.lessons["styles"] if (s != "story" or story_ok) and (s != "letters" or letters_ok)]
+    if letters_ok and reason == "new" and "letters" in styles:
+        return "letters"
     if reason == "reteach":
         last = conn.execute("SELECT style FROM lesson_views WHERE child_id = ? AND skill_id = ? ORDER BY id DESC "
                             "LIMIT 1", (child_id, skill_id)).fetchone()
@@ -108,11 +140,13 @@ def build(conn, content: Content, child, skill_id: str, item_id: str, reason: st
         highlight = _highlight(skill, tiles, syllables)
     more = [{"text": w.text, "syllables": w.syllables} for w in items if isinstance(w, Word) and w.id != example.id][:3]
     story = _story(conn, content, child["id"], skill)
-    style = choose_style(conn, content.rules, child["id"], skill_id, reason, story is not None)
+    letters_ok = skill.category == "letter_sound" and bool(skill.letters)
+    style = choose_style(conn, content.rules, child["id"], skill_id, reason, story is not None, letters_ok)
     return {"skill_id": skill_id, "skill_name_fil": skill.name_fil, "skill_name_en": skill.name_en,
             "reason": reason, "style": style, "example": {"text": getattr(example, "text", ""), "tiles": tiles,
                                                           "syllables": syllables, "highlight": highlight},
-            "steps": steps, "more_words": more, "story": story if style == "story" else None}
+            "steps": steps, "more_words": more, "story": story if style == "story" else None,
+            "letters": _letters(content, skill, prefer) if style == "letters" else []}
 
 
 def record(conn, child_id: str, session_id: str, lesson: dict, method_run_id: Optional[int]) -> None:

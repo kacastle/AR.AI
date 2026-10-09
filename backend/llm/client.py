@@ -1,4 +1,4 @@
-"""Ollama chat client. Localhost only; no other network calls.
+"""Model client: the local model (Ollama or LM Studio, localhost) and, only when LLM_PROVIDER says so, Gemini.
 
 One call: POST {BASE_URL}/api/chat with stream false, keep_alive 30m, thinking off, and a JSON schema
 (or "json") in the format field, as content/prompts.md section 0 asks. Any failure (Ollama not running,
@@ -97,3 +97,93 @@ def available() -> bool:
             return True
     except OSError:
         return False
+
+
+# ---------- optional cloud model (Gemini), local first ----------
+# LLM_PROVIDER=local (default): every job runs on the local model above; nothing leaves the laptop.
+# LLM_PROVIDER=auto: personal story jobs go to Gemini when the laptop is online and GEMINI_API_KEY is set;
+#   everything else stays local, and any cloud error falls back to the local model.
+# LLM_PROVIDER=cloud: as auto, for every job kind.
+# The learner's name never leaves the laptop: it is replaced by a placeholder before the call and put back after.
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+CLOUD_KINDS = {"story"}
+ONLINE_CACHE_SECONDS = 60
+_online = (0.0, False)
+
+
+def provider() -> str:
+    return os.environ.get("LLM_PROVIDER", "local").lower()
+
+
+def online() -> bool:
+    """True when the cloud API answers (2 s check, cached for a minute). Any HTTP reply counts as online."""
+    global _online
+    checked, ok = _online
+    if time.monotonic() - checked < ONLINE_CACHE_SECONDS:
+        return ok
+    try:
+        with urllib.request.urlopen("https://generativelanguage.googleapis.com/", timeout=2):
+            ok = True
+    except urllib.error.HTTPError:
+        ok = True
+    except OSError:
+        ok = False
+    _online = (time.monotonic(), ok)
+    return ok
+
+
+def use_cloud(kind: str) -> bool:
+    mode = provider()
+    if mode not in ("auto", "cloud") or not os.environ.get("GEMINI_API_KEY"):
+        return False
+    return (mode == "cloud" or kind in CLOUD_KINDS) and online()
+
+
+def gemini_chat(system: str, user: str, temperature: float, num_predict: int) -> tuple[str, str]:
+    """One Gemini call (JSON output, no thinking). Returns (text, done_reason) like chat()."""
+    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+    payload = {
+        "systemInstruction": {"parts": [{"text": system}]},
+        "contents": [{"role": "user", "parts": [{"text": user}]}],
+        "generationConfig": {"temperature": temperature, "maxOutputTokens": max(num_predict * 2, 1024),
+                             "responseMimeType": "application/json", "thinkingConfig": {"thinkingBudget": 0}},
+    }
+    request = urllib.request.Request(GEMINI_URL.format(model=model), data=json.dumps(payload).encode("utf-8"),
+                                     headers={"Content-Type": "application/json",
+                                              "x-goog-api-key": os.environ.get("GEMINI_API_KEY", "")})
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            data = json.loads(response.read())
+        candidate = data["candidates"][0]
+        text = "".join(p.get("text", "") for p in candidate["content"]["parts"])
+        done = "length" if candidate.get("finishReason") == "MAX_TOKENS" else "stop"
+    except (OSError, ValueError, KeyError, TypeError, IndexError) as e:
+        raise ModelError(f"Gemini: {e}") from e
+    return tp.clean_output(text), done
+
+
+def _hide(text: str, names: list[str]) -> str:
+    for k, name in enumerate(names, 1):
+        text = text.replace(name, f"NAME_{k}")
+    return text
+
+
+def _unhide(text: str, names: list[str]) -> str:
+    for k, name in enumerate(names, 1):
+        text = text.replace(f"NAME_{k}", name)
+    return text
+
+
+def generate(kind: str, model: str, system: str, user: str, temperature: float, num_predict: int,
+             schema: dict | None = None, names=()) -> tuple[str, str, str]:
+    """(text, done_reason, provider): the cloud model when use_cloud(kind), else (or after a cloud error) the
+    local model. names: the learner names to keep on the laptop."""
+    names = sorted({n for n in names if n}, key=len, reverse=True)
+    if use_cloud(kind):
+        try:
+            text, done = gemini_chat(_hide(system, names), _hide(user, names), temperature, num_predict)
+            return _unhide(text, names), done, "cloud"
+        except ModelError:
+            pass                                   # offline after all, quota, bad reply: stay local
+    text, done = chat(model, system, user, temperature, num_predict, schema=schema)
+    return text, done, "local"

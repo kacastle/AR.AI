@@ -158,6 +158,36 @@ def streak(conn, child_id: str) -> int:
     return n
 
 
+# ---------- saved progress (the graph) ----------
+
+def snapshot(conn, content: Content, child_id: str, session_id: str) -> None:
+    """Saves the learner's progress for this session (one row, updated after every item that ends)."""
+    states = load_states(conn, child_id)
+    skills = content.data.skills
+    mastered = sum(1 for s in skills if s.id in states and states[s.id].mastered)
+    avg = sum(states[s.id].score if s.id in states else 0.0 for s in skills) / len(skills)
+    conn.execute("INSERT OR REPLACE INTO progress_snapshots (child_id, session_id, day, mastered_count, avg_score) "
+                 "VALUES (?, ?, date('now', 'localtime'), ?, ?)", (child_id, session_id, mastered, round(avg, 3)))
+
+
+def history(conn, child_id: str) -> list[dict]:
+    rows = conn.execute(
+        "SELECT p.session_id, p.day, p.mastered_count, p.avg_score, "
+        "(SELECT AVG(correct) FROM events e WHERE e.child_id = p.child_id AND e.session_id = p.session_id "
+        " AND e.attempt = 1) AS accuracy FROM progress_snapshots p JOIN sessions s ON s.id = p.session_id "
+        "WHERE p.child_id = ? ORDER BY s.started_at, s.rowid", (child_id,))
+    return [{"session_id": r["session_id"], "date": r["day"], "mastered_count": r["mastered_count"],
+             "avg_score": r["avg_score"], "accuracy": None if r["accuracy"] is None else round(r["accuracy"], 2)}
+            for r in rows]
+
+
+def ladder(content: Content, states: dict) -> list[dict]:
+    return [{"skill_id": s.id, "name_fil": s.name_fil, "level": s.level,
+             "score": round(states[s.id].score, 2) if s.id in states else 0.0,
+             "mastered": bool(s.id in states and states[s.id].mastered)}
+            for s in sorted(content.data.skills, key=lambda s: s.order)]
+
+
 # ---------- profile (tutor and parents) ----------
 
 def profile(conn, content: Content, child_id: str) -> dict:
@@ -200,4 +230,6 @@ def profile(conn, content: Content, child_id: str) -> dict:
         "stars": stars(conn, child_id),
         "streak": streak(conn, child_id),
         "sessions": sessions,
+        "history": history(conn, child_id),
+        "ladder": ladder(content, states),
     }

@@ -109,21 +109,24 @@ def _size(item: Entry) -> int:
     return len(item.syllables) if isinstance(item, Word) else len(item.word_tiles)
 
 
-def choose_item(items: list[Entry], used: Sequence[str], level: str, prefer: Sequence[str] = ()) -> Entry:
+def choose_item(items: list[Entry], used: Sequence[str], level: str, prefer: Sequence[str] = (),
+                rng: Optional[random.Random] = None) -> Entry:
     """Unused items first. easy = fewest syllables, hard = most, normal = content order.
     used: item ids oldest first. When every item was used, the one seen longest ago comes back.
-    prefer: word texts from the learner's interests (content.json interests[].words); used first when unused."""
+    prefer: word texts from the learner's interests (content.json interests[].words); used first when unused.
+    rng: pick at random among the equally good items (the diagnostic: learners do not all get the same items);
+    without it the choice is deterministic."""
     last_seen = {item_id: k for k, item_id in enumerate(used)}
     pool = [i for i in items if i.id not in last_seen]
     if not pool:
         return min(items, key=lambda i: last_seen[i.id])
     liked = [i for i in pool if getattr(i, "text", None) in set(prefer)]
     pool = liked or pool
-    if level == "easy":
-        return min(pool, key=_size)
-    if level == "hard":
-        return max(pool, key=_size)
-    return pool[0]
+    if level in ("easy", "hard"):
+        best = (min if level == "easy" else max)(_size(i) for i in pool)
+        tier = [i for i in pool if _size(i) == best]
+        return rng.choice(tier) if rng else tier[0]
+    return rng.choice(pool) if rng else pool[0]
 
 
 # ---------- task type and tiles ----------

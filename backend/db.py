@@ -109,6 +109,14 @@ CREATE TABLE IF NOT EXISTS lesson_views (
     worked INTEGER,                      -- NULL until lessons.check_items items were done
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS progress_snapshots (
+    child_id TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    day TEXT NOT NULL,                   -- YYYY-MM-DD
+    mastered_count INTEGER NOT NULL,     -- skills mastered after the learner's last item in the session
+    avg_score REAL NOT NULL,             -- mean skill score over all tile skills (0 for skills not started)
+    PRIMARY KEY (child_id, session_id)
+);
 CREATE TABLE IF NOT EXISTS method_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     child_id TEXT NOT NULL,
@@ -152,6 +160,7 @@ ADDED_COLUMNS = [
     ("children", "story_level", "INTEGER"),     # set by the story quiz (rules.json story_quiz); NULL before
     ("children", "placement", "TEXT"),          # 'pending' -> diagnostic items first, 'done'; NULL = no diagnostic
     ("events", "placement", "INTEGER NOT NULL DEFAULT 0"),   # 1 = a diagnostic (placement) item
+    ("children", "last_sheet_sentence", "TEXT"),   # the worksheet sentence last printed (not twice in a row)
 ]
 
 

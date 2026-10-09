@@ -40,7 +40,7 @@ def test_weakest_unlocked_skill(content, rules):
 def test_comprehension_and_empty_skills_are_not_chosen_for_tile_turns(content):
     ids = {s.id for s in selector.tile_skills(content)}
     assert "sk_comp_literal" not in ids      # practiced in the story turn
-    assert "sk_letters_2" not in ids         # has no items in content.json
+    assert "sk_letters_2" in ids             # words tagged in round 2, so sk_cv_2 can unlock
     assert "sk_sentence_1" in ids            # sentence_builder items
 
 

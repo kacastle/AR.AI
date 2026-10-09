@@ -46,6 +46,7 @@ def log(message: str) -> None:
     print(f"[llm] {datetime.now():%H:%M:%S} {message}", flush=True)
 
 
+LAST_PROVIDER: dict[str, str] = {}   # job kind -> "local" or "cloud" for its last model call
 CALL_TIMES: list[dict] = []     # every timed call since startup: {"what", "label", "seconds", "result"}
 
 
@@ -81,7 +82,10 @@ def ask_model(kind: str, user: str, v: dict, learner: Optional[dict]) -> str:
     """One call to the local model. Replaced by a fake in tests."""
     system, _, _ = prompts.build(kind, v)
     temperature, num_predict = prompts.SETTINGS[kind]
-    text, finish = client.chat(model_name(), system, user, temperature, num_predict, schema=v.get("_schema"))
+    names = [learner["name"]] if learner and learner.get("name") else []
+    text, finish, where = client.generate(kind, model_name(), system, user, temperature, num_predict,
+                                          schema=v.get("_schema"), names=names)
+    LAST_PROVIDER[kind] = where
     return "" if finish == "length" else text     # cut off: treat as broken output
 
 
@@ -190,7 +194,9 @@ def run_story(job: Job, content: Content) -> None:
         "interests": learner["interests"], "word_count": len(text.split()),
         "paragraphs": parsed["paragraphs"], "questions": parsed["questions"],
         "source": "model", "reviewed": False, "approved_by_tutor": False,
-        "model": model_name(), "plot_id": v["_plot_id"], "object": v["object"],
+        "model": (os.environ.get("GEMINI_MODEL", "gemini-2.5-flash") if LAST_PROVIDER.get("story") == "cloud"
+                  else model_name()), "plot_id": v["_plot_id"], "object": v["object"],
+        "provider": LAST_PROVIDER.get("story", "local"),
     }
     _save("story", payload, child_id=job.child_id, item_id=story_id)
 

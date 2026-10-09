@@ -79,7 +79,8 @@ def test_jobs_run_in_priority_order_then_first_come_first_served():
 
 def test_session_start_queues_words_and_template_audio_and_the_summary_phase_queues_summary_then_stories(api, fakes):
     _, session = new_session(api)
-    assert sorted(j.kind for j in worker.pending()) == ["lesson", "lesson", "story_audio", "story_audio", "words", "words"]
+    assert sorted(j.kind for j in worker.pending()) == ["lesson", "lesson", "story", "story", "story_audio",
+                                                        "story_audio", "words", "words"]
     worker.clear()
     api.post(f"/api/sessions/{session['id']}/phase", json={"phase": "summary"})
     assert [j.kind for j in worker.pending()] == ["summary", "story", "story"]   # the summary is never stuck behind

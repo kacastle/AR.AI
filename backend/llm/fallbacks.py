@@ -11,7 +11,8 @@ skill's content.json words (the sheet), the summary to summary.template().
 """
 import json
 import random
-from typing import Optional
+import re
+from typing import Optional, Sequence
 
 from backend import db
 from backend.content import Content
@@ -84,12 +85,44 @@ def _template_story(conn, content: Content, learner: dict, rnd: random.Random) -
     return story_id
 
 
-def library_story(conn, content: Content, child_id: str, level: int) -> str:
-    """A content.json story at the level, not one from the learner's last sessions if there is a choice."""
+def iid(interest: str) -> str:
+    """content.json stories tag interests without the prefix ("animals"); learners have "int_animals"."""
+    return interest.removeprefix("int_")
+
+
+def split_sentences(paragraph: str) -> list[str]:
+    """A paragraph's sentences, each with its end mark (content text only, nothing made up)."""
+    return [m.strip() for m in re.findall(r"[^.!?]+[.!?]", paragraph) if m.strip()]
+
+
+def library_story(conn, content: Content, child_id: str, level: int, interests: Sequence[str] = (),
+                  rnd: Optional[random.Random] = None) -> str:
+    """A content.json story at the level: the most of the learner's interests first, then not one from the
+    learner's last sessions; at random among equals (deterministic without rnd)."""
     recent = set(_recent_story_ids(conn, child_id, RECENT_SESSIONS))
     at_level = [s for s in content.data.stories if s.level == level] or content.data.stories
-    fresh = [s for s in at_level if s.id not in recent]
-    return (fresh or at_level)[0].id
+    mine = {iid(i) for i in interests}
+
+    def rank(s):
+        return (len(mine & {iid(t) for t in s.interests}), s.id not in recent)
+
+    best = max(rank(s) for s in at_level)
+    tier = [s for s in at_level if rank(s) == best]
+    return (rnd.choice(tier) if rnd else tier[0]).id
+
+
+def read_along_story(content: Content, learners: list[dict], rnd: random.Random) -> str:
+    """The group read-along: a library story at the group's lowest level that fits the most interests."""
+    level = min(l["level"] for l in learners) if learners else min(content.data.levels)
+    at_level = [s for s in content.data.stories if s.level == level] or content.data.stories
+    wanted = [iid(i) for l in learners for i in l["interests"]]
+
+    def score(s):
+        tags = {iid(t) for t in s.interests}
+        return sum(1 for w in wanted if w in tags)
+
+    best = max(score(s) for s in at_level)
+    return rnd.choice([s for s in at_level if score(s) == best]).id
 
 
 def choose_story(conn, content: Content, child_id: str, rnd: random.Random) -> str:
@@ -97,4 +130,4 @@ def choose_story(conn, content: Content, child_id: str, rnd: random.Random) -> s
     learner = learner_info(conn, content, child_id)
     return (_model_story(conn, child_id)
             or _template_story(conn, content, learner, rnd)
-            or library_story(conn, content, child_id, learner["level"]))
+            or library_story(conn, content, child_id, learner["level"], learner["interests"], rnd))

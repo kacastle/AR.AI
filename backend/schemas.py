@@ -35,7 +35,20 @@ class Learner(BaseModel):
 
 class GroupIn(BaseModel):
     tutor_name: str
-    learners: list[LearnerIn]
+    learners: list[LearnerIn] = []
+    existing_child_ids: list[str] = []   # returning learners (GET /api/learners): progress and diagnostic kept
+
+
+class LearnerListItem(BaseModel):
+    id: str
+    name: str
+    picture: str
+    interests: list[str]
+    placement: Optional[str]       # pending, done, or null (no diagnostic)
+    story_level: int
+    current_skill_fil: str
+    mastered_count: int
+    last_session: Optional[str]    # YYYY-MM-DD of the learner's last answered item
 
 
 class Group(BaseModel):
@@ -154,17 +167,26 @@ class LessonStory(BaseModel):
     source: str                    # model (a checked, approved lesson story) or content
 
 
+class LessonLetter(BaseModel):
+    letter: str
+    audio: str                     # the letter's sound (/api/audio/syl_a.wav; a consonant with a: syl_ma)
+    word: str                      # a word that starts with the letter (the learner's interest words first)
+    word_audio: Optional[str]
+    syllables: list[str]
+
+
 class Lesson(BaseModel):
     """Shown before the item: teach first, then practise (backend/lessons.py)."""
     skill_id: str
     skill_name_fil: str
     skill_name_en: str
     reason: Literal["new", "reteach"]
-    style: Literal["visual", "steps", "story"]
+    style: Literal["visual", "steps", "story", "letters"]
     example: LessonExample
     steps: list[str]               # the example built up: "ba", "bahay"
     more_words: list[LessonWord]
     story: Optional[LessonStory]   # set when style is story
+    letters: list[LessonLetter] = []   # set when style is letters (letter_sound skills)
 
 
 class InterestInfo(BaseModel):
@@ -242,12 +264,21 @@ class SheetWord(BaseModel):
     syllables: list[str]
 
 
+class ParentNote(BaseModel):
+    story_level: int
+    level_label_fil: str           # rules.json practice_sheet.level_labels_fil
+    current_skill_fil: str
+    mastered_count: int
+    total_skills: int
+
+
 class SheetOut(BaseModel):
     name: str
     date: str
     words: list[SheetWord]
     sentence: str
     home_line_fil: str
+    parent_note: Optional[ParentNote] = None
 
 
 class ApprovalItem(BaseModel):
@@ -290,6 +321,22 @@ class SessionProgress(BaseModel):
     total: int
 
 
+class HistoryPoint(BaseModel):
+    session_id: str
+    date: str                      # YYYY-MM-DD
+    mastered_count: int
+    avg_score: float
+    accuracy: Optional[float]      # first tries right in that session (null when only story answers)
+
+
+class LadderStep(BaseModel):
+    skill_id: str
+    name_fil: str
+    level: int
+    score: float
+    mastered: bool
+
+
 class ProfileOut(BaseModel):
     """Per-learner profile for the tutor and parents (backend/adapt.py profile())."""
     child_id: str
@@ -307,3 +354,5 @@ class ProfileOut(BaseModel):
     stars: int
     streak: int
     sessions: list[SessionProgress]
+    history: list[HistoryPoint] = []   # one point per session, oldest first (for the progress graph)
+    ladder: list[LadderStep] = []      # every skill in content.json order (the reading ladder)

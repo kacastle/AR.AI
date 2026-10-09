@@ -135,10 +135,11 @@ class LlmTest(unittest.TestCase):
         """The summary phase: the summary, then each learner's story for the next session, get queued."""
         self.client.post(f"/api/sessions/{session['id']}/phase", json={"phase": "summary"})
 
-    def test_session_queues_words_stories_come_at_the_end_and_turns_queue_nothing(self):
+    def test_session_queues_words_and_stories_and_turns_queue_nothing(self):
         _, session = self.make_session()
         kinds = sorted(j.kind for j in worker.pending() if j.kind != "story_audio")
-        self.assertEqual(kinds, ["lesson", "lesson", "words", "words"])   # lesson stories too
+        # Lesson stories, practice words, and a personal story from the interests right away (round 2).
+        self.assertEqual(kinds, ["lesson", "lesson", "story", "story", "words", "words"])
         # Filled template stories get their audio in the background too.
         self.assertEqual({j.story_id for j in worker.pending() if j.kind == "story_audio"},
                          {i for i in session["story_ids"].values() if i.startswith("ts_")})
@@ -240,7 +241,7 @@ class LlmTest(unittest.TestCase):
         self.assertEqual(self.fake.calls, ["story"])          # the retry is for failed checks only
 
     def test_no_story_without_a_usable_interest(self):
-        group, _ = self.make_session(interests=["int_animals"])   # int_animals has no objects yet
+        group, _ = self.make_session(interests=[])                # no interests: fallback stories only
         jobs.run(jobs.Job("story", child_id=group["learners"][0]["id"]))
         self.assertEqual(self.fake.calls, [])
 
@@ -359,8 +360,8 @@ class LlmTest(unittest.TestCase):
         _, third = self.make_session(group=group)
         self.assertNotEqual(third["story_ids"][ana], item["payload"]["id"])    # a model story is read once
 
-    def test_learner_without_interest_objects_gets_a_library_story_at_their_level(self):
-        group, session = self.make_session(interests=["int_animals"])
+    def test_learner_without_interests_gets_a_library_story_at_their_level(self):
+        group, session = self.make_session(interests=[])
         story_id = session["story_ids"][group["learners"][0]["id"]]
         self.assertIn(story_id, CONTENT.stories_by_id)
         self.assertEqual(CONTENT.stories_by_id[story_id].level, 1)

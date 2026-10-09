@@ -421,15 +421,27 @@ def story_schema(paragraphs, qtypes):
                 "choices": {"type": "array", "items": s, "minItems": nc, "maxItems": nc},
                 "answer": s}}}}}
 
+def interest_of(learner, obj):
+    """The learner's interest (English label, lower case) that the object comes from, for the prompt."""
+    for i in learner.get("interests") or []:
+        if obj in INTERESTS[i]["objects"]:
+            return INTERESTS[i]["label_en"].lower()
+    ids = learner.get("interests") or []
+    return INTERESTS[ids[0]]["label_en"].lower() if ids else "playing"
+
 def story_case(learner, rnd):
     lv = RULES["story_levels"][str(learner["level"])]
     # Each plot lists the objects that fit it (no shoes to play with at the park, no crayons in the rain).
     # Choose a plot that fits one of the learner's interest objects, then an object that fits the plot.
     mine = [o for i in learner["interests"] for o in INTERESTS[i]["objects"]]
-    plots = [p for p in CONTENT["story_plots"] if p["level"] == learner["level"]
-             and set(p["fits_objects"]) & set(mine)]
-    plot = rnd.choice(plots)
-    obj = rnd.choice([o for o in mine if o in plot["fits_objects"]])
+    at_level = [p for p in CONTENT["story_plots"] if p["level"] == learner["level"]]
+    plots = [p for p in at_level if set(p["fits_objects"]) & set(mine)]
+    if plots:
+        plot = rnd.choice(plots)
+        obj = rnd.choice([o for o in mine if o in plot["fits_objects"]])
+    else:   # no plot fits the learner's objects: any plot at the level, with an object that fits it
+        plot = rnd.choice(at_level)
+        obj = rnd.choice(plot["fits_objects"])
     plot_text = plot["outline_en"].replace("{name}", learner["name"]).replace("{object}", obj)
     skill_words = [w["text"] for w in WORDS if learner["weakest"] in w["skill_ids"]]
     optional = rnd.sample(skill_words, 2)
@@ -438,7 +450,7 @@ def story_case(learner, rnd):
     wlo, whi = lv["target_words_per_sentence"]
     qtypes = pick_question_types(lv, rnd)
     v = {
-        "name": learner["name"], "object": obj, "plot": plot_text,
+        "name": learner["name"], "object": obj, "plot": plot_text, "interest": interest_of(learner, obj),
         "beats": numbered_beats(plot["beats_en"], learner["name"], obj),
         "word_bank": ", ".join(plot["word_bank_fil"]),
         "connectors": ", ".join(RULES["story_style"]["connectors_fil"]),
@@ -511,7 +523,8 @@ def lesson_case(learner, rnd):
     objects = [o for i in learner["interests"] for o in INTERESTS[i]["objects"]] if learner.get("interests") else []
     obj = rnd.choice(objects) if objects else "bola"
     s = {"type": "string"}
-    return {"name": learner["name"], "object": obj, "skill_name_en": SKILLS[sk]["name_en"],
+    return {"name": learner["name"], "object": obj, "interest": interest_of(learner, obj),
+            "skill_name_en": SKILLS[sk]["name_en"],
             "pattern_description": PATTERNS.get(sk, SKILLS[sk]["name_en"]), "lesson_words": ", ".join(lesson_words),
             "_words": lesson_words, "_skill": sk,
             "_schema": {"type": "object", "required": ["sentences"], "properties": {
