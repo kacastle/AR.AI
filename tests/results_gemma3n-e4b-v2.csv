@@ -1,0 +1,311 @@
+prompt,model,run,learner,result,failed_checks,seconds,output
+story,gemma3n:e4b,1,Ana,FAIL,long_sentences_2;answer_not_in_story,40.2,"{
+ ""title"": ""Ang Laruang Kalabaw ni Ana"",
+ ""paragraphs"": [
+ ""Sa umaga, dinanala ni Ana ang laruang kalabaw sa parke. Nakita niya si Kuya doon.  "",
+ ""Ibinahagi ni Ana ang laruang kalabaw kay Kuya. Naglaro sila nang sabay, at nagningning ang kanilang ngiti.  Umuwi sila nang masaya.""],
+ ""questions"": [
+ {
+ ""type"": ""who"",
+ ""prompt"": ""Sino ang dinanala ng laruang kalabaw?"",
+ ""choices"": [""Ana"", ""Kuya"", ""Lola""],
+ ""answer"": ""Ana""
+ },
+ {
+ ""type"": ""what"",
+ ""prompt"": ""Ano ang kanilang nilalaro?"",
+ ""choices"": [""bola"", ""laruang kalabaw"", ""kotse""],
+ ""answer"": ""laruang kalabaw""
+ },
+ {
+ ""type"": ""where"",
+ ""prompt"": ""Saan sila umuwi?"",
+ ""choices"": [""sa parke"", ""sa bahay"", ""sa paaralan""],
+ ""answer"": ""sa bahay""
+ }
+]
+}"
+story,gemma3n:e4b,2,Ben,FAIL,word_count_41;long_sentences_1,24.6,"{
+ ""title"": ""Ang Laruang Tren ni Ben"",
+ ""paragraphs"": [
+ ""Umuulan nang malakas ngayon. Kaya hindi naglaro si Ben sa labas. Pero may laruang tren siya sa loob ng bahay. "",
+ ""Sa loob ng bahay, naglaro si Ben. Nakita ni Nanay si Ben na naglalaro. Ngingiti nang masaya si Nanay kay Ben.""
+ ],
+ ""questions"": [
+ {
+ ""type"": ""who"",
+ ""prompt"": ""Sino ang naglaro?"",
+ ""choices"": [
+ ""Si Ben"",
+ ""Si Nanay"",
+ ""Si Kuya""
+ ],
+ ""answer"": ""Si Ben""
+ },
+ {
+ ""type"": ""what"",
+ ""prompt"": ""Ano ang laruan ni Ben?"",
+ ""choices"": [
+ ""bola"",
+ ""laruang tren"",
+ ""balsa""
+ ],
+ ""answer"": ""laruang tren""
+ },
+ {
+ ""type"": ""where"",
+ ""prompt"": ""Nasaan si Ben?"",
+ ""choices"": [
+ ""sa ilog"",
+ ""sa parke"",
+ ""sa loob ng bahay""
+ ],
+ ""answer"": ""sa loob ng bahay""
+ }
+ ]
+}"
+story,gemma3n:e4b,3,Mila,PASS,,34.8,"{
+ ""title"": ""Larawan ng Buwan ni Mila"",
+ ""paragraphs"": [
+ ""Sa bakuran, naglaro si Mila sa kanyang larawan ng buwan. Nakangiti siya habang hinahawakan ito nang mahigpit.  Naglalaro siya sa buong araw na masaya. "",
+ ""Pero nagpalakas ang hangin.  Naging madilim ang ulap sa langit. Agad na kinuha ni Mila ang larawan ng buwan sa loob.  Bago umulan, maingat siyang pumasok."",
+ ""Pagkatapos ng ulan, bumalik si Mila sa bakuran.  Naglalaro siya ulit sa larawan ng buwan.  Mainit ang puso niya, at masaya siya.""
+ ],
+ ""questions"": [
+ {
+ ""type"": ""sequence"",
+ ""prompt"": ""Ano ang ginawa ni Mila sa bakuran?"",
+ ""choices"": [
+ ""Hinahawakan niya ang larawan ng buwan."",
+ ""Naglalaro siya ng taguan."",
+ ""Kumakain siya ng tinapay.""
+ ],
+ ""answer"": ""Hinahawakan niya ang larawan ng buwan.""
+ },
+ {
+ ""type"": ""feeling"",
+ ""prompt"": ""Ano ang nararamdaman ni Mila nang umulan?"",
+ ""choices"": [
+ ""Natatakot siya."",
+ ""Nalulungkot siya."",
+ ""Naging maingat siya.""
+ ],
+ ""answer"": ""Naging maingat siya.""
+ },
+ {
+ ""type"": ""main_idea"",
+ ""prompt"": ""Ano ang pangunahing nangyari sa kuwento?"",
+ ""choices"": [
+ ""Nawala ang larawan ng buwan."",
+ ""Naglalaro si Mila sa bakuran."",
+ ""Naglaro siya sa larawan ng buwan kahit umulan.""
+ ],
+ ""answer"": ""Naglaro siya sa larawan ng buwan kahit umulan.""
+ }
+]
+}"
+story,gemma3n:e4b,4,Ana,FAIL,word_count_115;long_sentences_3;answer_not_in_story,31.0,"{
+ ""title"": ""Ang Laruang Kalabaw ni Ana"",
+ ""paragraphs"": [
+ ""Sa umaga, dinanala ni Ana ang laruang kalabaw sa parke. Nakita niya si Kuya doon.  Anong ginagawa ni Ana? \n\n(a) Nagbabasa\n(b) Naglalaro\n(c) Kumakanta\nSagot: (b)\nKaya ibinahagi niya ang laruang kalabaw kay Kuya, naglaro sila sabay. Masaya sila habang naglalaro. \n\nPagkatapos, umuwi sila nang maaga.  Ibinahagi niya ang laruang kalabaw niya kay Kuya.  Nang umuwi si Ana, siya ay masaya."",
+ ""questions: [{\""type\"": \""who\"", \""prompt\"": \""Sino ang naglaro kay Ana?\"", \""choices\"": [\""Lola\"", \""Kuya\"", \""Tatay\""], \""answer\"": \""Kuya\""}, {\""type\"": \""what\"", \""prompt\"": \""Ano ang ibinahagi ni Ana kay Kuya?\"", \""choices\"": [\""bola\"", \""laruang kalabaw\"", \""barya\""], \""answer\"": \""laruang kalabaw\""}, {\""type\"": \""where\"", \""prompt\"": \""Saan dinanala ni Ana ang laruang kalabaw?\"", \""choices\"": [\""sa bahay\"", \""sa parke\"", \""sa paaralan\""], \""answer\"": \""sa parke\""}]""
+],""questions"": [{""type"": ""who"", ""prompt"": ""Sino ang nakita ni Ana?"", ""choices"": [""Kuyang"", ""Nanay"", ""Lolo""], ""answer"": ""Kuyang""}, {""type"": ""what"", ""prompt"": ""Ano ang ibinahagi ni Ana?"", ""choices"": [""bola"", ""laruang kalabaw"", ""barya""], ""answer"": ""laruang kalabaw""}, {""type"": ""where"", ""prompt"": ""Saan sila naglaro?"", ""choices"": [""sa bahay"", ""sa parke"", ""sa ilog""], ""answer"": ""sa parke""}]
+}"
+story,gemma3n:e4b,5,Ben,FAIL,word_count_47;long_sentences_2;object_missing,24.8,"{
+ ""title"": ""Ang Sapato ni Ben"",
+ ""paragraphs"": [
+ ""Tumulong si Ben kay Tatay maglinis ng bahay. Nawala ang sapato niya ilang araw na ang nakalipas. Sa ilalim ng kama niya, hinanap niya ito nang mabuti. "",
+ ""Nang tiningnan niya, nakita niya ang sapato! Nagpasalamat si Tatay kay Ben. Ngumiti si Ben dahil natagpuan niya ang sapato.""
+ ],
+ ""questions"": [
+ {
+ ""type"": ""who"",
+ ""prompt"": ""Sino ang tumulong kay Tatay?"",
+ ""choices"": [""Si Ben"", ""Si Lola"", ""Si Kuya""],
+ ""answer"": ""Si Ben""
+ },
+ {
+ ""type"": ""what"",
+ ""prompt"": ""Ano ang nawawala?"",
+ ""choices"": [""bola"", ""sapato"", ""libro""],
+ ""answer"": ""sapato""
+ },
+ {
+ ""type"": ""where"",
+ ""prompt"": ""Nasaan nakita ni Ben ang sapato?"",
+ ""choices"": [""sa ilog"", ""sa ilalim ng kama"", ""sa kahon""],
+ ""answer"": ""sa ilalim ng kama""
+ }
+ ]
+}"
+story,gemma3n:e4b,6,Mila,FAIL,sentence_count_6,26.9,"{
+ ""title"": ""Regalo ni Mila"",
+ ""paragraphs"": [
+ ""Kaaarawan ni Lola ngayon, kaya gusto ni Mila magbigay ng regalo. Gumuhit si Mila ng larawan ng mangga. "",
+ ""Kiniya niya ang pintura at kiinulayan niya ang larawan. Naging m<h3>ganda</h3> ang larawan niya. "",
+ ""Ibinigay ni Mila ang larawan kay Lola. Tuwang-tuwa si Lola at niyakap niya si Mila.""],""questions"": [
+ {
+ ""type"": ""sequence"",
+ ""prompt"": ""Ano ang ginawa ni Mila para kay Lola?"",
+ ""choices"": [""Gumuhit siya ng larawan."", ""Naglaro siya ng bola."", ""Kumanta siya ng awit.""],
+ ""answer"": ""Gumuhit siya ng larawan.""
+ },
+ {
+ ""type"": ""feeling"",
+ ""prompt"": ""Ano ang nararamdaman ni Lola?"",
+ ""choices"": [""malungkot"", ""tuwa"", ""galit""],
+ ""answer"": ""tuwa""
+ },
+ {
+ ""type"": ""who"",
+ ""prompt"": ""Sino ang nagbigay ng regalo?"",
+ ""choices"": [""Si Lola."", ""Si Mila."", ""Si Kuya.""],
+ ""answer"": ""Si Mila.""
+ }
+ ]
+}"
+story,gemma3n:e4b,7,Ana,FAIL,long_sentences_1,25.0,"{
+ ""title"": ""Ang Krayola ni Ana"",
+ ""paragraphs"": [
+ ""Sa umaga, dinanala ni Ana ang krayola sa parke. Nakita niya si Kuya doon.  Anong ginagawa ni Ana?"",
+ ""Ibinahagi ni Ana ang krayola kay Kuya. Naglaro sila nang sabay.  Nang umuwi sila, masaya si Ana.""
+ ],
+ ""questions"": [
+ {
+ ""type"": ""who"",
+ ""prompt"": ""Sino ang nakita ni Ana?"",
+ ""choices"": [
+ ""Lola"",
+ ""Kuya"",
+ ""Tatay""
+ ],
+ ""answer"": ""Kuya""
+ },
+ {
+ ""type"": ""what"",
+ ""prompt"": ""Ano ang ibinahagi ni Ana kay Kuya?"",
+ ""choices"": [
+ ""bola"",
+ ""krayola"",
+ ""singsing""
+ ],
+ ""answer"": ""krayola""
+ },
+ {
+ ""type"": ""where"",
+ ""prompt"": ""Saan dinanala ni Ana ang krayola?"",
+ ""choices"": [
+ ""sa parke"",
+ ""sa bahay"",
+ ""sa paaralan""
+ ],
+ ""answer"": ""sa parke""
+ }
+ ]
+}"
+story,gemma3n:e4b,8,Ben,FAIL,word_count_50;sentence_count_12;long_sentences_1;object_missing;other_names_Kuyang,26.0,"{
+ ""title"": ""Ang Sapato ni Ben"",
+ ""paragraphs"": [
+ ""Sa umaga, dinanala ni Ben ang sapato sa parke. Nakita niya si Kuyang naglalaro doon. Ano ang ginagawa ni Ben? \n\nA. Naglalaro\nB. Nagbabasa\nC. Nagtatakbo\nSagot: A. Naglalaro."",
+ ""Ibinahagi ni Ben ang sapato kay Kuyang. Kaya naglaro sila nang sabay. Masaya silang umuwi kasama si Ben. Masaya si Ben.""
+ ],
+ ""questions"": [
+ {
+ ""type"": ""who"",
+ ""prompt"": ""Sino ang nagbahagi ng sapato?"",
+ ""choices"": [""Ben"", ""Kuya"", ""Lola""],
+ ""answer"": ""Ben""
+ },
+ {
+ ""type"": ""what"",
+ ""prompt"": ""Ano ang ibinahagi ni Ben kay Kuya?"",
+ ""choices"": [""lapis"", ""sapato"", ""gatas""],
+ ""answer"": ""sapato""
+ },
+ {
+ ""type"": ""where"",
+ ""prompt"": ""Saan sila naglaro?"",
+ ""choices"": [""sa bahay"", ""sa parke"", ""sa paaralan""],
+ ""answer"": ""sa parke""
+ }
+ ]
+}"
+story,gemma3n:e4b,9,Mila,PASS,,33.4,"{
+ ""title"": ""Larawan ng Buwan ni Mila"",
+ ""paragraphs"": [
+ ""Sa bakuran, naglaro si Mila kasama niya ang larawan ng buwan. Nakangiti siya habang hinahawakan ang larawan.  Naglalaro siya nang masaya sa buong araw."",
+ ""Pero nagpalakas ang hangin.  Naging madilim ang ulap sa kalangitan. Agad na binuhat ni Mila ang larawan ng buwan papasok sa bahay.  Bago umuulan, nag-ingat siya."",
+ ""Sinabi ni Nanay na mainit ang puso ni Mila. Pagkatapos ng ulan, naglaro muli si Mila sa larawan ng buwan.  Masaya siya sa kanyang larawan ng buwan.""
+ ],
+ ""questions"": [
+ {
+ ""type"": ""sequence"",
+ ""prompt"": ""Ano ang ginawa ni Mila sa bakuran?"",
+ ""choices"": [
+ ""Naglalaro siya."",
+ ""Nagkwento siya."",
+ ""Nagsaya siya.""
+ ],
+ ""answer"": ""Naglalaro siya.""
+ },
+ {
+ ""type"": ""feeling"",
+ ""prompt"": ""Ano ang nararamdaman ni Mila nang umulan?"",
+ ""choices"": [
+ ""Natakot siya."",
+ ""Nalungkot siya."",
+ ""Naging maingat siya.""
+ ],
+ ""answer"": ""Naging maingat siya.""
+ },
+ {
+ ""type"": ""main_idea"",
+ ""prompt"": ""Ano ang pangunahing nangyari sa kwento?"",
+ ""choices"": [
+ ""Naglalaro si Mila."",
+ ""Bumuhos ang ulan."",
+ ""Naglaro si Mila sa larawan ng buwan.""
+ ],
+ ""answer"": ""Naglaro si Mila sa larawan ng buwan.""
+ }
+]
+}"
+story,gemma3n:e4b,10,Ana,FAIL,word_count_42;long_sentences_2;other_names_Kuyang,26.3,"{
+ ""title"": ""Ang Laruang Pusa ni Ana"",
+ ""paragraphs"": [
+ ""Ngayon, dinanala ni Ana ang laruang pusang niya sa parke. Nakita niya si Kuyang naglalaro doon. Paano kaya niya ito lapitan?"",
+ ""Ibinahagi ni Ana ang laruang pusang niya kay Kuyang. Naglaro sila nang sabay sa parke. Kaya sila ay umuwi nang masaya.""
+ ],
+ ""questions"": [
+ {
+ ""type"": ""who"",
+ ""prompt"": ""Sino ang nagbahagi ng laruang pusang niya?"",
+ ""choices"": [
+ ""Si Kuyang"",
+ ""Si Ana"",
+ ""Si Lola""
+ ],
+ ""answer"": ""Si Ana""
+ },
+ {
+ ""type"": ""what"",
+ ""prompt"": ""Ano ang ibinahagi ni Ana kay Kuyang?"",
+ ""choices"": [
+ ""bola"",
+ ""laruang pusang"",
+ ""singsing""
+ ],
+ ""answer"": ""laruang pusang""
+ },
+ {
+ ""type"": ""where"",
+ ""prompt"": ""Saan sila naglaro?"",
+ ""choices"": [
+ ""sa bahay"",
+ ""sa parke"",
+ ""sa ilog""
+ ],
+ ""answer"": ""sa parke""
+ }
+ ]
+}"

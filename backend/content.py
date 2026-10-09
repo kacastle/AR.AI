@@ -150,8 +150,17 @@ class Support(Model):
 
 class Difficulty(Model):
     window: int
-    distractor_tiles: dict[str, int]
+    target_low: float
+    target_high: float
+    harder_above: float
+    easier_below: float
     stop_after_wrong: int
+    distractor_tiles: dict[str, int]
+
+
+class Review(Model):
+    days: list[int]
+    fail_score: float
 
 
 class Hints(Model):
@@ -168,6 +177,13 @@ class Timing(Model):
 class Selection(Model):
     skill_order: list[str]
     task_types_by_category: dict[str, list[str]]
+    avoid_items_seen_in_last_sessions: int
+
+
+class Rotation(Model):
+    order: str
+    skip_absent: bool
+    easy_item_after_wrong: int
 
 
 class DemoFast(Model):
@@ -184,8 +200,18 @@ class SessionRules(Model):
 
 
 class Placement(Model):
+    items_per_skill: int
+    stop_after_failed_skills: int
+    passed_score: float
     skills: list[str]
+    low_emergent_if_fail_before: str
     profiles: list[str]
+
+
+class ConfusableLetters(Model):
+    vowels: list[list[str]]
+    consonants: list[list[str]]
+    ng: list[str]
 
 
 class MistakeType(Model):
@@ -221,10 +247,13 @@ class RulesFile(Model):
     support: Support
     difficulty: Difficulty
     hints: Hints
+    review: Review
     timing: Timing
     selection: Selection
     session: SessionRules
+    rotation: Rotation
     placement: Placement
+    confusable_letters: ConfusableLetters
     mistake_types: dict[str, MistakeType]
     methods: dict[str, Method]
     feedback_templates: dict[str, FeedbackTemplate]
@@ -337,6 +366,9 @@ def _cross_check(c: ContentFile, r: RulesFile) -> list[str]:
     for sk in r.placement.skills:
         if sk not in skill_ids:
             p.append(f"rules.json placement.skills: '{sk}' is not a skill id")
+    if r.placement.low_emergent_if_fail_before not in r.placement.skills:
+        p.append(f"rules.json placement.low_emergent_if_fail_before: "
+                 f"'{r.placement.low_emergent_if_fail_before}' is not in placement.skills")
     for code, mt in r.mistake_types.items():
         if mt.method not in r.methods:
             p.append(f"rules.json mistake_types.{code}: method '{mt.method}' is not in methods")

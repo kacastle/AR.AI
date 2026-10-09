@@ -7,7 +7,7 @@ calls the local Ollama model, runs the checks from prompts.md, and saves:
   - results.csv              one row per run (pass/fail, failed checks, seconds)
   - stories_for_review.md    every story, for the Filipino speaker to rate 1-5
 
-Usage (from the project root):
+Usage (from the folder with content.json, rules.json, prompts.md):
   LM Studio (start the local server in LM Studio first):
     python test_prompts.py --backend lmstudio --list-models
     python test_prompts.py --backend lmstudio --model <model-id> --runs 10
@@ -99,14 +99,14 @@ def _post(url, payload):
         return json.loads(r.read())
 
 def call_model(model, user, temperature, num_predict, mock=None, system=GENERIC_SYSTEM,
-               backend="lmstudio", base_url=None):
+               backend="lmstudio", base_url=None, schema=None):
     t0 = time.time()
     if mock is not None:
         return mock, time.time() - t0
     messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
     if backend == "ollama":
         url = (base_url or "http://localhost:11434") + "/api/chat"
-        d = _post(url, {"model": model, "stream": False, "format": "json", "keep_alive": "30m",
+        d = _post(url, {"model": model, "stream": False, "format": schema or "json", "keep_alive": "30m",
                         "messages": messages,
                         "options": {"temperature": temperature, "num_predict": num_predict}})
         text = d["message"]["content"]
@@ -115,7 +115,7 @@ def call_model(model, user, temperature, num_predict, mock=None, system=GENERIC_
         body = {"model": model, "messages": messages, "temperature": temperature,
                 "max_tokens": num_predict, "stream": False,
                 "response_format": {"type": "json_schema",
-                                    "json_schema": {"name": "output", "schema": {"type": "object"}}}}
+                                    "json_schema": {"name": "output", "schema": schema or {"type": "object"}}}}
         try:
             d = _post(url, body)
         except urllib.error.HTTPError:
@@ -136,7 +136,9 @@ def words_in(text):
     return WORD_RE.findall(text)
 
 def sentences(text):
-    return [s for s in re.split(r'(?<=[.!?])["”]?\s+', text) if s.strip()]
+    # Split only when the next sentence starts with a capital or a quote, so that
+    # '"Salamat!" sabi ni Lola.' stays one sentence.
+    return [s for s in re.split(r'(?<=[.!?])["”]?\s+(?=[A-ZÑ"“])', text) if s.strip()]
 
 def blocklisted(text):
     t = text.lower()
@@ -260,6 +262,30 @@ def check_summary(out, v):
     return fails, d
 
 # ---------------------------------------------------------------- test case builders
+def pick_question_types(lv, rnd):
+    n = RULES["story_style"]["questions_per_story"]
+    required = list(lv["required_question_types"])
+    rest = [t for t in lv["question_types"] if t not in required]
+    rnd.shuffle(rest)
+    return (required + rest)[:n]
+
+def numbered_beats(beats, name, obj):
+    return "\n".join(f"Paragraph {i}: " + b.replace("{name}", name).replace("{object}", obj)
+                     for i, b in enumerate(beats, 1))
+
+def story_schema(paragraphs, qtypes):
+    nq, nc = RULES["story_style"]["questions_per_story"], RULES["story_style"]["choices_per_question"]
+    s = {"type": "string"}
+    return {"type": "object", "required": ["title", "paragraphs", "questions"], "properties": {
+        "title": s,
+        "paragraphs": {"type": "array", "items": s, "minItems": paragraphs, "maxItems": paragraphs},
+        "questions": {"type": "array", "minItems": nq, "maxItems": nq, "items": {
+            "type": "object", "required": ["type", "prompt", "choices", "answer"], "properties": {
+                "type": {"type": "string", "enum": qtypes},
+                "prompt": s,
+                "choices": {"type": "array", "items": s, "minItems": nc, "maxItems": nc},
+                "answer": s}}}}}
+
 def story_case(learner, rnd):
     lv = RULES["story_levels"][str(learner["level"])]
     ints = [INTERESTS[i] for i in learner["interests"]]
@@ -270,17 +296,26 @@ def story_case(learner, rnd):
     skill_words = [w["text"] for w in WORDS if learner["weakest"] in w["skill_ids"]]
     optional = rnd.sample(skill_words, 2)
     ex = CONTENT["story_examples"][str(learner["level"])]
-    lo, hi = (4, 8) if learner["level"] == 1 else (8, 10)
+    lo, hi = lv["min_sentences"], lv["max_sentences"]
+    wlo, whi = lv["target_words_per_sentence"]
+    qtypes = pick_question_types(lv, rnd)
     v = {
         "name": learner["name"], "object": obj, "plot": plot_text,
+        "beats": numbered_beats(plot["beats_en"], learner["name"], obj),
+        "word_bank": ", ".join(plot["word_bank_fil"]),
+        "connectors": ", ".join(RULES["story_style"]["connectors_fil"]),
         "other_names": ", ".join(plot["characters"]), "level": learner["level"],
-        "min_sentences": lo, "max_sentences": hi,
+        "paragraphs": lv["paragraphs"], "sentences_per_paragraph": lv["sentences_per_paragraph"],
+        "min_wps": wlo, "max_wps": whi,
         "min_words": lv["min_words"], "max_words": lv["max_words"],
-        "max_words_per_sentence": lv["max_words_per_sentence"], "question_types": ", ".join(lv["question_types"]),
+        "max_words_per_sentence": lv["max_words_per_sentence"], "question_types": ", ".join(qtypes),
         "optional_words": ", ".join(optional),
-        "example_plot": ex["plot_en"], "example_story": ex["story_fil"],
+        "example_name": ex["name"], "example_object": ex["object"],
+        "example_other_names": ", ".join(ex["characters"]),
+        "example_beats": numbered_beats(ex["beats_en"], ex["name"], ex["object"]),
+        "example_json": json.dumps(ex["output"], ensure_ascii=False),
         "_other_names_list": plot["characters"], "_optional": optional, "_plot_id": plot["id"],
-        "_sent_range": (lo, hi),
+        "_sent_range": (lo, hi), "_schema": story_schema(lv["paragraphs"], qtypes), "_qtypes": qtypes,
     }
     return v
 
@@ -319,13 +354,15 @@ def mock_output(kind, v, learner):
     if kind == "story":
         n, o = learner["name"], v["object"]
         oth = v["_other_names_list"][0]
-        sents = [f"Si {n} ay may {o}.", f"Masaya si {n}.", f"Nakita ni {n} si {oth}.", f"Naglaro sila ng {o}."]
+        paras = [f"Umaga na at maaraw sa labas. Dinala ni {n} ang {o}. Nakita niya si {oth} doon.",
+                 f"Kaya sabay silang naglaro nang masaya. Pagkatapos, umuwi na sila sa bahay. Masaya si {n} sa araw na ito."]
         if learner["level"] == 2:
-            sents += [f"Umulan nang malakas.", f"Pumasok sila sa bahay.", f"Ngumiti si {oth}.", f"Masaya ulit si {n}."]
-        qt = v["question_types"].split(", ")
-        return json.dumps({"title": "Test", "paragraphs": [" ".join(sents)], "questions": [
-            {"type": "who", "prompt": "Sino ang may " + o + "?", "choices": [n, "Lola", "Kuya"], "answer": n}] * 3},
-            ensure_ascii=False)
+            paras = [f"Umaga na at maaraw sa labas ng bahay. Dinala ni {n} ang {o} sa bakuran. Nakita niya roon si {oth} na nagwawalis.",
+                     f"Kaya tinulungan niya si {oth} sa paglilinis ng bakuran. Pagkatapos, sabay silang naglaro ng {o}. Tumawa sila nang malakas at masaya.",
+                     f"Pagdating sa bahay, nagluto si {oth} ng tanghalian. Habang naghihintay, naglaro ulit si {n}. Sabay silang kumain nang masaya."]
+        q = {"prompt": "Sino ang may " + o + "?", "choices": [n, "Lola", "Kuya"], "answer": n}
+        return json.dumps({"title": "Test", "paragraphs": paras,
+                           "questions": [dict(q, type=t) for t in v["_qtypes"]]}, ensure_ascii=False)
     if kind == "words":
         c = sorted(v["_candidates"])[: v["count"]]
         return json.dumps({"words": [{"text": w, "syllables": [w], "meaning_en": ""} for w in c]})
@@ -372,7 +409,8 @@ def main():
                     out, secs = call_model(a.model, prompt, temp, num,
                                            mock=mock_output(kind, v, learner) if a.mock else None,
                                            system=SYSTEM if kind == "story" else GENERIC_SYSTEM,
-                                           backend=a.backend, base_url=a.base_url)
+                                           backend=a.backend, base_url=a.base_url,
+                                           schema=v.get("_schema"))
                     break
                 except Exception as e:
                     err = e

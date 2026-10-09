@@ -47,9 +47,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     turn_number INTEGER NOT NULL DEFAULT 1,
     current_child_id TEXT,
     current_item_id TEXT,
-    current_task_type TEXT,
-    current_skill_id TEXT,
-    current_tiles TEXT,
+    current_turn TEXT,
     started_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS events (
@@ -106,7 +104,17 @@ def connect() -> Iterator[sqlite3.Connection]:
         conn.close()
 
 
+# Columns added after a table was first created: (table, column, type).
+ADDED_COLUMNS = [
+    ("sessions", "current_turn", "TEXT"),
+]
+
+
 def init_db() -> None:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with connect() as conn:
         conn.executescript(SCHEMA)
+        for table, column, col_type in ADDED_COLUMNS:
+            existing = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+            if column not in existing:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")

@@ -86,20 +86,30 @@ Response
 
 ## GET /api/sessions/{id}/next
 The current turn. Calling it again returns the same turn until it is answered with `next_action: "next"`.
+Learners take turns in the group's fixed order, and absent learners are skipped.
+- `task_type`:
+  - `dictation_letters`: build the word from letter tiles.
+  - `dictation_syllables`: build it from syllable tiles.
+  - `missing_letter`: one box is empty; pick the tile for it.
+  - `sentence_builder`: put word tiles in order (`syllables` is `[]`).
 - `item.slots`: number of answer boxes.
-- `item.tiles`: answer tiles and distractor tiles, shuffled. `ng` is one tile.
-- `prefill`: tiles to show in the boxes first. `show` = the full answer (the learner then rebuilds it), `guide` = first tile, `alone` = `[]`.
+- `item.tiles`: tiles to choose from, shuffled: answer tiles and distractors. For `missing_letter`, these are the candidates for the empty box. `ng` is one tile; words with `ng` always get `n` and `g` as distractors.
+- `prefill`: **one entry per box**, `""` = empty box.
+  - `show`: the full answer (the learner then rebuilds it).
+  - `guide`: first tile, e.g. `["b","","","",""]`.
+  - `alone`: all `""`.
+  - For `missing_letter`, every box except the gap is filled (`["","s","o"]`).
 - `seconds`: time for the item.
 
 ```json
-{"child_id": "c_78552429", "child_name": "Ana", "turn_number": 1, "task_type": "dictation_letters",
+{"child_id": "c_78552429", "child_name": "Ana", "turn_number": 1, "task_type": "missing_letter",
  "item": {"id": "w_aso", "prompt_audio": "/api/audio/w_aso.wav", "slots": 3,
-          "tiles": ["a", "s", "i", "o", "u", "e"], "syllables": ["a", "so"]},
+          "tiles": ["u", "a", "e", "i"], "syllables": ["a", "so"]},
  "support_level": "show", "prefill": ["a", "s", "o"], "seconds": 60}
 ```
 
 ## POST /api/sessions/{id}/answer
-`attempt` starts at 1 for each item and goes up by 1 on each retry.
+`given` is the content of **all** boxes, left to right (for `missing_letter` too: the full word). `attempt` starts at 1 for each item and goes up by 1 on each retry. The skill score and support level update once, when the item ends (`next_action: "next"`).
 
 Request
 ```json

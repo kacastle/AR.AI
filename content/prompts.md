@@ -1,4 +1,4 @@
-# Model prompts (v0.1)
+# Model prompts (v0.2)
 
 Four prompts run on the local 3B model in Ollama: **personal story**, **practice words**, **feedback**, and **tutor summary**. All stories are individual: one learner, one story. Each prompt returns JSON. Code checks every output before anyone sees it. If an output fails the checks 2 times, the app uses the fallback.
 
@@ -16,7 +16,7 @@ Four prompts run on the local 3B model in Ollama: **personal story**, **practice
 | Tutor summary | 0.3 | 400 | End of session | Fixed template (section 4) |
 
 - **Turns never wait for the model.** During a turn, use `feedback_templates` from `rules.json` (less than 1 second). Use the feedback prompt only if a call takes less than 2 seconds on the demo laptop.
-- Use Ollama's JSON output for all prompts: `"format": "json"` (or a JSON schema).
+- Use Ollama's JSON output for all prompts: `"format": "json"`. For the personal story, pass a JSON schema as `format` (section 1), so the model cannot give the wrong number of paragraphs, questions, or choices.
 - Use `keep_alive` (for example `"30m"`) so that the model stays loaded during a session. Load the model when the app starts.
 - Instructions are in English; output is in Filipino. Small models follow English instructions better.
 - Every model item gets `"source": "model"` and `"approved_by_tutor": false`. It goes to the approval queue.
@@ -28,12 +28,12 @@ Four prompts run on the local 3B model in Ollama: **personal story**, **practice
 ```python
 import requests, json
 
-def call_model(system, user, temperature, num_predict, model="<model-name>"):
+def call_model(system, user, temperature, num_predict, model="<model-name>", schema=None):
     r = requests.post("http://localhost:11434/api/chat", json={
         "model": model,
         "messages": [{"role": "system", "content": system},
                      {"role": "user", "content": user}],
-        "format": "json",
+        "format": schema or "json",
         "stream": False,
         "keep_alive": "30m",
         "options": {"temperature": temperature, "num_predict": num_predict},
@@ -47,7 +47,9 @@ The only network address is `localhost`. Nothing goes to the internet.
 
 ## 1. Personal story (guided)
 
-Code chooses the plot, the object, and the example. The model only writes the plot in simple Filipino. This keeps the stories logical: small models write nonsense when they get long word lists and a free plot.
+Code chooses the plot, the object, the question types, and the example. The model only writes the plot in simple Filipino. This keeps the stories logical: small models write nonsense when they get long word lists and a free plot.
+
+**Why the prompt has this shape (v0.2).** In v0.1, Gemma 3n passed 1 of 10 story checks, and its stories read like lists. The causes: (1) `"paragraphs": [""]` made it write one sentence per paragraph; (2) wide ranges ("4 to 8 sentences, 20–40 words") made it pad with filler; (3) the plots were lists of unrelated English events; (4) the examples had no linking words, and the Level 2 example was too long for its own checks. Now the model gets a fixed shape that it can count (paragraphs × 3 sentences), a plot in beats (one beat per paragraph), a Filipino word bank, linking words, and a full example output that passes every check. A JSON schema fixes the number of paragraphs, questions, and choices.
 
 **Variables**
 
@@ -55,55 +57,71 @@ Code chooses the plot, the object, and the example. The model only writes the pl
 |---|---|
 | `{name}` | Learner's **first name only** |
 | `{object}` | One item from `objects` of one of the learner's interests (`content.json` → `interests`). Rotate between sessions. |
-| `{plot}` | `content.json` → `story_plots` at the learner's level, with `{name}` and `{object}` filled. Not the same plot as in the last 2 sessions. |
+| `{beats}` | `content.json` → `story_plots[].beats_en` at the learner's level, numbered "Paragraph 1: …", with `{name}` and `{object}` filled. Not the same plot as in the last 2 sessions. |
+| `{word_bank}` | The plot's `word_bank_fil` |
+| `{connectors}` | `rules.json` → `story_style.connectors_fil` |
 | `{other_names}` | The plot's `characters` (for example "Nanay") |
-| `{level}` | Learner's current level |
-| `{min_words}`, `{max_words}`, `{max_words_per_sentence}`, `{question_types}` | `rules.json` → `story_levels.<level>` |
-| `{min_sentences}`, `{max_sentences}` | Level 1: 4–8; Level 2: 8–10 |
+| `{paragraphs}`, `{sentences_per_paragraph}`, `{min_words}`, `{max_words}`, `{max_words_per_sentence}` | `rules.json` → `story_levels.<level>` |
+| `{min_wps}`, `{max_wps}` | `rules.json` → `story_levels.<level>.target_words_per_sentence` |
+| `{question_types}` | 3 types chosen by code from `story_levels.<level>.question_types`: first the `required_question_types` (Level 2: sequence, feeling), then random others |
 | `{optional_words}` | 2 words from the learner's weakest skill. Optional: the model uses one only if it fits. |
-| `{example_plot}`, `{example_story}` | `content.json` → `story_examples.<level>` |
+| `{example_name}`, `{example_object}`, `{example_other_names}`, `{example_beats}`, `{example_json}` | `content.json` → `story_examples.<level>` (`example_json` = its `output`, as one line of JSON) |
 
 **System**
 
 ```
-You write short stories for Filipino children aged 6 to 8.
-Write in simple, natural Filipino (Tagalog).
+You are a storyteller who writes short stories for Filipino children aged 6 to 8.
+A teacher reads your stories aloud, so each sentence follows from the sentence before it.
+Write in simple, natural Filipino (Tagalog). Never use English words.
 Follow every rule. Output only valid JSON. No other text.
 ```
 
 **User**
 
 ```
-Write a short story in simple, natural Filipino for a child aged 6 to 8.
-Follow this plot exactly. Do not add other events, places, or characters.
-Plot: {plot}
-Main character: {name}. Object: {object}.
-Other characters (only these): {other_names}.
-Length: {min_sentences} to {max_sentences} sentences. Each sentence has {max_words_per_sentence} words or fewer. Total {min_words} to {max_words} words.
-If it fits naturally, use one of these words: {optional_words}. Do not force it.
-Rules:
-- Every sentence must make sense in real life. Use only common words that a Grade 1 child knows.
-- Use the name {name} at least 2 times and the word "{object}" at least 1 time.
-- Kind, safe, and a happy ending. No violence, fear, or sadness at the end.
-- Write the story only once. Do not repeat or retell it.
-- Use the past tense for things that happened (for example: dinala, naglaro, ngumiti, umuwi).
-- Then write exactly 3 questions about the story, of these types: {question_types}.
-- Each question has exactly 3 short, different choices in Filipino. Exactly one choice is correct, and the correct answer is written in the story.
+Write a short story in simple, natural Filipino (Tagalog) for a child aged 6 to 8.
+The story is read aloud, so it must flow: each sentence follows from the sentence before it.
 
-Example of a plot and its story:
-Plot: {example_plot}
-Story: {example_story}
+Main character: {name}. Object: {object}. Other characters (only these): {other_names}.
+Plot. Write one paragraph for each part. Do not add other events, places, or characters.
+{beats}
 
-Output JSON:
-{"title": "", "paragraphs": [""], "questions": [{"type": "", "prompt": "", "choices": ["", "", ""], "answer": ""}]}
+Shape:
+- Exactly {paragraphs} paragraphs. Each paragraph has exactly {sentences_per_paragraph} sentences.
+- Each sentence has {min_wps} to {max_wps} words, never more than {max_words_per_sentence}. Total {min_words} to {max_words} words.
+
+Flow:
+- After the first sentence, start most sentences with a linking word ({connectors}) or with siya, niya, sila.
+- Write the name {name} in the first paragraph and in the last paragraph. In the other sentences, use siya or niya.
+- Write the word "{object}" in the first paragraph and in the last paragraph.
+- No filler sentences, no lesson, and no "Sana..." at the end. The last sentence ends the plot happily.
+
+Words:
+- Use only common words that a Grade 1 child knows. Use these words where they fit: {word_bank}.
+- If it fits naturally, also use one of these words: {optional_words}. Do not force it.
+- No English words. Use the past tense for things that happened.
+- Write each name exactly as given (for example: si {other_names}, kay {other_names}). Never add -ng to a name (not "Kuyang").
+- Kind and safe. No violence or fear.
+
+Questions:
+- Exactly 3 questions, with these types in this order: {question_types}.
+- Each question has exactly 3 short, different choices in Filipino. Never 4.
+- Copy the answer letter for letter from one of the choices. The answer is written in the story.
+- For a feeling question, the answer is a feeling word that is in the story.
+
+Example. Main character: {example_name}. Object: {example_object}. Other characters: {example_other_names}.
+{example_beats}
+Output: {example_json}
+
+Now write the story for {name}. Output only the JSON, in the same shape as the example.
 ```
 
-Temperature: **0.5**.
+Temperature: **0.5**. Send the JSON schema as Ollama `format` (see `story_schema()` in `test_prompts.py`): `paragraphs` has exactly `{paragraphs}` items, `questions` has exactly 3, each `choices` has exactly 3, and `type` is one of `{question_types}`.
 
 **Checks**
 
 - [ ] JSON parses; `title`, `paragraphs`, and 3 `questions` are present.
-- [ ] Sentence count, word count, and sentence length are in range.
+- [ ] Sentence count (`story_levels.<level>.min_sentences`–`max_sentences`), word count, and sentence length are in range. A line of dialogue with its speaker (`"Salamat!" sabi ni Lola.`) is one sentence.
 - [ ] `{name}` appears 2 times or more; `{object}` appears 1 time or more.
 - [ ] No person names except `{name}` and `{other_names}`.
 - [ ] Each `answer` is one of its `choices`; the 3 choices are different; each `type` is allowed.
@@ -111,7 +129,7 @@ Temperature: **0.5**.
 - [ ] No blocklist word.
 - [ ] The Filipino speaker's rating (in tests) is 4 or more for "makes sense."
 
-**After the checks:** split the story into paragraphs of 2–3 sentences. Add `id`, `level`, `skill_ids`, `for_child_id`, `plot_id`, `source: "model"`, `approved_by_tutor: false`. Generate audio in the background.
+**After the checks:** the paragraphs from the model are used as they are. Add `id`, `level`, `skill_ids`, `for_child_id`, `plot_id`, `source: "model"`, `approved_by_tutor: false`. Generate audio in the background.
 
 **Fallback:** fill a template from `content.json` → `story_templates` at the learner's level (see `rules.md` section 9).
 

@@ -68,9 +68,11 @@ class ApiTest(unittest.TestCase):
         word = CONTENT.words_by_id[turn["item"]["id"]]
         self.assertEqual(turn["item"]["syllables"], word.syllables)
         self.assertEqual(turn["item"]["slots"], len(word.tiles))
-        self.assertTrue(set(word.tiles) <= set(turn["item"]["tiles"]))
         self.assertEqual(turn["child_name"], "Ana")
         self.assertEqual(turn["prefill"], word.tiles)  # new skill starts at support "show"
+        # First skill is sk_vowels (letter_sound); its first task type is missing_letter: one vowel is missing.
+        self.assertEqual(turn["task_type"], "missing_letter")
+        self.assertIn(word.tiles[0], turn["item"]["tiles"])
         again = self.client.get(f"/api/sessions/{session['id']}/next").json()
         self.assertEqual(again, turn)
 

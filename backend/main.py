@@ -1,9 +1,9 @@
 import json
 import os
-import random
 import re
 from collections import Counter
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 from datetime import date, datetime, timedelta
 
 from fastapi import FastAPI, HTTPException
@@ -11,8 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from backend import db
-from backend.content import Content, format_problems, load_content
-from backend.engine.selector import focus_skill, pick_word, skill_words
+from backend.content import Content, Word, format_problems, load_content
+from backend.engine import review, rotation, scoring
+from backend.engine.selector import pick_next, skill_items, weakest_unlocked_skill
+from backend.engine.state import SkillState, new_state
 from backend.schemas import (
     AnswerIn, ApprovalIn, ApprovalItem, Feedback, Group, GroupIn, Hint, Item, Learner,
     LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, Result, Session, SessionIn,
@@ -55,16 +57,45 @@ def get_row(conn, table: str, row_id: str):
     return row
 
 
-def mastered_skills(conn, child_id: str) -> set[str]:
-    rows = conn.execute(
-        "SELECT skill_id FROM skill_state WHERE child_id = ? AND mastered_at IS NOT NULL", (child_id,))
-    return {r["skill_id"] for r in rows}
+def _date(value):
+    return date.fromisoformat(value) if value else None
 
 
-def support_level(conn, child_id: str, skill_id: str) -> str:
-    row = conn.execute("SELECT support_level FROM skill_state WHERE child_id = ? AND skill_id = ?",
-                       (child_id, skill_id)).fetchone()
-    return row["support_level"] if row else content.rules.support.start["new"]
+def load_states(conn, child_id: str) -> dict[str, SkillState]:
+    rows = conn.execute("SELECT * FROM skill_state WHERE child_id = ?", (child_id,))
+    return {r["skill_id"]: SkillState(
+        skill_id=r["skill_id"], score=r["score"], support_level=r["support_level"], attempts=r["attempts"],
+        correct_streak=r["correct_streak"], wrong_streak=r["wrong_streak"], review_step=r["review_step"],
+        next_review_at=_date(r["next_review_at"]), mastered_at=_date(r["mastered_at"]),
+    ) for r in rows}
+
+
+def save_state(conn, child_id: str, s: SkillState) -> None:
+    conn.execute(
+        "INSERT OR REPLACE INTO skill_state (child_id, skill_id, score, attempts, correct_streak, wrong_streak, "
+        "support_level, review_step, next_review_at, mastered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (child_id, s.skill_id, s.score, s.attempts, s.correct_streak, s.wrong_streak, s.support_level,
+         s.review_step, s.next_review_at and s.next_review_at.isoformat(),
+         s.mastered_at and s.mastered_at.isoformat()))
+
+
+def first_try_results(conn, child_id: str) -> list[bool]:
+    """The learner's items, oldest first: True = right on the first attempt."""
+    rows = conn.execute("SELECT correct FROM events WHERE child_id = ? AND attempt = 1 ORDER BY id", (child_id,))
+    return [bool(r["correct"]) for r in rows]
+
+
+def used_items(conn, session_id: str, child_id: str) -> list[str]:
+    """Items this learner saw in this session and in the last N sessions (rules.selection), oldest first."""
+    n = content.rules.selection.avoid_items_seen_in_last_sessions
+    sessions = [r["session_id"] for r in conn.execute(
+        "SELECT session_id FROM events WHERE child_id = ? AND session_id != ? "
+        "GROUP BY session_id ORDER BY MAX(id) DESC LIMIT ?", (child_id, session_id, n))]
+    sessions.append(session_id)
+    marks = ",".join("?" * len(sessions))
+    rows = conn.execute(f"SELECT item_id FROM events WHERE child_id = ? AND session_id IN ({marks}) "
+                        "GROUP BY item_id ORDER BY MAX(id)", (child_id, *sessions))
+    return [r["item_id"] for r in rows]
 
 
 def group_out(conn, group_id: str) -> Group:
@@ -170,34 +201,30 @@ def next_turn(session_id: str):
     rules = content.rules
     with db.connect() as conn:
         s = get_row(conn, "sessions", session_id)
-        if s["current_item_id"] is None:
-            present = json.loads(s["present"])
-            child_id = present[(s["turn_number"] - 1) % len(present)]
-            used = {r["item_id"] for r in conn.execute(
-                "SELECT DISTINCT item_id FROM events WHERE session_id = ? AND child_id = ?", (session_id, child_id))}
-            skill, word = pick_word(content, mastered_skills(conn, child_id), used)
-            tiles = word.tiles + word.distractor_tiles[:rules.difficulty.distractor_tiles["normal"]]
-            random.shuffle(tiles)
-            conn.execute(
-                "UPDATE sessions SET current_child_id = ?, current_item_id = ?, current_task_type = ?, "
-                "current_skill_id = ?, current_tiles = ? WHERE id = ?",
-                (child_id, word.id, "dictation_letters", skill.id, json.dumps(tiles), session_id))
+        if s["current_turn"] is None:
+            group_order = [r["id"] for r in conn.execute(
+                "SELECT id FROM children WHERE group_id = ? ORDER BY rowid", (s["group_id"],))]
+            order = rotation.turn_order(group_order, json.loads(s["present"]), rules)
+            child_id = rotation.child_for_turn(order, s["turn_number"])
+            results = first_try_results(conn, child_id)
+            pick = pick_next(content, load_states(conn, child_id), date.today(),
+                             used_items(conn, session_id, child_id), results,
+                             easy=rotation.needs_easy_item(results, rules))
+            conn.execute("UPDATE sessions SET current_child_id = ?, current_item_id = ?, current_turn = ? WHERE id = ?",
+                         (child_id, pick.item_id, json.dumps(asdict(pick)), session_id))
             s = get_row(conn, "sessions", session_id)
-
         child = get_row(conn, "children", s["current_child_id"])
-        word = content.words_by_id[s["current_item_id"]]
-        level = support_level(conn, child["id"], s["current_skill_id"])
+    turn = json.loads(s["current_turn"])
 
-    prefill = {"show": list(word.tiles), "guide": word.tiles[:1], "alone": []}[level]
     return NextTurn(
         child_id=child["id"],
         child_name=child["name"],
         turn_number=s["turn_number"],
-        task_type=s["current_task_type"],
-        item=Item(id=word.id, prompt_audio=f"/api/audio/{word.id}.wav", slots=len(word.tiles),
-                  tiles=json.loads(s["current_tiles"]), syllables=word.syllables),
-        support_level=level,
-        prefill=prefill,
+        task_type=turn["task_type"],
+        item=Item(id=turn["item_id"], prompt_audio=f"/api/audio/{turn['item_id']}.wav", slots=len(turn["answer"]),
+                  tiles=turn["tiles"], syllables=turn["syllables"]),
+        support_level=turn["support_level"],
+        prefill=turn["prefill"],
         seconds=rules.session.demo_fast.item_seconds if DEMO_FAST else rules.timing.item_seconds,
     )
 
@@ -210,8 +237,9 @@ def answer(session_id: str, body: AnswerIn):
         if s["current_item_id"] != body.item_id or s["current_child_id"] != body.child_id:
             raise HTTPException(409, "this is not the current turn; call /next first")
         child = get_row(conn, "children", body.child_id)
-        word = content.words_by_id[body.item_id]
-        expected = word.tiles
+        turn = json.loads(s["current_turn"])
+        item_id = turn["item_id"]
+        expected = turn["answer"]
         correct = body.given == expected
         ladder = rules.hints.ladder
         templates = rules.feedback_templates
@@ -232,7 +260,7 @@ def answer(session_id: str, body: AnswerIn):
                         len(expected) - 1)
             hint = Hint(
                 kind=kind,
-                audio=f"/api/audio/{word.id}_slow.wav" if kind == "replay_by_syllable" else None,
+                audio=f"/api/audio/{item_id}_slow.wav" if kind == "replay_by_syllable" else None,
                 highlight_slot={"highlight_slot": diff, "first_tile": 0}.get(kind),
             )
             # Stub until the classifier lands: no mistake type, so no mistake feedback text.
@@ -243,17 +271,24 @@ def answer(session_id: str, body: AnswerIn):
             feedback = Feedback(message_fil=show.message_fil[0].format(name=child["name"]), hint_fil=show.hint_fil)
             answer_tiles = list(expected)
 
-        level = support_level(conn, child["id"], s["current_skill_id"])
         conn.execute(
             "INSERT INTO events (session_id, child_id, item_id, task_type, skill_id, given, correct, mistake_type, "
             "hints_used, attempt, time_ms, support_level, next_action) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (session_id, child["id"], word.id, s["current_task_type"], s["current_skill_id"], json.dumps(body.given),
-             int(correct), None, body.hints_used, body.attempt, body.time_ms, level, next_action))
+            (session_id, child["id"], item_id, turn["task_type"], turn["skill_id"], json.dumps(body.given),
+             int(correct), None, body.hints_used, body.attempt, body.time_ms, turn["support_level"], next_action))
         if next_action == "next":
+            # The item has ended: update the skill once.
+            today = date.today()
+            first_try = body.attempt == 1
+            state = load_states(conn, child["id"]).get(turn["skill_id"]) or new_state(turn["skill_id"], rules)
+            result = scoring.item_result(rules, turn["support_level"], body.attempt, correct=True)
+            state = scoring.apply_item(rules, state, result, first_try, today)
+            if turn["is_review"]:
+                state = review.apply_review(state, first_try, rules, today)
+            save_state(conn, child["id"], state)
             conn.execute(
                 "UPDATE sessions SET turn_number = turn_number + 1, current_child_id = NULL, current_item_id = NULL, "
-                "current_task_type = NULL, current_skill_id = NULL, current_tiles = NULL WHERE id = ?",
-                (session_id,))
+                "current_turn = NULL WHERE id = ?", (session_id,))
 
     return Result(correct=correct, mistake_type=None, feedback=feedback, hint=hint,
                   next_action=next_action, answer=answer_tiles)
@@ -272,7 +307,7 @@ def summary(session_id: str):
             items = {e["item_id"] for e in events}
             first_try = {e["item_id"] for e in events if e["attempt"] == 1 and e["correct"]}
             mistakes = Counter(e["mistake_type"] for e in events if e["mistake_type"])
-            skill = focus_skill(content, mastered_skills(conn, child_id))
+            skill = weakest_unlocked_skill(content, load_states(conn, child_id))
             if mistakes:
                 main = mistakes.most_common(1)[0][0]
                 main_mistakes.setdefault(main, []).append(child["name"])
@@ -301,8 +336,8 @@ def sheet(child_id: str):
     ps = content.rules.practice_sheet
     with db.connect() as conn:
         child = get_row(conn, "children", child_id)
-        skill = focus_skill(content, mastered_skills(conn, child_id))
-    words = skill_words(content, skill.id)[:ps.words]
+        skill = weakest_unlocked_skill(content, load_states(conn, child_id), words_only=True)
+    words = [i for i in skill_items(content, skill) if isinstance(i, Word)][:ps.words]
     sentence = next((sn for sn in content.sentences if sn.level == skill.level), content.sentences[0])
     return SheetOut(name=child["name"], date=date.today().isoformat(),
                     words=[SheetWord(text=w.text, syllables=w.syllables) for w in words],
