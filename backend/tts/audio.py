@@ -36,6 +36,8 @@ PARAGRAPH_GAP_MS = 500
 EDGE_KEEP_MS = 40    # silence kept at each end of a spoken piece before pieces are joined
 MAX_WORD_MS = 1500   # a story word longer than this is a voice glitch; the check reports it
 QUIET_PEAK = 0.05    # a clip quieter than this has no real speech (the voice sometimes returns silence)
+SECONDS_PER_WEIGHT = 1.0 / 14.1   # OmniVoice: its reference "Nice to meet you." (weight 14.1) is 25 frames = 1 s
+MIN_SPEECH_SECONDS = 0.5          # floor for one short syllable or word (0.35 sounded clipped; picked 2026-10-10)
 
 
 @dataclass
@@ -51,6 +53,18 @@ def fingerprint(job: Job) -> str:
     """Changes when the clip's text or how it is joined changes, so edited content gets new audio."""
     data = json.dumps([job.parts, job.gap_ms, job.part_keys, job.words], ensure_ascii=False)
     return hashlib.sha1(data.encode("utf-8")).hexdigest()[:16]
+
+
+def clip_stamp(job: Job, settings: dict) -> str:
+    """What a clip was made from: its text and the voice settings. A clip whose saved stamp differs is out of date."""
+    data = json.dumps(settings, sort_keys=True).encode("utf-8")
+    return f"{fingerprint(job)}/{hashlib.sha1(data).hexdigest()[:12]}"
+
+
+def is_short(job: Job) -> bool:
+    """One word or syllable per part: words, syllables, syllable items and the slow versions.
+    Sentences, stories and feedback lines are not short."""
+    return job.words is None and all(" " not in p.strip() for p in job.parts)
 
 
 def slow_key(item_id: str) -> str:
@@ -125,21 +139,31 @@ def estimate_word_spans(words: list[str], total_ms: int) -> list[tuple[int, int]
     return spans
 
 
-def first_audible(make, tries: int, quiet: float = QUIET_PEAK) -> np.ndarray:
-    """make(attempt) -> samples, or raises ValueError when the voice returned nothing. Tries up to `tries`
-    times and returns the first clip with real sound; if none has, the loudest (empty if all failed)."""
-    best = np.zeros(0, dtype=np.float32)
+def speech_seconds(text: str, speed: float) -> float:
+    """A natural length for the text, given to the voice as its duration. OmniVoice's own estimate stretches
+    anything shorter than ~2 s (a 2-letter syllable got ~0.8 s, 1.3 s at our speed) and the voice fills the
+    extra time with mumble. Same Latin weights as OmniVoice, without that stretch, floored for one syllable."""
+    weight = sum(1.0 if ch.isalpha() else 0.2 if ch.isspace() else 0.5 for ch in text.strip())
+    return max(MIN_SPEECH_SECONDS, weight * SECONDS_PER_WEIGHT / speed)
+
+
+def best_take(make, tries: int, score, good: float, quiet: float = QUIET_PEAK) -> tuple[np.ndarray, float]:
+    """make(attempt) -> samples, or raises ValueError when the voice returned nothing; score(samples) -> 0..1.
+    Tries up to `tries` times and returns (samples, score) of the first take scoring at least `good`, else of
+    the best one. A take with no real sound scores 0; among those the loudest is kept (empty if all failed)."""
+    best, best_key = np.zeros(0, dtype=np.float32), (-1.0, -1.0)
     for attempt in range(tries):
         try:
             samples = make(attempt)
         except ValueError:
             continue
         peak = float(np.abs(samples).max()) if len(samples) else 0.0
-        if peak >= quiet:
-            return samples
-        if peak > (float(np.abs(best).max()) if len(best) else -1.0):
-            best = samples
-    return best
+        value = score(samples) if peak >= quiet else 0.0
+        if value >= good:
+            return samples, value
+        if (value, peak) > best_key:
+            best, best_key = samples, (value, peak)
+    return best, max(best_key[0], 0.0)
 
 
 def split_sentences(text: str) -> list[str]:

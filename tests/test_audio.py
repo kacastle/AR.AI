@@ -95,30 +95,64 @@ def test_estimate_word_spans_shares_the_time_by_letters():
     assert audio.estimate_word_spans(["—"], 300) == [(0, 0)]
 
 
-def test_first_audible_retries_errors_and_silence():
-    loud = np.full(10, 0.5, dtype=np.float32)
-    quiet = np.full(10, 0.01, dtype=np.float32)
-    outputs = [ValueError("empty"), quiet, loud]
-    tried = []
+def test_speech_seconds_is_a_natural_length_without_omnivoice_short_text_stretch():
+    # letters 1.0, spaces 0.2, punctuation 0.5; OmniVoice's own Latin weights, divided by the speed
+    assert audio.speech_seconds("Si Ana ay masaya.", 1.0) == pytest.approx(14.1 * audio.SECONDS_PER_WEIGHT)   # 13 letters, 3 spaces, 1 period
+    assert audio.speech_seconds("Si Ana ay masaya.", 0.5) == pytest.approx(2 * 14.1 * audio.SECONDS_PER_WEIGHT)
+    # OmniVoice itself would give a 2-letter syllable ~0.8 s (1.3 s at speed 0.65); we give the floor
+    assert audio.speech_seconds("ma", 0.65) == audio.MIN_SPEECH_SECONDS
+    assert audio.speech_seconds("sapatos", 0.65) > audio.speech_seconds("aso", 0.65)
 
+
+def test_is_short_means_one_word_or_syllable_per_part():
+    jobs = {j.key: j for j in audio.plan(CONTENT)}
+    short = {k for k, j in jobs.items() if audio.is_short(j)}
+    assert {"syl_ma", "w_aso", audio.slow_key("w_aso"), "y_ma"} <= short    # y_ = a syllable item
+    assert audio.slow_key(CONTENT.sentences[0].id) in short           # a sentence word by word
+    assert CONTENT.sentences[0].id not in short                       # the whole sentence
+    assert not any(k.startswith(("st_", "fb_")) for k in short)       # stories and feedback lines
+
+
+def test_clip_stamp_changes_with_text_or_voice_settings():
+    job = audio.Job("w_x", ["bahay"])
+    s1, s2 = {"speed": 0.65}, {"speed": 0.7}
+    assert audio.clip_stamp(job, s1) == audio.clip_stamp(audio.Job("w_x", ["bahay"]), dict(s1))
+    assert audio.clip_stamp(job, s1) != audio.clip_stamp(job, s2)
+    assert audio.clip_stamp(job, s1) != audio.clip_stamp(audio.Job("w_x", ["baha"]), s1)
+
+
+def _takes(outputs, tried):
     def make(attempt):
         tried.append(attempt)
         out = outputs[attempt]
         if isinstance(out, Exception):
             raise out
         return out
-
-    assert audio.first_audible(make, tries=5) is loud
-    assert tried == [0, 1, 2]                                   # stops at the first clip with sound
+    return make
 
 
-def test_first_audible_keeps_the_loudest_when_every_try_is_quiet():
+def test_best_take_retries_errors_silence_and_low_scores():
+    loud_bad, loud_good = (np.full(10, 0.5, dtype=np.float32) for _ in range(2))
+    quiet = np.full(10, 0.01, dtype=np.float32)
+    tried = []
+    scores = {id(loud_bad): 0.4, id(loud_good): 0.9}
+    samples, score = audio.best_take(_takes([ValueError("empty"), quiet, loud_bad, loud_good, loud_bad], tried),
+                                     tries=5, score=lambda s: scores[id(s)], good=0.8)
+    assert samples is loud_good and score == 0.9
+    assert tried == [0, 1, 2, 3]                                # stops at the first good take
+
+
+def test_best_take_keeps_the_best_when_no_take_is_good():
+    a, b = np.full(4, 0.5, dtype=np.float32), np.full(4, 0.6, dtype=np.float32)
+    scores = {id(a): 0.5, id(b): 0.7}
+    samples, score = audio.best_take(_takes([a, b], []), tries=2, score=lambda s: scores[id(s)], good=0.8)
+    assert samples is b and score == 0.7
+    # every take quiet: the loudest one, score 0 (pregen_audio --check reports it)
     outs = [np.full(4, p, dtype=np.float32) for p in (0.01, 0.03, 0.02)]
-    assert audio.first_audible(lambda a: outs[a], tries=3) is outs[1]
-
-    def broken(attempt):
-        raise ValueError("empty")
-    assert len(audio.first_audible(broken, tries=2)) == 0       # silence; pregen_audio --check reports it
+    samples, score = audio.best_take(_takes(outs, []), tries=3, score=lambda s: 1.0, good=0.8)
+    assert samples is outs[1] and score == 0.0
+    samples, score = audio.best_take(_takes([ValueError("x")] * 2, []), tries=2, score=lambda s: 1.0, good=0.8)
+    assert len(samples) == 0 and score == 0.0
 
 
 # ---------- build ----------

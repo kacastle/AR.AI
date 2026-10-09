@@ -15,7 +15,8 @@ import torch  # noqa: E402
 import torchaudio.functional as AF  # noqa: E402
 from omnivoice import OmniVoice  # noqa: E402
 
-from backend.tts.audio import estimate_word_spans, first_audible, trim  # noqa: E402
+from backend.tts import audio  # noqa: E402
+from backend.tts.audio import best_take, estimate_word_spans, trim  # noqa: E402
 
 MODEL_ID = "k2-fsa/OmniVoice"
 LANGUAGE = "fil"
@@ -28,12 +29,13 @@ SPEED = 0.65         # about 2.6 words per second on a story: a normal talking p
 NUM_STEP = 16        # generation steps; 32 is the model's default, 16 is about twice as fast
 TRIES = 8            # the voice sometimes returns silence for a short text ("uod" needed seed 6); try another seed
 
-INPUT_VERSION = 1
+INPUT_VERSION = 2    # 2: explicit duration from audio.speech_seconds (OmniVoice stretched short text into mumble)
 
 
 def settings() -> dict:
     return {"model": MODEL_ID, "language": LANGUAGE, "speed": SPEED, "num_step": NUM_STEP, "seed": SEED,
-            "rate": RATE, "input_version": INPUT_VERSION}
+            "rate": RATE, "seconds_per_weight": audio.SECONDS_PER_WEIGHT,
+            "min_speech_seconds": audio.MIN_SPEECH_SECONDS, "input_version": INPUT_VERSION}
 
 
 class Speaker:
@@ -44,7 +46,8 @@ class Speaker:
 
     def _generate(self, text: str, seed: int) -> np.ndarray:
         torch.manual_seed(seed)
-        wav = self.model.generate(text=text, language=LANGUAGE, speed=SPEED, num_step=NUM_STEP)[0]
+        wav = self.model.generate(text=text, language=LANGUAGE, duration=audio.speech_seconds(text, SPEED),
+                                  num_step=NUM_STEP)[0]
         wav = torch.as_tensor(np.asarray(wav, dtype=np.float32))
         return AF.resample(wav, MODEL_RATE, RATE).numpy().astype(np.float32)
 
@@ -56,7 +59,8 @@ class Speaker:
             if not any(ch.isalpha() for ch in text):
                 self._cache[text] = (np.zeros(0, dtype=np.float32), [(0, 0)] * len(text.split()))
             else:
-                samples = first_audible(lambda attempt: self._generate(text, SEED + attempt), TRIES)
+                samples, _ = best_take(lambda attempt: self._generate(text, SEED + attempt), TRIES,
+                                       score=lambda samples: 1.0, good=1.0)   # any take with real sound
                 samples, _ = trim(samples, self.rate)
                 spans = estimate_word_spans(text.split(), round(len(samples) * 1000 / self.rate))
                 self._cache[text] = (samples, spans)

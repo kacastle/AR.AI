@@ -9,6 +9,8 @@ See backend/tts/audio.py for the file names.
 
 Usage: python scripts/pregen_audio.py          generate what is missing, then check
        python scripts/pregen_audio.py --force  remake every clip
+       python scripts/pregen_audio.py --short  remake only out-of-date words, syllables and slow hints
+                                               (not sentences, stories or feedback lines)
        python scripts/pregen_audio.py --check  only check that every word and story has a file that plays
 """
 import json
@@ -26,7 +28,8 @@ os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 from backend.content import load_content  # noqa: E402
 from backend.tts import audio  # noqa: E402
 
-# The voice settings the files in audio_cache/ were made with, and each clip's text fingerprint.
+# The latest voice settings, and for each clip in audio_cache/ the text and settings it was made with
+# (audio.clip_stamp). A clip whose stamp differs from the current one is out of date.
 STAMP = audio.AUDIO_DIR / "_settings.json"
 
 
@@ -49,20 +52,23 @@ def recorded(job: audio.Job) -> bool:
     return job.words is None and any((audio.RECORDINGS_DIR / f"{k}.wav").is_file() for k in keys)
 
 
-def generate(jobs: list[audio.Job], force: bool) -> None:
+def generate(jobs: list[audio.Job], force: bool, short_only: bool = False) -> None:
     from backend.tts import omni   # loads torch; only when generating
     settings = omni.settings()
     old, made = read_stamp()
-    if old != settings and any(audio.wav_path(j.key).is_file() for j in jobs):
-        print(f"Voice settings changed ({old} -> {settings}); remaking every clip.")
-        force = True
-    changed = [j for j in jobs if done(j) and made.get(j.key) != audio.fingerprint(j)]
-    if changed and not force:
-        print("No text fingerprints saved yet; remaking every clip once." if not made else
-              f"{len(changed)} clips have new text in content/ (for example {changed[0].key}); remaking them.")
+    if old != settings and old is not None:
+        print(f"Voice settings changed ({old} -> {settings}).")
+    stale = [j for j in jobs if done(j) and made.get(j.key) != audio.clip_stamp(j, settings)]
+    if stale and not force:
+        print(f"{len(stale)} clips were made from other text or voice settings (for example {stale[0].key}).")
     # Recordings are cheap to copy, so they are always refreshed.
-    todo = [j for j in jobs if force or not done(j) or recorded(j) or j in changed]
-    print(f"{len(jobs)} clips, {len(jobs) - len(todo)} up to date in {audio.AUDIO_DIR}, {len(todo)} to make")
+    todo = [j for j in jobs if force or not done(j) or recorded(j) or j in stale]
+    if short_only:
+        skipped = [j for j in todo if not audio.is_short(j)]
+        todo = [j for j in todo if audio.is_short(j)]
+        if skipped:
+            print(f"--short: leaving {len(skipped)} sentences, stories and feedback lines as they are.")
+    print(f"{len(jobs)} clips, {len(jobs) - len(todo)} kept in {audio.AUDIO_DIR}, {len(todo)} to make")
     if todo:
         speaker = omni.Speaker()
         start = time.perf_counter()
@@ -77,8 +83,10 @@ def generate(jobs: list[audio.Job], force: bool) -> None:
                 audio.write_wav(audio.wav_path(job.key), samples, rate)
             if n % 50 == 0 or n == len(todo):
                 print(f"  {n}/{len(todo)}  ({time.perf_counter() - start:.0f}s)", flush=True)
-    STAMP.write_text(json.dumps({"settings": settings, "clips": {j.key: audio.fingerprint(j) for j in jobs}},
-                                indent=1), encoding="utf-8")
+    remade = {j.key for j in todo}
+    clips = {j.key: audio.clip_stamp(j, settings) if j.key in remade else made[j.key]
+             for j in jobs if j.key in remade or j.key in made}
+    STAMP.write_text(json.dumps({"settings": settings, "clips": clips}, indent=1), encoding="utf-8")
 
 
 def plays(key: str) -> bool:
@@ -124,7 +132,7 @@ def main():
     audio.AUDIO_DIR.mkdir(exist_ok=True)
     jobs = audio.plan(content)
     if "--check" not in sys.argv:
-        generate(jobs, force="--force" in sys.argv)
+        generate(jobs, force="--force" in sys.argv, short_only="--short" in sys.argv)
     sys.exit(1 if check(content, jobs) else 0)
 
 
