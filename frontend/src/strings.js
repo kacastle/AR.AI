@@ -105,12 +105,12 @@ export const t = {
     parentNote: 'Para sa magulang o kasama sa bahay:',
   },
   landing: {
-    title: 'AR.Ai: Educational Technology Solutions',
+    title: 'AR.Ai: Ang Matalinong Kaakabay sa Pagbasa',
     subtitle: 'Ang Matalinong Kaagapay sa Pagbasa para sa DepEd ARAL Program',
     badges: ['100% Offline & Private', 'Powered by Local AI (Ollama 3B)', 'Key Stage 1 (Grades 1-3) Ready'],
     features: [
       {
-        title: 'Mababang Basahin (Adaptive Stories)',
+        title: 'Maikling Babasahin (Adaptive Stories)',
         text: 'Mga kuwentong Filipino na ginagawa mismo sa device, ayon sa hilig ng bawat bata.',
       },
       {
