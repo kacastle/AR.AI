@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *.db
-audio_cache/
+# Generated audio is committed so teammates skip the ~2-hour pregen; listening-test clips stay local.
+audio_cache/try_*
 .env
 node_modules/
