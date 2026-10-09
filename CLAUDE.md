@@ -1,11 +1,100 @@
 Project: ReadingTutor PH. Offline tutor's assistant for DepEd ARAL-Reading, Key Stage 1, Filipino. One tutor, one laptop, 3 learners, 60 minutes or less. Fully offline.
-I am Person 2. I own backend/, scripts/, tests/. Do not edit frontend/ or content/ (Person 1 and Person 3 own them).
-Stack: Python FastAPI + Pydantic, SQLite, Ollama (3B instruct model, JSON output), MMS-TTS facebook/mms-tts-tgl.
-Principles: rules decide what to teach. The model only writes stories, practice words, and summaries inside limits. Code checks every model output. Fixed templates are the fallback. No turn waits for the model; every turn returns in under 1 second.
-Hard rules: no network calls except localhost. No new dependencies without asking. Do not rename JSON fields or ids from content/content.json and content/rules.json. ng is one tile. Learner data stays in the local SQLite file. Never invent Tagalog text; use only text from content files or templates I paste.
-Layout: backend/main.py, db.py, content.py, engine/ (classifier, scoring, selector, rotation, review), llm/, tts/, tests/. scripts/pregen_audio.py, scripts/seed_demo.py.
-API: POST /api/tutor/login; GET /api/groups/{id}; POST /api/groups; POST /api/sessions; GET /api/stories/{id}; POST /api/sessions/{id}/phase; GET /api/sessions/{id}/next; POST /api/sessions/{id}/answer; GET /api/sessions/{id}/summary; GET /api/children/{id}/sheet; GET /api/approvals; POST /api/approvals/{id}; GET /api/audio/{key}.wav.
+
+## Who owns what
+I am Person 2. I own backend/, scripts/, tests/. Do not edit frontend/ (Person 1, not started yet) or content/ (Person 3, Kiefer). content/ files are read-only inputs and may be replaced by newer versions at any time (content v0.2 is in content/ now).
+
+## Stack
+Python FastAPI + Pydantic, SQLite, Ollama with JSON output, MMS-TTS facebook/mms-tts-tgl. Windows with PowerShell, venv in .venv.
+Installed in .venv: fastapi, uvicorn, transformers, torch (CPU build), pytest. Ask before adding anything else.
+Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL (default gemma3n:e4b until the model comparison picks one). Never write "3B" in code, docs or comments; use the real model name.
+
+## Principles
+- Rules decide what to teach. The model only writes stories, practice words, feedback wording and summaries inside limits.
+- Code checks every model output. Fixed templates are the fallback.
+- No turn waits for the model. Every turn returns in under 1 second.
+- Model work runs in the background (thread or queue), never inside /next or /answer.
+
+## Hard rules
+- No network calls except localhost. No new dependencies without asking.
+- Do not rename JSON fields or ids from content/content.json and content/rules.json.
+- ng is one tile.
+- Learner data stays in the local SQLite file. Never commit *.db, audio_cache/ or real child data. Use fake names in seed data.
+- Never invent Tagalog text. Use only text from content files, test_prompts.py prompts, or templates I paste. If a template is missing, use the generic fallback below and tell me.
+
+## Layout and how to run
+Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv active.
+- backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state). Still to come: llm/, tts/. Each folder has an __init__.py.
+- tests/ (repo root): API, content and prompt tests (test_api.py, test_content.py, test_prompts.py). backend/tests/: engine unit tests (classifier, scoring, selector, rotation, review) with a shared conftest.py. `python -m pytest` runs both.
+- scripts/: test_ollama.py, test_tts.py, simulate.py (3-learner session through the real API). Still to come: pregen_audio.py, seed_demo.py.
+- content/ (Person 3), frontend/ (Person 1).
+- Imports: package style only, for example `from backend.db import ...`. Never `from db import ...`.
+- Server: `uvicorn backend.main:app --reload --reload-dir backend --port 8000`
+- Tests: `python -m pytest`
+- Content check (for Person 3): `python -m backend.content` prints OK or a numbered list of problems.
+- Simulation: `python scripts/simulate.py`
+- Scripts: `python scripts/pregen_audio.py`
+- Database: data/tutor.db (gitignored). `DB_PATH` overrides it. New columns are added automatically on startup.
+- Demo timing: `$env:DEMO_FAST="1"` uses rules.json session.demo_fast (1-minute phases, 20-second items).
+- Offline mode (PowerShell): `$env:HF_HUB_OFFLINE="1"; $env:TRANSFORMERS_OFFLINE="1"`
+- Docs page: http://localhost:8000/docs
+
+## Model prompts and checks
+tests/test_prompts.py (Person 3's v0.2) holds the prompt text and the check functions I use to compare models. It reads content/ through CONTENT_DIR and writes its results*.csv and stories_for_review*.md files next to itself. Reuse them; do not write a second copy of any prompt or check. If code must move, move it into backend/llm/ and make test_prompts.py import from there.
+Story, practice words, feedback and summary prompts come from content/prompts.md. Retry a failed output once, then use the library or template fallback.
+
+## API
+POST /api/tutor/login; GET /api/groups/{id}; POST /api/groups; POST /api/sessions; GET /api/stories/{id}; POST /api/sessions/{id}/phase; GET /api/sessions/{id}/next; POST /api/sessions/{id}/answer; GET /api/sessions/{id}/summary; GET /api/children/{id}/sheet; GET /api/approvals; POST /api/approvals/{id}; GET /api/audio/{key}.wav.
+Person 1 builds against these shapes, so never change or rename a field without telling me first. Every shape, with one example response, lives in backend/API_CONTRACT.md. Keep that file in sync with the code. CORS allows http://localhost:5173.
+
 Next turn: child_id, child_name, turn_number, task_type, item (id, prompt_audio, slots, tiles, syllables), support_level, prefill, seconds.
+- task_type: dictation_letters, dictation_syllables, missing_letter, sentence_builder (from rules.json selection.task_types_by_category).
+- prefill has one entry per slot; "" = empty slot. show = full answer, guide = first tile, alone = all empty; missing_letter = every slot except the gap.
 Answer: child_id, item_id, given, hints_used, attempt, time_ms.
+- given is the content of all slots, left to right (missing_letter too). attempt starts at 1 per item.
 Result: correct, mistake_type, feedback (message_fil, hint_fil), hint (kind, audio, highlight_slot), next_action (retry, show_answer, next), answer.
 hint.kind: replay_by_syllable, highlight_slot, first_tile.
+Other shapes (keep flat and simple, reuse content.json field names):
+- login: body {pin}, returns {ok} (demo stub: any PIN works)
+- groups: group with learners (name, picture, profile); profile must be in rules.json placement.profiles
+- sessions: body {group_id, present[]}, returns session with read_along_story_id
+- stories: {title, paragraphs, words[{text, start_ms, end_ms}], audio_url} (word timings are estimates until pregen_audio.py)
+- phase: body {phase}, returns {phase, ends_at}
+- summary: learners[{child_id, summary, next_focus_skill, next_method}] and group_note (English fallback template from prompts.md section 4)
+- sheet: name, date, 5 words with syllables, 1 sentence, home_line_fil
+- approvals: waiting AI items; POST body {approve}, returns {ok}
+
+## Engine rules
+All numbers are read from content/rules.json. The values below are the current ones.
+- Mistake classifier checks in this order: same tiles in a different order = O_ORDER; n and g as two tiles where ng was expected = O_NG; then Levenshtein alignment: vowel for vowel = P_SUB_VOWEL, consonant for consonant = P_SUB_CONS, ng replaced by n = O_NG, one deleted tile at the end = P_OMIT_FINAL, in the middle = P_OMIT_MID, two or more deleted tiles in a row = S_SYLL_MISS, extra tile = P_ADD. With several mistakes return the first from the left. Vowel for consonant (or the other way) goes by the expected tile. (rules.md section 7 puts the ng check first; Person 3 has been told.)
+- Score: new = old + 0.3 x (result - old), once per item when it ends. Results: alone 1.0, guide or 1 hint 0.7, shown 0.4, wrong 0.0. Correct at support show, or after 2+ hints, counts as shown (0.4), so mastery needs support alone.
+- An item counts as correct (for streaks, "last 3 correct" and rotation) when the first attempt was right.
+- Mastered at 0.85 with 8 attempts and last 3 correct. Reteach below 0.60: support resets to show only when a skill falls from practice into reteach. Review after 1, 3, 7, 14 days; a failed review resets the score to 0.70 and support to guide.
+- Support: up after 3 correct in a row, down after 2 wrong in a row. 3 wrong in a row: one easy item from a mastered skill (or the current skill at easy difficulty if none is mastered).
+- Selection: due review skill first, else the weakest unlocked skill (all prerequisites mastered). Comprehension skills are for the story turn, not tile turns. Task types rotate per skill. Unused items first; when all are used, the one seen longest ago comes back. Items seen in the last session are avoided.
+- Difficulty: after 10 items, accuracy above 0.90 = hard (4 distractors, most syllables), below 0.60 = easy (2 distractors, fewest syllables), else normal (3). Words with ng always get n and g as distractors.
+- Placement: 2 items per skill in rules.json placement.skills; a skill passes only if both are right. Stop after 2 failed skills in a row. Passed skills start at 0.70 and count as mastered (no review dates). Practice starts at the first failed skill. low_emergent if a skill before sk_cvcv_1 fails, else high_emergent.
+- Timers: item_seconds 60 is the limit for an item; slow_seconds 30 triggers the SLOW rule.
+- Correction steps: hint 1 replay_by_syllable, hint 2 highlight_slot, hint 3 first_tile, then next_action show_answer so the learner rebuilds it, then next.
+
+## Fixed feedback templates (message_fil / hint_fil)
+The code uses rules.json feedback_templates: CORRECT (rotates its 3 lines) and SHOW_ANSWER. Mistake feedback is not wired yet.
+- P_OMIT_FINAL: Malapit na, {name}! / Pakinggan ang huling pantig: ba-HAY.
+- P_SUB_VOWEL: Magaling ang subok mo! / Pakinggan: me-sa. E ba o I?
+- O_NG: Kaya mo ito! / Hanapin ang tile na ng.
+- S_SYLL_MISS: Konti na lang! / Pumalakpak tayo: sa-pa-tos. Ilang pantig?
+- Correct: Ang galing mo, {name}!
+- Generic fallback for any other code (Kiefer must confirm): Subukan natin ulit, {name}!
+
+## Progress
+- P2-0 done: FastAPI skeleton, test_ollama.py, test_tts.py.
+- P2-1 done: Pydantic shapes, SQLite tables, content loader and checks, every endpoint returns its shape with real content, API_CONTRACT.md.
+- P2-3 done: classifier with tests (backend/engine/classifier.py).
+- P2-4 done: scoring, selector, rotation, review and placement with tests, wired into /next and /answer; simulate.py shows 3 learners changing skill and support level.
+- Not wired yet: classifier in /answer (mistake_type is still null, so there is no mistake feedback), placement endpoint and session flow, end_with_easy_item, alerts, llm/, tts/, pregen_audio.py, seed_demo.py.
+- Content issue for Person 3: sk_letters_2 has no words, so sk_cv_2 (which needs it mastered) can never unlock.
+
+## Working rules for the agent
+- One task per prompt. Give a 5-bullet plan first for big tasks.
+- Write tests before engine code. Run `python -m pytest` before saying a task is done.
+- Only edit files in backend/, scripts/ and tests/ unless I say otherwise.
+- If something fails 3 times, simplify it and tell me instead of adding complexity.
