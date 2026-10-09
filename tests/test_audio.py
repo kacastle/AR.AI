@@ -179,10 +179,25 @@ def test_build_uses_a_recording_when_there_is_one(tmp_path):
 def test_a_syllable_item_uses_the_syllable_recording(tmp_path):
     jobs = {j.key: j for j in audio.plan(CONTENT)}
     assert jobs["y_ma"].part_keys == ["syl_ma"]             # one recording: syl_ma, y_ma and the slow hints
-    assert jobs["w_aso"].part_keys is None                  # words stay on the voice
+    assert jobs["y_ma"].blend_ms is None                    # one syllable: the recording as it is
     audio.write_wav(tmp_path / "syl_ma.wav", np.zeros(9, dtype=np.float32), 1000)
     samples, rate, _ = audio.build(jobs["y_ma"], FakeSpeaker(), tmp_path)
     assert (len(samples), rate) == (9, 1000)
+
+
+def test_a_word_is_its_recorded_syllables_blended(tmp_path):
+    jobs = {j.key: j for j in audio.plan(CONTENT)}
+    aso = jobs["w_aso"]
+    assert aso.part_keys == ["syl_a", "syl_so"] and aso.blend_ms == audio.BLEND_MS
+    audio.write_wav(tmp_path / "syl_a.wav", np.full(200, 0.5, dtype=np.float32), 1000)
+    audio.write_wav(tmp_path / "syl_so.wav", np.full(300, 0.5, dtype=np.float32), 1000)
+    samples, rate, _ = audio.build(audio.Job("w_aso", ["aso"], part_keys=["syl_a", "syl_so"], blend_ms=60),
+                                   FakeSpeaker(), tmp_path)
+    assert (len(samples), rate) == (200 + 300 - 60, 1000)          # the 60 ms overlap
+    # a syllable without a recording: the voice says the whole word
+    samples, _, _ = audio.build(audio.Job("w_x", ["bahay"], part_keys=["syl_ba", "syl_hay"], blend_ms=60),
+                                FakeSpeaker(), tmp_path)
+    assert len(samples) == 100                                     # FakeSpeaker: 100 samples per word
 
 
 def test_split_sentences_keeps_every_word():
