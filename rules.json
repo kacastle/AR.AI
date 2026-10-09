@@ -1,0 +1,520 @@
+{
+  "version": "0.1",
+  "score": {
+    "alpha": 0.3,
+    "start_score": 0.0,
+    "result_values": {
+      "alone": 1.0,
+      "guide_or_1_hint": 0.7,
+      "shown": 0.4,
+      "wrong": 0.0
+    }
+  },
+  "thresholds": {
+    "reteach_below": 0.6,
+    "mastered_at": 0.85,
+    "min_attempts": 8,
+    "last_correct": 3
+  },
+  "alert": {
+    "below": 0.6,
+    "min_attempts": 10,
+    "days": 14
+  },
+  "support": {
+    "levels": [
+      "show",
+      "guide",
+      "alone"
+    ],
+    "up_after_correct": 3,
+    "down_after_wrong": 2,
+    "start": {
+      "new": "show",
+      "reteach": "show",
+      "practice": "guide"
+    },
+    "prefill": {
+      "show": "full_answer_first_then_rebuild",
+      "guide": "first_tile",
+      "alone": "none"
+    }
+  },
+  "difficulty": {
+    "window": 10,
+    "target_low": 0.7,
+    "target_high": 0.85,
+    "harder_above": 0.9,
+    "easier_below": 0.6,
+    "stop_after_wrong": 3,
+    "distractor_tiles": {
+      "easy": 2,
+      "normal": 3,
+      "hard": 4
+    },
+    "harder_means": [
+      "more_syllables",
+      "more_distractor_tiles",
+      "next_story_level"
+    ],
+    "easier_means": [
+      "fewer_syllables",
+      "fewer_distractor_tiles",
+      "more_support"
+    ]
+  },
+  "hints": {
+    "ladder": [
+      "replay_by_syllable",
+      "highlight_slot",
+      "first_tile"
+    ],
+    "max_attempts": 3,
+    "after_max": "show_answer_then_rebuild",
+    "check_item_after_correction": true
+  },
+  "review": {
+    "days": [
+      1,
+      3,
+      7,
+      14
+    ],
+    "fail_score": 0.7
+  },
+  "timing": {
+    "slow_seconds": 30,
+    "item_seconds": 60
+  },
+  "selection": {
+    "skill_order": [
+      "due_review",
+      "weakest_unlocked"
+    ],
+    "unlock": "all prerequisites mastered",
+    "task_types_by_category": {
+      "letter_sound": [
+        "missing_letter",
+        "dictation_letters"
+      ],
+      "syllable": [
+        "dictation_letters",
+        "dictation_syllables"
+      ],
+      "word": [
+        "dictation_letters",
+        "dictation_syllables",
+        "missing_letter"
+      ],
+      "sentence": [
+        "sentence_builder"
+      ],
+      "comprehension": [
+        "story_questions"
+      ]
+    },
+    "avoid_items_seen_in_last_sessions": 1
+  },
+  "session": {
+    "max_minutes": 60,
+    "tile_turn_minutes": 35,
+    "story_turn_minutes": 15,
+    "summary_minutes": 10,
+    "warmup_review_items_per_learner": 1,
+    "main_items_per_learner": 9,
+    "story_turn": {
+      "read_along": true,
+      "questions": 3,
+      "tap_word_to_hear": true
+    },
+    "end_with_easy_item": true,
+    "max_learners": 5,
+    "demo_fast": {
+      "phase_minutes": 1,
+      "item_seconds": 20
+    }
+  },
+  "rotation": {
+    "order": "fixed",
+    "skip_absent": true,
+    "easy_item_after_wrong": 3
+  },
+  "placement": {
+    "items_per_skill": 2,
+    "stop_after_failed_skills": 2,
+    "passed_score": 0.7,
+    "skills": [
+      "sk_vowels",
+      "sk_letters_1",
+      "sk_cv_1",
+      "sk_cvcv_1",
+      "sk_ng",
+      "sk_cvc_final",
+      "sk_sentence_1",
+      "sk_comp_literal"
+    ],
+    "low_emergent_if_fail_before": "sk_cvcv_1",
+    "profiles": [
+      "low_emergent",
+      "high_emergent"
+    ]
+  },
+  "story_levels": {
+    "1": {
+      "min_words": 25,
+      "max_words": 40,
+      "max_words_per_sentence": 8,
+      "question_types": [
+        "who",
+        "where",
+        "what"
+      ]
+    },
+    "2": {
+      "min_words": 45,
+      "max_words": 80,
+      "max_words_per_sentence": 12,
+      "question_types": [
+        "sequence",
+        "feeling",
+        "main_idea",
+        "who",
+        "where"
+      ]
+    }
+  },
+  "mistake_types": {
+    "P_SUB_VOWEL": {
+      "group": "phonological",
+      "description_en": "Wrong vowel, often e/i or o/u",
+      "method": "minimal_pair_vowels"
+    },
+    "P_SUB_CONS": {
+      "group": "phonological",
+      "description_en": "Wrong consonant, often b/d, p/b, m/n",
+      "method": "minimal_pair_consonants"
+    },
+    "P_OMIT_FINAL": {
+      "group": "phonological",
+      "description_en": "Final consonant left out",
+      "method": "syllable_color_clap"
+    },
+    "P_OMIT_MID": {
+      "group": "phonological",
+      "description_en": "Middle consonant left out (closed syllable or cluster)",
+      "method": "syllable_tiles_then_letters"
+    },
+    "P_ADD": {
+      "group": "phonological",
+      "description_en": "Extra letter",
+      "method": "count_slots"
+    },
+    "O_ORDER": {
+      "group": "orthographic",
+      "description_en": "Correct letters in the wrong order",
+      "method": "left_to_right_highlight"
+    },
+    "O_NG": {
+      "group": "orthographic",
+      "description_en": "ng written as n, or as n + g",
+      "method": "ng_sound_pairs"
+    },
+    "S_SYLL_MISS": {
+      "group": "syllable",
+      "description_en": "A whole syllable left out",
+      "method": "clap_count_syllables"
+    },
+    "SN_ORDER": {
+      "group": "sentence",
+      "description_en": "Words in the wrong order",
+      "method": "first_word_model_sentence"
+    },
+    "SN_PUNCT": {
+      "group": "sentence",
+      "description_en": "Capital letter or period missing",
+      "method": "capital_period_rule"
+    },
+    "C_LITERAL": {
+      "group": "comprehension",
+      "description_en": "Wrong who, where, or what answer",
+      "method": "highlight_answer_sentence"
+    },
+    "C_SEQUENCE": {
+      "group": "comprehension",
+      "description_en": "Wrong story order",
+      "method": "picture_order_strip"
+    },
+    "C_INFER": {
+      "group": "comprehension",
+      "description_en": "Wrong feeling or main idea",
+      "method": "hint_question"
+    },
+    "SLOW": {
+      "group": "engagement",
+      "description_en": "No answer after slow_seconds, or 2+ hints",
+      "method": "easier_item_encourage"
+    }
+  },
+  "methods": {
+    "minimal_pair_vowels": {
+      "description_en": "Play the correct word and the wrong-vowel word as a pair. Then 3 items that use only the two vowel tiles.",
+      "items_after": 3
+    },
+    "minimal_pair_consonants": {
+      "description_en": "Show a picture card for each of the two sounds. Then dictation with only the two confused letters.",
+      "items_after": 3
+    },
+    "syllable_color_clap": {
+      "description_en": "Split the word into colored syllables and clap each one. Focus on the last sound.",
+      "items_after": 3
+    },
+    "syllable_tiles_then_letters": {
+      "description_en": "Build the word with syllable tiles first, then with letter tiles. TTS says each syllable slowly.",
+      "items_after": 2
+    },
+    "count_slots": {
+      "description_en": "Show the number of empty slots. Count the sounds together.",
+      "items_after": 2
+    },
+    "left_to_right_highlight": {
+      "description_en": "Highlight each letter left to right while TTS speaks. Build one syllable at a time.",
+      "items_after": 2
+    },
+    "ng_sound_pairs": {
+      "description_en": "Show the ng sound card. Play pairs: na/nga, ni/ngi. Highlight the ng tile.",
+      "items_after": 3
+    },
+    "clap_count_syllables": {
+      "description_en": "Clap and count the syllables. Use syllable tiles.",
+      "items_after": 2
+    },
+    "first_word_model_sentence": {
+      "description_en": "Show the first word (capital letter). TTS reads the model sentence. Retry.",
+      "items_after": 1
+    },
+    "capital_period_rule": {
+      "description_en": "Highlight the capital letter and the period.",
+      "items_after": 1
+    },
+    "highlight_answer_sentence": {
+      "description_en": "Highlight the sentence that has the answer. TTS reads it. Retry.",
+      "items_after": 1
+    },
+    "picture_order_strip": {
+      "description_en": "Put a picture strip of 3 events in order. Then a shorter story.",
+      "items_after": 1
+    },
+    "hint_question": {
+      "description_en": "Ask a hint question about what happened before. Retry.",
+      "items_after": 1
+    },
+    "easier_item_encourage": {
+      "description_en": "Encourage. Give an easier item from the same skill.",
+      "items_after": 1
+    }
+  },
+  "feedback_templates": {
+    "CORRECT": {
+      "message_fil": [
+        "Ang galing mo, {name}!",
+        "Tama! Magaling, {name}!",
+        "Yehey! Tama ka!"
+      ],
+      "hint_fil": null
+    },
+    "P_SUB_VOWEL": {
+      "message_fil": [
+        "Magaling ang subok mo!"
+      ],
+      "hint_fil": "Pakinggan: {syllables_hyphen}. Aling patinig ang tama?"
+    },
+    "P_SUB_CONS": {
+      "message_fil": [
+        "Malapit na!"
+      ],
+      "hint_fil": "Pakinggan ang tunog: {syllables_hyphen}."
+    },
+    "P_OMIT_FINAL": {
+      "message_fil": [
+        "Malapit na, {name}!"
+      ],
+      "hint_fil": "Pakinggan ang huling pantig: {syllables_last_caps}."
+    },
+    "P_OMIT_MID": {
+      "message_fil": [
+        "Konti na lang!"
+      ],
+      "hint_fil": "Dahan-dahan: {syllables_hyphen}."
+    },
+    "P_ADD": {
+      "message_fil": [
+        "Halos tama na!"
+      ],
+      "hint_fil": "Bilangin ang mga kahon: {slots} lang."
+    },
+    "O_ORDER": {
+      "message_fil": [
+        "Tama ang mga titik!"
+      ],
+      "hint_fil": "Ayusin ang pagkakasunod: {syllables_hyphen}."
+    },
+    "O_NG": {
+      "message_fil": [
+        "Kaya mo ito!"
+      ],
+      "hint_fil": "Hanapin ang tile na \"ng.\""
+    },
+    "S_SYLL_MISS": {
+      "message_fil": [
+        "Konti na lang!"
+      ],
+      "hint_fil": "Pumalakpak tayo: {syllables_hyphen}. Ilang pantig?"
+    },
+    "SN_ORDER": {
+      "message_fil": [
+        "Subukan ulit!"
+      ],
+      "hint_fil": "Magsimula sa salitang may malaking titik."
+    },
+    "SN_PUNCT": {
+      "message_fil": [
+        "Halos tama na!"
+      ],
+      "hint_fil": "Tandaan ang malaking titik at tuldok."
+    },
+    "C_LITERAL": {
+      "message_fil": [
+        "Subukan natin ulit."
+      ],
+      "hint_fil": "Basahin ang may kulay na pangungusap."
+    },
+    "C_SEQUENCE": {
+      "message_fil": [
+        "Isipin natin ulit."
+      ],
+      "hint_fil": "Ano ang unang nangyari sa kuwento?"
+    },
+    "C_INFER": {
+      "message_fil": [
+        "Magandang subok!"
+      ],
+      "hint_fil": "Ano ang nangyari bago iyon?"
+    },
+    "SLOW": {
+      "message_fil": [
+        "Kaya mo ito, {name}!"
+      ],
+      "hint_fil": "Subukan natin ang mas madali."
+    },
+    "SHOW_ANSWER": {
+      "message_fil": [
+        "Tingnan ang tamang sagot."
+      ],
+      "hint_fil": "Ngayon, ikaw naman ang bumuo."
+    }
+  },
+  "confusable_letters": {
+    "vowels": [
+      [
+        "e",
+        "i"
+      ],
+      [
+        "o",
+        "u"
+      ]
+    ],
+    "consonants": [
+      [
+        "b",
+        "d"
+      ],
+      [
+        "p",
+        "b"
+      ],
+      [
+        "m",
+        "n"
+      ],
+      [
+        "t",
+        "d"
+      ],
+      [
+        "k",
+        "g"
+      ],
+      [
+        "l",
+        "r"
+      ]
+    ],
+    "ng": [
+      "n",
+      "g"
+    ]
+  },
+  "practice_sheet": {
+    "words": 5,
+    "sentences": 1,
+    "show_scores": false,
+    "home_line_fil": "Basahin nang malakas ang mga salitang ito kasama ang isang kasama sa bahay."
+  },
+  "safety": {
+    "note": "Starter blocklist. Person 3 extends it. Any match rejects a model output.",
+    "blocklist": [
+      "patay",
+      "namatay",
+      "dugo",
+      "baril",
+      "kutsilyo",
+      "saksak",
+      "multo",
+      "halimaw",
+      "aswang",
+      "suntok",
+      "kill",
+      "dead",
+      "blood",
+      "gun",
+      "knife",
+      "ghost",
+      "monster"
+    ]
+  },
+  "personalization": {
+    "use_first_name_only": true,
+    "max_interests_per_learner": 3,
+    "interest_source": "the tutor picks at learner setup, or the learner taps up to 3 interest pictures in the first session",
+    "personal_story": {
+      "main_character": "the learner",
+      "min_name_mentions": 2,
+      "min_interest_words": 2,
+      "interest_words_from": "content.json interests[].words and interests[].objects of the learner's interests"
+    },
+    "positive_role": "A named learner is always kind and successful. A problem in the story comes from weather, a lost object, or chance, never from the learner. The learner helps solve it.",
+    "never_include": [
+      "surname",
+      "school name",
+      "address",
+      "real names of family members",
+      "health or family problems",
+      "comparisons between learners"
+    ],
+    "neutral_distractor_names": [
+      "Lola",
+      "Lolo",
+      "Tatay",
+      "Nanay",
+      "Kuya",
+      "Ate"
+    ],
+    "fallback_order": [
+      "model_story_if_approved",
+      "story_templates",
+      "library_story"
+    ],
+    "one_story_per_learner_per_session": true
+  }
+}
