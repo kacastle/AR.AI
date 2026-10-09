@@ -1,10 +1,10 @@
 import json
 import os
 import re
-from collections import Counter
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import date, datetime, timedelta
+from types import SimpleNamespace
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,6 +16,9 @@ from backend.engine import review, rotation, scoring
 from backend.engine.feedback import feedback_for, mistake_code
 from backend.engine.selector import pick_next, skill_items, weakest_unlocked_skill
 from backend.engine.state import SkillState, new_state
+from backend.llm.jobs import Job
+from backend.llm.worker import worker
+from backend.records import event_count, load_states, session_stats
 from backend.schemas import (
     AnswerIn, ApprovalIn, ApprovalItem, Feedback, Group, GroupIn, Hint, Item, Learner,
     LearnerSummary, LoginIn, NextTurn, OkOut, PhaseIn, PhaseOut, Result, Session, SessionIn,
@@ -37,7 +40,9 @@ async def lifespan(app: FastAPI):
         print(f"Content loaded with {len(content.problems)} problem(s):")
         print(format_problems(content.problems))
     db.init_db()
+    worker.start()
     yield
+    worker.stop()
 
 
 app = FastAPI(title="ReadingTutor PH", lifespan=lifespan)
@@ -56,19 +61,6 @@ def get_row(conn, table: str, row_id: str):
     if row is None:
         raise HTTPException(404, f"{table} '{row_id}' not found")
     return row
-
-
-def _date(value):
-    return date.fromisoformat(value) if value else None
-
-
-def load_states(conn, child_id: str) -> dict[str, SkillState]:
-    rows = conn.execute("SELECT * FROM skill_state WHERE child_id = ?", (child_id,))
-    return {r["skill_id"]: SkillState(
-        skill_id=r["skill_id"], score=r["score"], support_level=r["support_level"], attempts=r["attempts"],
-        correct_streak=r["correct_streak"], wrong_streak=r["wrong_streak"], review_step=r["review_step"],
-        next_review_at=_date(r["next_review_at"]), mastered_at=_date(r["mastered_at"]),
-    ) for r in rows}
 
 
 def save_state(conn, child_id: str, s: SkillState) -> None:
@@ -103,8 +95,8 @@ def group_out(conn, group_id: str) -> Group:
     g = get_row(conn, "groups", group_id)
     kids = conn.execute("SELECT * FROM children WHERE group_id = ? ORDER BY rowid", (group_id,))
     return Group(id=g["id"], tutor_name=g["tutor_name"],
-                 learners=[Learner(id=k["id"], name=k["name"], picture=k["picture"], profile=k["profile"])
-                           for k in kids])
+                 learners=[Learner(id=k["id"], name=k["name"], picture=k["picture"], profile=k["profile"],
+                                   interests=json.loads(k["interests"])) for k in kids])
 
 
 def session_out(s) -> Session:
@@ -132,15 +124,21 @@ def login(body: LoginIn):
 @app.post("/api/groups", response_model=Group)
 def create_group(body: GroupIn):
     profiles = content.rules.placement.profiles
+    known = {i.id for i in content.data.interests}
+    most = content.rules.personalization["max_interests_per_learner"]
     for learner in body.learners:
         if learner.profile not in profiles:
             raise HTTPException(422, f"profile must be one of {profiles}")
+        unknown = [i for i in learner.interests if i not in known]
+        if unknown or len(learner.interests) > most:
+            raise HTTPException(422, f"interests: up to {most} ids from content.json interests (unknown: {unknown})")
     with db.connect() as conn:
         group_id = db.new_id("g")
         conn.execute("INSERT INTO groups (id, tutor_name) VALUES (?, ?)", (group_id, body.tutor_name))
         for learner in body.learners:
-            conn.execute("INSERT INTO children (id, group_id, name, picture, profile) VALUES (?, ?, ?, ?, ?)",
-                         (db.new_id("c"), group_id, learner.name, learner.picture, learner.profile))
+            conn.execute("INSERT INTO children (id, group_id, name, picture, profile, interests) "
+                         "VALUES (?, ?, ?, ?, ?, ?)", (db.new_id("c"), group_id, learner.name, learner.picture,
+                                                       learner.profile, json.dumps(learner.interests)))
         return group_out(conn, group_id)
 
 
@@ -165,12 +163,17 @@ def create_session(body: SessionIn):
         session_id = db.new_id("s")
         conn.execute("INSERT INTO sessions (id, group_id, present, phase, read_along_story_id) VALUES (?, ?, ?, ?, ?)",
                      (session_id, body.group_id, json.dumps(body.present), "tiles", story.id))
-        return session_out(get_row(conn, "sessions", session_id))
+        out = session_out(get_row(conn, "sessions", session_id))
+    # Model work for later in the session; it runs in the background and the tutor approves it.
+    for child_id in body.present:
+        worker.submit(Job("story", child_id=child_id))
+        worker.submit(Job("words", child_id=child_id))
+    return out
 
 
 @app.get("/api/stories/{story_id}", response_model=StoryOut)
 def get_story(story_id: str):
-    story = content.stories_by_id.get(story_id)
+    story = content.stories_by_id.get(story_id) or approved_story(story_id)
     if story is None:
         raise HTTPException(404, f"story '{story_id}' not found")
     saved = tts_audio.load_timings(story.id)
@@ -198,6 +201,8 @@ def set_phase(session_id: str, body: PhaseIn):
         get_row(conn, "sessions", session_id)
         conn.execute("UPDATE sessions SET phase = ?, phase_ends_at = ? WHERE id = ?",
                      (body.phase, ends_at, session_id))
+    if body.phase == "summary":
+        worker.submit(Job("summary", session_id=session_id))
     return PhaseOut(phase=body.phase, ends_at=ends_at)
 
 
@@ -309,33 +314,45 @@ def answer(session_id: str, body: AnswerIn):
 
 @app.get("/api/sessions/{session_id}/summary", response_model=SummaryOut)
 def summary(session_id: str):
-    rules = content.rules
-    learners, main_mistakes = [], {}
     with db.connect() as conn:
         s = get_row(conn, "sessions", session_id)
-        for child_id in json.loads(s["present"]):
-            child = get_row(conn, "children", child_id)
-            events = conn.execute("SELECT * FROM events WHERE session_id = ? AND child_id = ?",
-                                  (session_id, child_id)).fetchall()
-            items = {e["item_id"] for e in events}
-            first_try = {e["item_id"] for e in events if e["attempt"] == 1 and e["correct"]}
-            mistakes = Counter(e["mistake_type"] for e in events if e["mistake_type"])
-            skill = weakest_unlocked_skill(content, load_states(conn, child_id))
-            if mistakes:
-                main = mistakes.most_common(1)[0][0]
-                main_mistakes.setdefault(main, []).append(child["name"])
-                method = rules.mistake_types[main].method
-            elif skill.mistake_types:
-                method = rules.mistake_types[skill.mistake_types[0]].method
-            else:
-                method = next(iter(rules.methods))
-            learners.append(LearnerSummary(
-                child_id=child_id,
-                summary=f"{child['name']}: {len(first_try)} of {len(items)} correct. "
-                        f"Next: {skill.name_en} with {method_name(method)}.",
-                next_focus_skill=skill.id,
-                next_method=method,
-            ))
+        stats = session_stats(conn, content, session_id)
+        events = event_count(conn, session_id)
+        row = conn.execute("SELECT payload FROM generated_items WHERE kind = 'summary' AND session_id = ? "
+                           "ORDER BY created_at DESC LIMIT 1", (session_id,)).fetchone()
+    model = model_summary(row, stats, events)
+    if model is not None:
+        return model
+    if s["phase"] == "summary" and events:
+        worker.submit(Job("summary", session_id=session_id))   # ready on a later call; never waited for
+    return template_summary(stats)
+
+
+def model_summary(row, stats, events: int):
+    """The model's summary if it was made from the events there are now, else None."""
+    if row is None:
+        return None
+    payload = json.loads(row["payload"])
+    if payload.get("event_count") != events:
+        return None
+    try:
+        out = SummaryOut(learners=payload["learners"], group_note=payload.get("group_note", ""))
+    except (KeyError, ValueError):
+        return None
+    return out if [x.child_id for x in out.learners] == [st.child_id for st in stats] else None
+
+
+def template_summary(stats) -> SummaryOut:
+    """prompts.md section 4 fallback template (code only)."""
+    rules = content.rules
+    main_mistakes = {}
+    for st in stats:
+        if st.main_mistake:
+            main_mistakes.setdefault(st.main_mistake, []).append(st.name)
+    learners = [LearnerSummary(
+        child_id=st.child_id,
+        summary=f"{st.name}: {st.correct} of {st.total} correct. Next: {st.skill.name_en} with {method_name(st.method)}.",
+        next_focus_skill=st.skill.id, next_method=st.method) for st in stats]
     shared = [(code, names) for code, names in main_mistakes.items() if len(names) >= 2]
     group_note = ""
     if shared:
@@ -350,7 +367,17 @@ def sheet(child_id: str):
     with db.connect() as conn:
         child = get_row(conn, "children", child_id)
         skill = weakest_unlocked_skill(content, load_states(conn, child_id), words_only=True)
+        approved = conn.execute(
+            "SELECT g.payload FROM generated_items g JOIN approvals a ON a.generated_item_id = g.id "
+            "WHERE g.kind = 'words' AND g.child_id = ? AND a.status = 'approved' "
+            "ORDER BY a.decided_at DESC, g.created_at DESC LIMIT 1", (child_id,)).fetchone()
     words = [i for i in skill_items(content, skill) if isinstance(i, Word)][:ps.words]
+    if approved:
+        chosen = json.loads(approved["payload"])
+        # Practice words the tutor approved, while the learner is still on that skill.
+        picked = [content.words_by_id[w["word_id"]] for w in chosen["words"] if w["word_id"] in content.words_by_id]
+        if chosen.get("skill_id") == skill.id and picked:
+            words = picked[:ps.words]
     sentence = next((sn for sn in content.sentences if sn.level == skill.level), content.sentences[0])
     return SheetOut(name=child["name"], date=date.today().isoformat(),
                     words=[SheetWord(text=w.text, syllables=w.syllables) for w in words],
@@ -370,10 +397,25 @@ def list_approvals():
 @app.post("/api/approvals/{approval_id}", response_model=OkOut)
 def decide_approval(approval_id: str, body: ApprovalIn):
     with db.connect() as conn:
-        get_row(conn, "approvals", approval_id)
+        approval = get_row(conn, "approvals", approval_id)
         conn.execute("UPDATE approvals SET status = ?, decided_at = datetime('now') WHERE id = ?",
                      ("approved" if body.approve else "rejected", approval_id))
+        item = get_row(conn, "generated_items", approval["generated_item_id"])
+        payload = json.loads(item["payload"])
+        if "approved_by_tutor" in payload:
+            payload["approved_by_tutor"] = body.approve
+            conn.execute("UPDATE generated_items SET payload = ? WHERE id = ?",
+                         (json.dumps(payload, ensure_ascii=False), item["id"]))
     return OkOut(ok=True)
+
+
+def approved_story(story_id: str):
+    """A model story the tutor approved, shaped like a content.json story; None if there is none."""
+    with db.connect() as conn:
+        row = conn.execute(
+            "SELECT g.payload FROM generated_items g JOIN approvals a ON a.generated_item_id = g.id "
+            "WHERE g.id = ? AND g.kind = 'story' AND a.status = 'approved'", (story_id,)).fetchone()
+    return SimpleNamespace(**json.loads(row["payload"])) if row else None
 
 
 @app.get("/api/audio/{key}.wav")

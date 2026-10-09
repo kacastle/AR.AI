@@ -1,4 +1,4 @@
-# API contract (P2-1)
+# API contract
 
 Base URL: `http://localhost:8000`. All bodies are JSON. CORS allows `http://localhost:5173`.
 Live, clickable docs: `http://localhost:8000/docs`.
@@ -23,12 +23,13 @@ Response
 
 ## POST /api/groups
 `profile` must be `low_emergent` or `high_emergent` (`rules.json` → `placement.profiles`). `picture` is any string the frontend chooses (for example an icon name).
+`interests` (optional, default `[]`): up to 3 ids from `content.json` → `interests` (`rules.json` → `personalization.max_interests_per_learner`), picked by the tutor at learner setup. The model writes personal stories only for learners with interests. Unknown ids or more than 3 → `422`.
 
 Request
 ```json
 {"tutor_name": "Teacher Liza", "learners": [
-  {"name": "Ana", "picture": "cat", "profile": "low_emergent"},
-  {"name": "Ben", "picture": "dog", "profile": "high_emergent"},
+  {"name": "Ana", "picture": "cat", "profile": "low_emergent", "interests": ["int_food", "int_toys"]},
+  {"name": "Ben", "picture": "dog", "profile": "high_emergent", "interests": ["int_vehicles"]},
   {"name": "Mila", "picture": "star", "profile": "low_emergent"}
 ]}
 ```
@@ -37,14 +38,15 @@ Response: the group (same shape as GET below).
 ## GET /api/groups/{id}
 ```json
 {"id": "g_e2c4a7a8", "tutor_name": "Teacher Liza", "learners": [
-  {"id": "c_78552429", "name": "Ana", "picture": "cat", "profile": "low_emergent"},
-  {"id": "c_937d2ee6", "name": "Ben", "picture": "dog", "profile": "high_emergent"},
-  {"id": "c_7f05adfd", "name": "Mila", "picture": "star", "profile": "low_emergent"}
+  {"id": "c_78552429", "name": "Ana", "picture": "cat", "profile": "low_emergent", "interests": ["int_food", "int_toys"]},
+  {"id": "c_937d2ee6", "name": "Ben", "picture": "dog", "profile": "high_emergent", "interests": ["int_vehicles"]},
+  {"id": "c_7f05adfd", "name": "Mila", "picture": "star", "profile": "low_emergent", "interests": []}
 ]}
 ```
 
 ## POST /api/sessions
 `present` = the learner ids at the session, in turn order. Turns rotate in this order.
+Creating a session also asks the background model for a personal story and practice words for each present learner. That never delays a request; results show up in `GET /api/approvals` a few minutes later.
 
 Request
 ```json
@@ -58,6 +60,7 @@ Response
 
 ## GET /api/stories/{id}
 `words` lists every word in reading order, with punctuation attached, for highlighting.
+`id` can be a `content.json` story id or the id of a model story the tutor approved (`gs_…`, from `GET /api/approvals`). A model story that is waiting or rejected returns `404`. Model stories have no audio yet (`audio_url` returns `404`).
 `words` is every word in reading order. Once `scripts/pregen_audio.py` has run, `start_ms`/`end_ms` are the real positions of each word in `audio_url` (the story is read naturally, paragraph by paragraph with a short pause between; the timings come from the voice model), so tapping a word can play just that part. Before that they are estimates and `audio_url` returns 404.
 
 ```json
@@ -156,6 +159,7 @@ Every answer writes one row to the `events` table, with `session_id` and `turn_n
 
 ## GET /api/sessions/{id}/summary
 One entry per present learner. `next_focus_skill` is a skill id from content.json, and `next_method` is a key of `rules.json` → `methods`. `group_note` is `""` when there is nothing to note.
+Moving the session to phase `summary` asks the background model for the summary. Until it is ready, and whenever answers were added after it was written, this returns the code template below (never waits for the model). Call it again a little later to get the model's wording; the shape is the same.
 
 ```json
 {"learners": [
@@ -180,11 +184,26 @@ Printable practice sheet. No scores.
 ```
 
 ## GET /api/approvals
-AI items waiting for the tutor. The list is empty until the model step is built. `kind` is `story`, `words` or `summary`. `payload` is the item's JSON (for a story: the same fields as in content.json `stories`).
+Model items waiting for the tutor, oldest first. Every item passed the checks in `content/test_prompts.py` (a failed one is retried once, then dropped). `kind`:
+- `story`: a personal story. `payload` has the same fields as content.json `stories` (`id` is `gs_…`, `source` is `"model"`), plus `model`, `plot_id` and `object`. Once approved, `GET /api/stories/{payload.id}` serves it and `approved_by_tutor` becomes `true`.
+- `words`: practice words. `payload` = `{"skill_id", "words": [{"text", "word_id", "syllables", "meaning_en"}], "model"}`; only content.json words. Once approved, they go on the learner's practice sheet while the learner is on that skill.
 
+A learner gets no new story (or word list) while one is still waiting for the tutor.
+
+Example from gemma4:e4b (`questions` and the second item shortened):
 ```json
-[{"id": "a_1b2c3d4e", "kind": "story", "child_id": "c_78552429",
-  "payload": {"title": "...", "paragraphs": ["..."], "questions": []}}]
+[{"id": "a_5c1d9e20", "kind": "story", "child_id": "c_1ae8b7ec",
+  "payload": {"id": "gs_3f8a61b2", "title": "Ang Bola ni Ana", "level": 1, "skill_ids": ["sk_vowels"],
+              "target_word_ids": [], "interests": ["int_food", "int_toys"], "word_count": 40,
+              "paragraphs": ["Nagdala si Ana ng bola. Sa parke niya ito dinala. Doon niya nakita si Kuya.",
+                             "Si Kuya walang laruan. Kaya ibinahagi niya ang bola. Naglaro sila nang sabay.",
+                             "Naglaro sila ng bola. Kaya sila ay umuwi. Masaya si Ana pagkatapos."],
+              "questions": [{"type": "who", "prompt": "...", "choices": ["...", "...", "..."], "answer": "..."}],
+              "source": "model", "reviewed": false, "approved_by_tutor": false,
+              "model": "gemma4:e4b", "plot_id": "plot_l1_park", "object": "bola"}},
+ {"id": "a_8e02b7c4", "kind": "words", "child_id": "c_1ae8b7ec",
+  "payload": {"skill_id": "sk_vowels", "model": "gemma4:e4b",
+              "words": [{"text": "oso", "word_id": "w_oso", "syllables": ["o", "so"], "meaning_en": "..."}]}}]
 ```
 
 ## POST /api/approvals/{id}

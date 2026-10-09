@@ -14,6 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 os.environ["DB_PATH"] = str(Path(tempfile.mkdtemp()) / "simulate.db")
+os.environ.setdefault("LLM_WORKER", "0")   # the engine only; no model calls
 
 from fastapi.testclient import TestClient  # noqa: E402
 

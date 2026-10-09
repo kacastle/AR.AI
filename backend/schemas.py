@@ -21,6 +21,7 @@ class LearnerIn(BaseModel):
     name: str
     picture: str
     profile: str
+    interests: list[str] = []      # ids from content.json interests, at most rules.personalization max
 
 
 class Learner(BaseModel):
@@ -28,6 +29,7 @@ class Learner(BaseModel):
     name: str
     picture: str
     profile: str
+    interests: list[str]
 
 
 class GroupIn(BaseModel):

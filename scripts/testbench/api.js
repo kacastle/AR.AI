@@ -7,10 +7,11 @@
 export const MOCK_SESSION_ID = 'testbench'
 
 const KEY = 'testbench_session_id'
+// Interests let the background model write personal stories (they appear in GET /api/approvals).
 const LEARNERS = [
-  { name: 'Ana', picture: 'cat', profile: 'low_emergent' },
-  { name: 'Ben', picture: 'dog', profile: 'high_emergent' },
-  { name: 'Carlo', picture: 'bird', profile: 'low_emergent' },
+  { name: 'Ana', picture: 'cat', profile: 'low_emergent', interests: ['int_food', 'int_toys'] },
+  { name: 'Ben', picture: 'dog', profile: 'high_emergent', interests: ['int_vehicles', 'int_basketball'] },
+  { name: 'Carlo', picture: 'bird', profile: 'low_emergent', interests: ['int_drawing', 'int_music'] },
 ]
 
 async function call(method, path, body) {

@@ -47,7 +47,7 @@ class ApiTest(unittest.TestCase):
         group, _ = self.make_session()
         got = self.client.get(f"/api/groups/{group['id']}").json()
         self.assertEqual(got, group)
-        self.assertEqual(set(got["learners"][0]), {"id", "name", "picture", "profile"})
+        self.assertEqual(set(got["learners"][0]), {"id", "name", "picture", "profile", "interests"})
 
     def test_bad_profile_rejected(self):
         r = self.client.post("/api/groups", json={
