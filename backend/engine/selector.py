@@ -28,6 +28,7 @@ class Pick:
     support_level: str
     is_review: bool
     is_easy: bool
+    gap_slot: Optional[int] = None   # missing_letter: the box the learner fills
 
 
 # ---------- skills ----------
@@ -194,6 +195,7 @@ def build_pick(content: Content, skill: Skill, state: SkillState, item: Entry, l
     task = choose_task_type(content, skill, state, item)
     count = rules.difficulty.distractor_tiles[level]
     syllables = item.syllables if isinstance(item, Word) else []
+    gap = None
 
     if task == "sentence_builder":
         answer, tiles = list(item.word_tiles), list(item.word_tiles)
@@ -216,7 +218,7 @@ def build_pick(content: Content, skill: Skill, state: SkillState, item: Entry, l
     rng.shuffle(tiles)
     return Pick(skill_id=skill.id, task_type=task, item_id=item.id, answer=answer, tiles=tiles,
                 syllables=syllables, prefill=prefill, support_level=state.support_level,
-                is_review=is_review, is_easy=is_easy)
+                is_review=is_review, is_easy=is_easy, gap_slot=gap)
 
 
 def pick_next(content: Content, states: dict[str, SkillState], today: date, used: Sequence[str],

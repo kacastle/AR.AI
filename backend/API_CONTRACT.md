@@ -99,13 +99,16 @@ Learners take turns in the group's fixed order, and absent learners are skipped.
   - `guide`: first tile, e.g. `["b","","","",""]`.
   - `alone`: all `""`.
   - For `missing_letter`, every box except the gap is filled (`["","s","o"]`).
+- `gap_slot`: for `missing_letter`, the box (0-based) the learner fills; `null` for the other task types.
+  Use it instead of guessing from `prefill`: at support `show` the prefill is the full word, and a letter
+  can appear twice (in "unan" the gap is box 3, not box 1).
 - `seconds`: time for the item.
 
 ```json
 {"child_id": "c_78552429", "child_name": "Ana", "turn_number": 1, "task_type": "missing_letter",
  "item": {"id": "w_aso", "prompt_audio": "/api/audio/w_aso.wav", "slots": 3,
           "tiles": ["u", "a", "e", "i"], "syllables": ["a", "so"]},
- "support_level": "show", "prefill": ["a", "s", "o"], "seconds": 60}
+ "support_level": "show", "prefill": ["a", "s", "o"], "gap_slot": 0, "seconds": 60}
 ```
 
 ## POST /api/sessions/{id}/answer

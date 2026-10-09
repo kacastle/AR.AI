@@ -230,6 +230,7 @@ def next_turn(session_id: str):
                   tiles=turn["tiles"], syllables=turn["syllables"]),
         support_level=turn["support_level"],
         prefill=turn["prefill"],
+        gap_slot=turn.get("gap_slot"),   # turns stored before this field have none
         seconds=rules.session.demo_fast.item_seconds if DEMO_FAST else rules.timing.item_seconds,
     )
 

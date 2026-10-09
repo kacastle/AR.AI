@@ -111,6 +111,27 @@ def test_missing_letter_leaves_the_skill_letter_empty(content, rules):
     assert p.prefill == ["", "s", "o"]
     assert p.answer == ["a", "s", "o"]
     assert "a" in p.tiles and len(p.tiles) == 1 + 3
+    assert p.gap_slot == 0
+
+
+@pytest.mark.parametrize("support", ["show", "guide", "alone"])
+def test_gap_slot_names_the_missing_box_even_when_the_letter_repeats(content, rules, support):
+    # "unan" with sk_cvc_final: the gap is the final n, not the first n (which the frontend used to guess).
+    skill = content.skills_by_id["sk_cvc_final"]
+    word = content.words_by_id["w_unan"]
+    state = replace(new_state(skill.id, rules), support_level=support, attempts=2)   # 3rd type: missing_letter
+    p = selector.build_pick(content, skill, state, word, "normal", False, False, rng())
+    assert p.task_type == "missing_letter"
+    assert p.gap_slot == selector._gap(word, skill) == 3
+    if support != "show":
+        assert p.prefill[p.gap_slot] == "" and all(p.prefill[i] for i in range(4) if i != 3)
+
+
+def test_gap_slot_is_none_for_other_task_types(content, rules):
+    skill = content.skills_by_id["sk_vowels"]
+    state = replace(new_state(skill.id, rules), attempts=1)   # dictation_letters
+    p = selector.build_pick(content, skill, state, content.words_by_id["w_aso"], "normal", False, False, rng())
+    assert p.task_type == "dictation_letters" and p.gap_slot is None
 
 
 def test_task_type_rotates_with_attempts(content, rules):

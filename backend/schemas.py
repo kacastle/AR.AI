@@ -92,6 +92,7 @@ class NextTurn(BaseModel):
     item: Item
     support_level: SupportLevel
     prefill: list[str]
+    gap_slot: Optional[int]
     seconds: int
 
 

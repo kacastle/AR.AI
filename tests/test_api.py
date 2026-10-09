@@ -78,6 +78,7 @@ class ApiTest(unittest.TestCase):
         # First skill is sk_vowels (letter_sound); its first task type is missing_letter: one vowel is missing.
         self.assertEqual(turn["task_type"], "missing_letter")
         self.assertIn(word.tiles[0], turn["item"]["tiles"])
+        self.assertEqual(turn["gap_slot"], 0)    # the box to leave empty, also at support "show"
         again = self.client.get(f"/api/sessions/{session['id']}/next").json()
         self.assertEqual(again, turn)
 
