@@ -1,0 +1,14 @@
+.slot {
+  min-width: var(--tile-size);
+  min-height: calc(var(--tile-size) + 6px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.slot--empty {
+  height: var(--tile-size);
+  border: 3px dashed var(--slot-border);
+  border-radius: 16px;
+  background: var(--slot-bg);
+}

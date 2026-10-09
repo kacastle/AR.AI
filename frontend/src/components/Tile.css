@@ -1,0 +1,39 @@
+.tile {
+  min-width: var(--tile-size);
+  min-height: var(--tile-size);
+  padding: 0 16px;
+  border: 3px solid var(--tile-border);
+  border-radius: 16px;
+  background: var(--tile-bg);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--word-size);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: lowercase;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--tile-border);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tile:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 var(--tile-border);
+}
+
+.tile:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.tile--placed {
+  background: var(--placed-bg);
+  border-color: var(--placed-border);
+  box-shadow: 0 6px 0 var(--placed-border);
+}
+
+.tile:disabled {
+  cursor: default;
+}

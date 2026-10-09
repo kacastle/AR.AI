@@ -1,0 +1,23 @@
+// All user-facing text (Filipino).
+export const t = {
+  appTitle: 'Reading Tutor PH',
+  loading: 'Sandali lang...',
+  loadError: 'May problema. Subukan muli.',
+  retry: 'Subukan muli',
+  instruction: 'Buuin ang salita. Pindutin ang isang tile.',
+  pictureLabel: 'Larawan ng salita',
+  slotsLabel: 'Mga puwang para sa salita',
+  trayLabel: 'Mga tile na pagpipilian',
+  emptySlot: (n) => `Bakanteng puwang ${n}`,
+  placedTile: (text, n) => `${text}, nasa puwang ${n}. Pindutin para alisin.`,
+  availableTile: (text) => `${text}. Pindutin para ilagay.`,
+  clear: 'Burahin',
+  check: 'Suriin',
+  next: 'Susunod',
+  restart: 'Ulitin mula simula',
+  correct: 'Magaling! Tama ang sagot mo!',
+  incorrect: 'Halos tama na! Subukan muli.',
+  finished: 'Tapos na! Ang galing mo!',
+  progress: (current, total) => `Tanong ${current} sa ${total}`,
+  stars: (n) => `Mga bituin: ${n}`,
+}

@@ -1,0 +1,54 @@
+@font-face {
+  font-family: 'Andika';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/fonts/andika-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Andika';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./assets/fonts/andika-latin-700-normal.woff2') format('woff2');
+}
+
+:root {
+  --tile-size: 72px; /* must stay >= 64px */
+  --word-size: 40px; /* must stay >= 32px */
+
+  --bg: #fff7e6;
+  --ink: #2b2b3a;
+  --card: #ffffff;
+  --card-shadow: #e8d9bd;
+  --tile-bg: #ffe08a;
+  --tile-border: #e0a800;
+  --placed-bg: #bfe8ff;
+  --placed-border: #3a9bd9;
+  --slot-bg: #f3ead8;
+  --slot-border: #c9b48c;
+  --primary: #2fa84f;
+  --primary-shadow: #1f7a38;
+  --focus: #7a4dff;
+  --good-bg: #d6f5dd;
+  --good-ink: #1f6b33;
+  --try-bg: #ffe3d6;
+  --try-ink: #a3401a;
+
+  font-family: 'Andika', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+}

@@ -1,0 +1,18 @@
+.feedback {
+  margin: 0;
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.feedback--correct {
+  background: var(--good-bg);
+  color: var(--good-ink);
+}
+
+.feedback--incorrect {
+  background: var(--try-bg);
+  color: var(--try-ink);
+}
