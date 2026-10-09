@@ -4632,8 +4632,8 @@
         "langit"
       ],
       "objects": [
-        "laruang rocket",
-        "larawan ng buwan"
+        "laruang roket",
+        "teleskopyo"
       ]
     },
     {
@@ -4915,6 +4915,9 @@
     {
       "id": "plot_l2_gift",
       "level": 2,
+      "avoid_objects": [
+        "larawan ng pamilya"
+      ],
       "characters": [
         "Lola"
       ],

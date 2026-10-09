@@ -151,6 +151,7 @@ Each learner gets one personal story in each session, during his or her story tu
 - Each plot has `word_bank_fil`: correct Filipino words for that plot (for example `tanghalian`, not "lunch"; `gumuhit`, not "nag-drawing"). Small models invent verb forms when they do not get these words.
 - The numbers are in `rules.json` → `story_levels.<level>`: `paragraphs`, `sentences_per_paragraph`, `target_words_per_sentence`, `min_sentences`/`max_sentences`, and `required_question_types`. Linking words are in `story_style.connectors_fil`.
 - A new plot needs `id`, `level`, `characters`, `beats_en`, `word_bank_fil`, and `outline_en` (= the beats joined).
+- Optional `avoid_objects`: objects that do not fit the plot. For example, `plot_l2_gift` ("draws a picture of the {object}") avoids `larawan ng pamilya`. Code does not choose this plot for those objects.
 
 **Fallback order:** an approved model story for that learner → a filled template from `story_templates` → a library story. Templates need no model, so personalization always works.
 
@@ -171,6 +172,7 @@ Each learner gets one personal story in each session, during his or her story tu
 
 - All Filipino lines in `feedback_templates` are drafts. A Filipino speaker must check them.
 - `safety.blocklist` is a starter list. Person 3 extends it.
+- `safety.judgmental_en` and `safety.judgmental_fil` are words that judge the learner (slow, mabagal, tamad...). Any match rejects a feedback or tutor summary output.
 - Each `story_examples.<level>.output` in `content.json` must pass `check_story` in `test_prompts.py`. The model copies the length and shape of the example, so an example that breaks the rules teaches the model to break them.
 - The v0.2 examples, plot beats, and word banks are drafts. A Filipino speaker must check them.
 - If `rules.json` changes, restart the backend. Do not edit numbers in the code.

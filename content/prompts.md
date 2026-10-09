@@ -16,7 +16,8 @@ Four prompts run on the local 3B model in Ollama: **personal story**, **practice
 | Tutor summary | 0.3 | 400 | End of session | Fixed template (section 4) |
 
 - **Turns never wait for the model.** During a turn, use `feedback_templates` from `rules.json` (less than 1 second). Use the feedback prompt only if a call takes less than 2 seconds on the demo laptop.
-- Use Ollama's JSON output for all prompts: `"format": "json"`. For the personal story, pass a JSON schema as `format` (section 1), so the model cannot give the wrong number of paragraphs, questions, or choices.
+- Use Ollama's JSON output for all prompts: `"format": "json"`. For the personal story, pass a JSON schema as `format` (section 1), so the model cannot give the wrong number of paragraphs, questions, or choices. For practice words, pass a schema whose `text` is an enum of the candidates, with exactly `{count}` items (see `words_schema()` in `test_prompts.py`), so the model cannot invent a word or return too few.
+- Turn off "thinking" for thinking models (Gemma 4): LM Studio `"reasoning_effort": "none"`, Ollama `"think": false`. Otherwise the model spends all of `max_tokens` on reasoning and returns no output.
 - Use `keep_alive` (for example `"30m"`) so that the model stays loaded during a session. Load the model when the app starts.
 - Instructions are in English; output is in Filipino. Small models follow English instructions better.
 - Every model item gets `"source": "model"` and `"approved_by_tutor": false`. It goes to the approval queue.
@@ -61,6 +62,7 @@ Code chooses the plot, the object, the question types, and the example. The mode
 | `{word_bank}` | The plot's `word_bank_fil` |
 | `{connectors}` | `rules.json` → `story_style.connectors_fil` |
 | `{other_names}` | The plot's `characters` (for example "Nanay") |
+| `{distractor_names}` | `rules.json` → `personalization.neutral_distractor_names` (wrong choices for who questions) |
 | `{paragraphs}`, `{sentences_per_paragraph}`, `{min_words}`, `{max_words}`, `{max_words_per_sentence}` | `rules.json` → `story_levels.<level>` |
 | `{min_wps}`, `{max_wps}` | `rules.json` → `story_levels.<level>.target_words_per_sentence` |
 | `{question_types}` | 3 types chosen by code from `story_levels.<level>.question_types`: first the `required_question_types` (Level 2: sequence, feeling), then random others |
@@ -93,7 +95,7 @@ Shape:
 Flow:
 - After the first sentence, start most sentences with a linking word ({connectors}) or with siya, niya, sila.
 - Write the name {name} in the first paragraph and in the last paragraph. In the other sentences, use siya or niya.
-- Write the word "{object}" in the first paragraph and in the last paragraph.
+- Write the word "{object}" in the first paragraph and again in the last paragraph. In the last paragraph, write "{object}" itself, not "ito" or "niya".
 - No filler sentences, no lesson, and no "Sana..." at the end. The last sentence ends the plot happily.
 
 Words:
@@ -106,8 +108,10 @@ Words:
 Questions:
 - Exactly 3 questions, with these types in this order: {question_types}.
 - Each question has exactly 3 short, different choices in Filipino. Never 4.
-- Copy the answer letter for letter from one of the choices. The answer is written in the story.
-- For a feeling question, the answer is a feeling word that is in the story.
+- Copy the answer letter for letter from one of the choices.
+- For who, what, where, and feeling questions, the answer uses words that are written in the story. Do not ask about something the story does not say.
+- For a feeling question, the answer is a feeling word that is written in the story (for example masaya, natuwa, nalungkot). Do not guess a feeling such as "pagod" if the story does not say it.
+- In a who question, the 3 choices are people: {name}, {other_names}, or {distractor_names}.
 
 Example. Main character: {example_name}. Object: {example_object}. Other characters: {example_other_names}.
 {example_beats}
@@ -154,10 +158,11 @@ Skill: {skill_name_en} ({pattern_description})
 The child's mistake: {mistake_description}
 Prefer common, concrete words that a child can picture.
 Do not select words that are rude, scary, or for adults.
-Split each word into syllables.
+Select exactly {count} different words, only from the candidates. Copy each word letter for letter.
+Never add a word that is not in the candidate list, even if it fits the skill.
 Candidates: {candidate_words}
-Output JSON:
-{"words": [{"text": "", "syllables": [""], "meaning_en": ""}]}
+Output JSON, for example:
+{"words": [{"text": "bahay", "meaning_en": "house"}]}
 ```
 
 **Checks**
@@ -183,9 +188,11 @@ Mistake type: {mistake_description}
 Teaching method: {method_description}
 Attempt: {attempt} of 3. Support level: {support_level}
 Rules:
-- Be kind and short. Each field has 12 words or fewer.
+- Be kind and short. Each field is one short sentence of 8 words or fewer (never more than 12).
 - Never say that the child is bad or slow.
-- Do not give the full answer unless the attempt is 3.
+- Do not give the full answer unless the attempt is 3: never write the word "{expected}", not even in syllables (not "{expected}" split with hyphens or spaces). The app plays the sound; your hint tells the child what to listen for or look at.
+- Only Filipino words. No English or Taglish (not "clap", say "pumalakpak").
+- Talk about the sound or the letter, not the word. Good: {"message_fil": "Malapit na, {name}!", "hint_fil": "Pakinggan ang huling tunog."}
 Output JSON:
 {"message_fil": "", "hint_fil": ""}
 ```
@@ -207,8 +214,10 @@ Code computes all numbers first. The model only puts them into words.
 **`{learner_data}` format (one line for each learner, made by code)**
 
 ```
-c_01 | Ana | 7 of 8 correct | skills: sk_cvcv_1, sk_ng | weakest: sk_ng | mistakes: O_NG x2 | support: guide | alert: no
+c_01 | Ana | 7 of 8 correct | skills: sk_cvcv_1 (CV-CV words), sk_ng (The letter ng) | weakest: sk_ng (The letter ng) | mistakes: O_NG (ng written as n, or as n + g) x2 | support: guide | alert: no
 ```
+
+Each code goes with its meaning (`skills[].name_en` in `content.json`, `mistake_types.<code>.description_en` in `rules.json`). Without the meaning, the model guesses what a code means and writes wrong facts in the summary.
 
 **User**
 
@@ -218,11 +227,14 @@ Session date: {date}. Learners present: {present_count}.
 For each learner you get: id, name, items correct of total, skills practiced,
 weakest skill, main mistake types, support level, and alert yes or no.
 {learner_data}
+Allowed next focus skills (id and meaning): {skill_list}
 Allowed next methods: {method_list}
 Rules:
-- One line for each learner, 25 words or fewer.
+- `child_id` is the id exactly as given (c_01), not the name.
+- next_focus_skill is one skill id copied from the allowed list (for example sk_ng). next_method is one method id copied from the allowed list.
+- Each summary is one or two short sentences, 20 words or fewer. Start with the learner's name. Only say what the data says.
+- In the summary, write skills, mistakes, and methods in plain words for the tutor, using the meanings given. Never write ids such as sk_ng, O_NG, or ng_sound_pairs in the summary text.
 - Use numbers like "6 of 8 correct". No percentages.
-- Name one next focus skill and one method from the allowed list.
 - If 2 or more learners have the same main mistake, write one short note to the tutor about it.
 - Kind and factual. Never call a learner slow, weak, or bad.
 Output JSON:

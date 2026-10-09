@@ -499,7 +499,10 @@
       "knife",
       "ghost",
       "monster"
-    ]
+    ],
+    "judgmental_note": "Words that judge the learner. Any match rejects a feedback or summary output.",
+    "judgmental_en": ["slow", "weak", "bad", "lazy", "stupid", "dumb"],
+    "judgmental_fil": ["mabagal", "tamad", "bobo", "tanga", "mahina", "pangit"]
   },
   "personalization": {
     "use_first_name_only": true,
