@@ -120,6 +120,11 @@ def check(content, jobs: list[audio.Job]) -> int:
                 if w["end_ms"] - w["start_ms"] > audio.MAX_WORD_MS:
                     print(f"  warning: {story.id} word {w['text']!r} lasts {w['end_ms'] - w['start_ms']} ms; "
                           "listen to it, the voice may have glitched")
+    syllables = sorted({s.lower() for w in content.data.words for s in w.syllables})
+    unrecorded = [s for s in syllables if not (audio.RECORDINGS_DIR / f"{audio.syllable_key(s)}.wav").is_file()]
+    if unrecorded:
+        print(f"  {len(unrecorded)}/{len(syllables)} syllables have no recording yet (for example "
+              f"{', '.join(unrecorded[:5])}); see python scripts/recordings.py --list")
     print(f"check: {len(must) - len(bad)}/{len(must)} words and stories play; "
           f"{len(jobs) - len(missing)}/{len(jobs)} clips present")
     return len(bad) + len(missing)

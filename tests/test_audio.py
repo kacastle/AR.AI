@@ -176,6 +176,15 @@ def test_build_uses_a_recording_when_there_is_one(tmp_path):
     assert len(samples) == 4 + 100 + 30
 
 
+def test_a_syllable_item_uses_the_syllable_recording(tmp_path):
+    jobs = {j.key: j for j in audio.plan(CONTENT)}
+    assert jobs["y_ma"].part_keys == ["syl_ma"]             # one recording: syl_ma, y_ma and the slow hints
+    assert jobs["w_aso"].part_keys is None                  # words stay on the voice
+    audio.write_wav(tmp_path / "syl_ma.wav", np.zeros(9, dtype=np.float32), 1000)
+    samples, rate, _ = audio.build(jobs["y_ma"], FakeSpeaker(), tmp_path)
+    assert (len(samples), rate) == (9, 1000)
+
+
 def test_split_sentences_keeps_every_word():
     assert audio.split_sentences("Si Ana. May aso si Ben.") == ["Si Ana.", "May aso si Ben."]
     # A quote ending in ! followed by a lowercase word is one sentence.

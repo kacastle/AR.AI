@@ -100,7 +100,8 @@ def plan(content) -> list[Job]:
         jobs.setdefault(job.key, job)
 
     for w in content.data.words:
-        add(Job(w.id, [w.tts_text]))
+        # A syllable item says one syllable: it uses that syllable's recording (syl_ma.wav for y_ma).
+        add(Job(w.id, [w.tts_text], part_keys=[syllable_key(w.syllables[0])] if w.kind == "syllable" else None))
         add(Job(slow_key(w.id), list(w.syllables), gap_ms=SLOW_GAP_MS,
                 part_keys=[syllable_key(s) for s in w.syllables]))
     for w in content.data.words:
@@ -255,10 +256,10 @@ def build(job: Job, speaker, recordings_dir: Path = None) -> tuple[np.ndarray, i
             raise ValueError(f"{job.key}: {len(times)} word timings for {len(job.words)} words")
         return joined, rate, [{"text": t, "start_ms": a, "end_ms": b} for t, (a, b) in zip(job.words, times)]
 
-    whole = _recording(recordings_dir, job.key)
-    if whole is not None:
-        _, got = read_wav(recordings_dir / f"{job.key}.wav")
-        return whole, got, None
+    one_part_keys = [job.part_keys[0]] if job.gap_ms is None and job.part_keys else []
+    for key in [job.key] + one_part_keys:
+        if _recording(recordings_dir, key) is not None:
+            return read_wav(recordings_dir / f"{key}.wav") + (None,)
 
     if job.gap_ms is None:
         return speak(job.parts[0], speaker, job.key)[0], rate, None
