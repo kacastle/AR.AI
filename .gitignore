@@ -7,3 +7,5 @@ node_modules/
 # Session story audio (template ts_ and model gs_ stories) says a learner's name: never commit it.
 audio_cache/ts_*
 audio_cache/gs_*
+# The original long syllable recording; the split syl_*.wav files are committed.
+content/recordings/*[ ]*.wav

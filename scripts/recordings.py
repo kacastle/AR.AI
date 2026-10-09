@@ -23,6 +23,7 @@ from backend.tts import audio  # noqa: E402
 
 RATE = 16000     # the rate of every clip in audio_cache/ (backend/tts/omni.py RATE)
 PEAK = 0.7
+MIN_PIECE_PEAK = 0.06   # quieter pieces in a long recording are clicks or breaths
 
 
 def syllables(content) -> dict[str, str]:
@@ -71,7 +72,8 @@ def split_on_pauses(samples: np.ndarray, rate: int, pause_ms: int = 500, thresho
             if quiet * 10 >= pause_ms:
                 pieces.append(samples[start * win:(n - quiet + 1) * win])
                 start, quiet = None, 0
-    return pieces
+    # Clicks and breaths between syllables are much quieter than speech (peak under 0.06 after to_clip).
+    return [p for p in pieces if float(np.abs(p).max()) >= MIN_PIECE_PEAK]
 
 
 def main():
