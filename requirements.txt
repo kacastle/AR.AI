@@ -1,0 +1,10 @@
+# Python 3.10+ (tested on 3.14). Install the CPU build of torch first, see README.md:
+#   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+fastapi
+uvicorn
+pydantic
+transformers
+pytest
+# Optional: the voice for new stories made during a session (words, syllables and library stories are
+# already in audio_cache/). Without it, new stories are shown as text only.
+omnivoice

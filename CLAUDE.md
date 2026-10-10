@@ -6,7 +6,7 @@ Exception (2026-10-10, feedback round 2): Kiefer approved one round of edits acr
 
 ## Stack
 Python FastAPI + Pydantic, SQLite, Ollama with JSON output, OmniVoice k2-fsa/OmniVoice (language fil, default voice) for text to speech. Windows with PowerShell, venv in .venv.
-Installed in .venv: fastapi, uvicorn, transformers, torch (CPU build), torchaudio (CPU build), omnivoice, pytest. Ask before adding anything else.
+Installed in .venv: fastapi, uvicorn, transformers, torch (CPU build), torchaudio (CPU build), omnivoice, pytest (listed in requirements.txt; torch/torchaudio from the CPU index). Ask before adding anything else, and add it to requirements.txt.
 Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL (default gemma4:e4b, the model content/test_prompts.py v0.3 is tuned for). Never write "3B" in code, docs or comments; use the real model name.
 
 ## Principles
@@ -24,6 +24,7 @@ Model name is NOT hardcoded. Read it from the environment variable OLLAMA_MODEL 
 
 ## Layout and how to run
 Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv active.
+- Judges and new machines: README.md has the step-by-step setup and run instructions (install, ollama pull, two terminals, demo options, checks). Keep it in sync when a run command changes.
 - backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), records.py (skill states and learner info from the database), summary.py (tutor summary), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state, feedback), llm/ (harness loads content/test_prompts.py; client, prompts, checks, fallbacks, jobs; worker = background thread), tts/ (audio plan, clip building; omni.py = OmniVoice speaker). Each folder has an __init__.py.
 - tests/ (repo root): API, content, audio, model-job and testbench tests (test_api.py, test_content.py, test_audio.py, test_llm.py, test_testbench.py); tests/conftest.py sets LLM_WORKER=0. The prompt test harness is content/test_prompts.py. backend/tests/: engine unit tests (classifier, scoring, selector, rotation, review) with a shared conftest.py. `python -m pytest` runs both.
 - scripts/: test_ollama.py, simulate.py (3-learner session through the real API), pregen_audio.py, testbench.py + testbench/ (real frontend against the real backend), pull_models.sh. Still to come: seed_demo.py.
