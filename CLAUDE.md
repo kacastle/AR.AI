@@ -27,7 +27,7 @@ Everything runs from the repo root (C:\Users\admin\reading-tutor) with the venv 
 - Judges and new machines: README.md has the step-by-step setup and run instructions (install, ollama pull, two terminals, demo options, checks). Keep it in sync when a run command changes.
 - backend/: main.py (routes), schemas.py (API shapes), db.py, content.py (loads and checks content/), records.py (skill states and learner info from the database), summary.py (tutor summary), API_CONTRACT.md, engine/ (classifier, scoring, selector, rotation, review, state, feedback), llm/ (harness loads content/test_prompts.py; client, prompts, checks, fallbacks, jobs; worker = background thread), tts/ (audio plan, clip building; omni.py = OmniVoice speaker). Each folder has an __init__.py.
 - tests/ (repo root): API, content, audio, model-job and testbench tests (test_api.py, test_content.py, test_audio.py, test_llm.py, test_testbench.py); tests/conftest.py sets LLM_WORKER=0. The prompt test harness is content/test_prompts.py. backend/tests/: engine unit tests (classifier, scoring, selector, rotation, review) with a shared conftest.py. `python -m pytest` runs both.
-- scripts/: test_ollama.py, simulate.py (3-learner session through the real API), pregen_audio.py, testbench.py + testbench/ (real frontend against the real backend), pull_models.sh. Still to come: seed_demo.py.
+- scripts/: test_ollama.py, simulate.py (3-learner session through the real API), demo_session.py, seed_demo.py, pregen_audio.py, testbench.py + testbench/ (real frontend against the real backend), pull_models.sh.
 - content/ (Person 3), frontend/ (Person 1).
 - Imports: package style only, for example `from backend.db import ...`. Never `from db import ...`.
 - Server: `uvicorn backend.main:app --reload --reload-dir backend --port 8000`
@@ -109,8 +109,14 @@ The code uses rules.json feedback_templates for every code (confirmed): CORRECT 
 - Testbench: scripts/testbench.py runs the real frontend against the real backend (the frontend's own client, VITE_USE_MOCK=false, through Vite's /api proxy).
 - Sign-up and lessons (demo branch): the tutor signs up each learner (name, picture, interests, diagnostic) in the frontend. backend/lessons.py: a lesson (visual, steps or story) before a learner's first item of a skill and, in another style, when a re-teach starts; whether it worked is remembered (rules.json lessons). Story lessons come from the model (prompts.md section 7, job "lesson", queued at session start and when a re-teach starts). LLM_BACKEND=lmstudio runs the model jobs on LM Studio.
 - Learner loop (demo branch): backend/adapt.py: diagnostic (learner "diagnostic": true), pace and the SLOW rule, re-teach methods remembered per learner (rules.json reteach), stars and streak, interest words first, GET /api/children/{id}/profile. Story phase: each learner's own story, then its quiz; the quiz moves the next story's level (rules.json story_quiz).
-- Not wired yet: placement endpoint and session flow, end_with_easy_item, SLOW rule, alerts, seed_demo.py, model feedback wording, audio for model stories.
-- Round 2 (2026-10-10): interest-ranked library/read-along stories and a personal story job at sign-up and session start; new English plots (animals, food, nature/farm, school/family) with word banks from existing content words; "letters" lesson style and the vowel intro; varied diagnostic items; progress_snapshots + GET /api/learners + existing_child_ids; level-matched sheet with parent_note; Gemini provider; sk_letters_2 tagged on 5 existing words (dahon, lapis, gatas, papel, pinto). Kiefer must confirm the parent footnote labels in rules.json practice_sheet.level_labels_fil ("Antas 1", "Antas 2").
+- Round 2 (2026-10-10): interest-ranked library/read-along stories and a personal story job at sign-up and session start; new English plots (animals, food, nature/farm, school/family) with word banks from existing content words; "letters" lesson style and the vowel intro; varied diagnostic items; progress_snapshots + GET /api/learners + existing_child_ids; level-matched sheet with parent_note; Gemini provider; sk_letters_2 tagged on 5 existing words (dahon, lapis, gatas, papel, pinto).
+
+## Current submission status (2026-10-10)
+- The working tree is clean on `main` and matches `origin/main`.
+- Verification passed: `python -m pytest` (188 tests), `python -m backend.content`, `python scripts/pregen_audio.py --check`, and `frontend`: `npm run build`.
+- The committed repository contains the required setup, backend, frontend, content, tests, and audio cache. Local `.venv/`, `data/`, caches, generated session/story clips, and source recordings remain ignored and must not be committed.
+- Before submitting a new change, rerun the four checks above and update `README.md` if setup or run commands change.
+- Future enhancements are not submission blockers unless the task or rubric explicitly requires them: richer alert behavior, additional placement/session refinements, model-generated feedback wording, and audio generation for newly created model stories.
 
 ## Working rules for the agent
 - One task per prompt. Give a 5-bullet plan first for big tasks.
